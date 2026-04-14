@@ -46,4 +46,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Servidor Online`));
+server.listen(PORT, () => console.log(`🚀 Lux Chat Online`));

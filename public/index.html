@@ -3,143 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Modern</title>
+    <title>Lux Chat Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
         
-        :root { --theme-color: #0095f6; } /* Azul Instagram padrão */
+        :root { --theme-color: #0095f6; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; color: #fff; }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #000000; /* Fundo totalmente preto estilo OLED */
-            color: #f5f5f5;
-        }
-
-        /* Efeito de Vidro Escuro */
-        .glass-ui { 
-            background: #121212; 
-            border: 1px solid #262626; 
-        }
-
-        /* Estilo das Bolhas */
-        .bubble-me {
-            background: linear-gradient(45deg, #373737, #262626);
-            border: 1px solid #333;
-        }
+        .glass-sidebar { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border-right: 1px solid #222; }
+        .insta-input-container { background: #1a1a1a; border: 1px solid #333; border-radius: 30px; transition: 0.3s; }
+        .insta-input-container:focus-within { border-color: var(--theme-color); box-shadow: 0 0 15px rgba(0, 149, 246, 0.2); }
         
-        .bubble-other {
-            background: #121212;
-            border: 1px solid #262626;
+        .bubble-me { 
+            background: var(--theme-color); 
+            box-shadow: 0 4px 15px -5px var(--theme-color);
         }
+        .bubble-other { background: #262626; }
 
-        /* Scrollbar Invisível/Moderna */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
+        .theme-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+        .theme-dot:hover { transform: scale(1.2); }
+
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-        .bg-theme { background-color: var(--theme-color) !important; }
+        
+        /* Classes dinâmicas de tema */
         .text-theme { color: var(--theme-color) !important; }
+        .bg-theme { background-color: var(--theme-color) !important; }
         .border-theme { border-color: var(--theme-color) !important; }
-
-        .insta-input {
-            background: #121212;
-            border: 1px solid #363636;
-            border-radius: 22px;
-        }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden" id="theme-style-container">
+<body class="h-screen flex overflow-hidden">
 
     <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
-        <div class="w-full max-w-sm text-center">
-            <h1 class="text-4xl font-bold mb-10 tracking-tighter italic">ChatApp</h1>
+        <div class="w-full max-w-sm">
+            <div class="text-center mb-10">
+                <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">Lux.</h1>
+                <p class="text-gray-500 text-sm mt-2">Conecte-se ao futuro do chat</p>
+            </div>
             <div class="space-y-4">
-                <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#262626] p-4 rounded-lg outline-none focus:border-gray-500 text-sm">
-                <input id="avatar" type="text" placeholder="Link da foto (URL)" class="w-full bg-[#121212] border border-[#262626] p-4 rounded-lg outline-none focus:border-gray-500 text-sm">
-                <button onclick="entrar()" class="w-full bg-theme text-white font-bold py-3 rounded-lg text-sm mt-4 active:opacity-70 transition">Entrar</button>
+                <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl outline-none focus:border-blue-500 transition">
+                <input id="avatar" type="text" placeholder="URL da foto (opcional)" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl outline-none focus:border-blue-500 transition">
+                <button onclick="entrar()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/20 transition-all">Entrar agora</button>
             </div>
         </div>
     </div>
 
-    <aside class="w-20 md:w-80 border-r border-[#262626] flex flex-col p-4 hidden md:flex">
-        <div class="p-4 mb-8">
-            <h1 class="text-2xl font-bold tracking-tighter">Mensagens</h1>
-        </div>
+    <aside class="w-20 lg:w-80 glass-sidebar hidden md:flex flex-col p-6">
+        <h1 class="text-2xl font-bold mb-10 px-2 tracking-tighter">Mensagens</h1>
         
-        <div class="px-4 mb-4 flex justify-between items-center text-sm font-bold">
-            <span>Online</span>
-            <span id="user-count" class="text-gray-500">0</span>
-        </div>
-
-        <div id="user-list" class="flex flex-col gap-2 overflow-y-auto px-2"></div>
+        <div class="flex-1 overflow-y-auto space-y-2" id="user-list"></div>
         
-        <div class="mt-auto border-t border-[#262626] pt-4 flex flex-col gap-4 px-4">
-            <button onclick="openSettings()" class="flex items-center gap-3 text-sm font-medium hover:text-gray-400 transition">
+        <div class="mt-auto pt-6 border-t border-[#222] space-y-4">
+            <button onclick="openSettings()" class="flex items-center gap-3 w-full p-3 hover:bg-white/5 rounded-xl transition font-medium">
                 <span>⚙️ Configurações</span>
             </button>
-            <button onclick="logout()" class="text-xs text-red-500 font-bold hover:underline transition text-left">Sair</button>
+            <button onclick="logout()" class="text-red-500 text-sm font-bold p-3 hover:underline">Sair da conta</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col relative bg-black">
-        <header class="h-16 border-b border-[#262626] flex items-center px-6 justify-between bg-black/80 backdrop-blur-md sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="font-bold text-sm tracking-tight">Canal Geral</span>
+    <main class="flex-1 flex flex-col bg-black">
+        <header class="h-20 border-b border-[#222] flex items-center px-8 justify-between bg-black/50 backdrop-blur-xl">
+            <div class="flex items-center gap-4">
+                <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
+                <h2 class="font-bold tracking-tight text-lg">Canal Global</h2>
             </div>
-            <div id="typing-indicator" class="text-[10px] text-gray-500 italic"></div>
+            <div id="typing-indicator" class="text-xs text-theme italic font-medium"></div>
         </header>
 
-        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col"></div>
+        <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"></div>
 
-        <div id="reply-container" class="hidden bg-[#121212] border-t border-[#262626] p-3 flex justify-between items-center animate-slide-up">
-            <div class="text-xs border-l-2 border-theme pl-3">
-                <p class="text-gray-500 font-medium">Respondendo a <span id="reply-name" class="text-white font-bold"></span></p>
-                <p id="reply-text" class="text-gray-400 truncate w-64"></p>
+        <div id="reply-container" class="hidden bg-[#121212] border-t border-theme/30 p-4 flex justify-between items-center animate-bounce-in">
+            <div class="border-l-4 border-theme pl-4">
+                <p class="text-[10px] uppercase font-bold text-theme">Respondendo a</p>
+                <p id="reply-text" class="text-sm text-gray-400 truncate w-48 lg:w-80"></p>
             </div>
-            <button onclick="cancelReply()" class="text-gray-500 text-lg pr-2">✕</button>
+            <button onclick="cancelReply()" class="text-gray-500 hover:text-white">✕</button>
         </div>
 
-        <footer class="p-4 bg-black">
-            <div class="max-w-4xl mx-auto relative flex items-center gap-3">
-                <button type="button" onclick="enviarFoto()" class="text-2xl hover:scale-110 transition">🖼️</button>
-                <form id="form" class="flex-1 flex items-center insta-input px-4 py-1">
-                    <input id="input" autocomplete="off" placeholder="Enviar mensagem..." class="flex-1 bg-transparent py-3 outline-none text-sm">
-                    <button class="text-theme font-bold text-sm ml-2 hover:text-white transition">Enviar</button>
+        <footer class="p-6">
+            <div class="max-w-5xl mx-auto flex items-center gap-4">
+                <button onclick="enviarFoto()" class="text-2xl hover:scale-125 transition grayscale hover:grayscale-0">🖼️</button>
+                <form id="form" class="flex-1 flex items-center insta-input-container px-6">
+                    <input id="input" autocomplete="off" placeholder="Escreva sua mensagem..." class="flex-1 bg-transparent py-4 outline-none text-sm font-medium">
+                    <button class="text-theme font-bold hover:scale-110 transition ml-4">Enviar</button>
                 </form>
             </div>
         </footer>
     </main>
 
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
-        <div class="bg-[#262626] p-8 rounded-2xl w-full max-w-xs shadow-2xl">
-            <h2 class="text-lg font-bold mb-6 text-center">Configurações</h2>
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-[#121212] border border-[#333] p-8 rounded-[32px] w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-bold mb-8 text-center">Personalizar Chat</h2>
             
-            <div class="space-y-4 text-sm">
+            <div class="space-y-6">
                 <div>
-                    <label class="text-gray-500 text-[10px] uppercase font-bold">Nome</label>
-                    <input id="set-username" type="text" class="w-full bg-[#121212] border border-[#363636] p-3 rounded-lg mt-1 outline-none">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">Nome de Exibição</label>
+                    <input id="set-username" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl mt-1 focus:border-theme outline-none transition">
                 </div>
                 <div>
-                    <label class="text-gray-500 text-[10px] uppercase font-bold">Foto URL</label>
-                    <input id="set-avatar" type="text" class="w-full bg-[#121212] border border-[#363636] p-3 rounded-lg mt-1 outline-none">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">URL da Foto</label>
+                    <input id="set-avatar" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl mt-1 focus:border-theme outline-none transition">
                 </div>
                 <div>
-                    <label class="text-gray-500 text-[10px] uppercase font-bold">Cor do Destaque</label>
-                    <div class="flex gap-3 mt-2">
-                        <button onclick="changeTheme('blue', '#0095f6')" class="w-6 h-6 rounded-full bg-[#0095f6]"></button>
-                        <button onclick="changeTheme('purple', '#a855f7')" class="w-6 h-6 rounded-full bg-[#a855f7]"></button>
-                        <button onclick="changeTheme('red', '#ff3040')" class="w-6 h-6 rounded-full bg-[#ff3040]"></button>
-                        <button onclick="changeTheme('gold', '#ffca28')" class="w-6 h-6 rounded-full bg-[#ffca28]"></button>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">Cor do Tema</label>
+                    <div class="flex gap-4 mt-3 ml-2">
+                        <div onclick="changeTheme('#0095f6')" class="theme-dot bg-[#0095f6]" style="background:#0095f6"></div>
+                        <div onclick="changeTheme('#ff3040')" class="theme-dot bg-[#ff3040]" style="background:#ff3040"></div>
+                        <div onclick="changeTheme('#a855f7')" class="theme-dot bg-[#a855f7]" style="background:#a855f7"></div>
+                        <div onclick="changeTheme('#22c55e')" class="theme-dot bg-[#22c55e]" style="background:#22c55e"></div>
+                        <div onclick="changeTheme('#f59e0b')" class="theme-dot bg-[#f59e0b]" style="background:#f59e0b"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-col gap-2 mt-10">
-                <button onclick="saveSettings()" class="w-full bg-theme py-3 rounded-lg font-bold text-sm text-white">Salvar</button>
-                <button onclick="closeSettings()" class="w-full text-white text-sm py-2">Cancelar</button>
+            <div class="grid grid-cols-2 gap-4 mt-12">
+                <button onclick="closeSettings()" class="bg-[#222] py-4 rounded-2xl font-bold">Cancelar</button>
+                <button onclick="saveSettings()" class="bg-theme py-4 rounded-2xl font-bold text-white shadow-lg shadow-theme/20">Salvar Tudo</button>
             </div>
         </div>
     </div>

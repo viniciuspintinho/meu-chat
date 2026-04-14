@@ -2,19 +2,23 @@ const socket = io();
 const loginDiv = document.getElementById('login');
 const msgContainer = document.getElementById('messages');
 const userListDiv = document.getElementById('user-list');
-const userCount = document.getElementById('user-count');
 const typingIndicator = document.getElementById('typing-indicator');
 const msgInput = document.getElementById('input');
 const replyContainer = document.getElementById('reply-container');
-const themeStyle = document.getElementById('theme-style-container');
 
 let selectedReply = null;
 let typingTimeout;
 
+// SISTEMA DE TEMA CORRIGIDO
+function applyTheme(hex) {
+    document.documentElement.style.setProperty('--theme-color', hex);
+    localStorage.setItem('chat_theme_color', hex);
+}
+
 window.onload = () => {
     const savedUser = localStorage.getItem('chat_user');
     const savedColor = localStorage.getItem('chat_theme_color') || '#0095f6';
-    themeStyle.style.setProperty('--theme-color', savedColor);
+    applyTheme(savedColor);
 
     if (savedUser) {
         const userData = JSON.parse(savedUser);
@@ -50,9 +54,8 @@ function closeSettings() {
     document.getElementById('settings-modal').classList.add('hidden');
 }
 
-function changeTheme(name, hex) {
-    themeStyle.style.setProperty('--theme-color', hex);
-    localStorage.setItem('chat_theme_color', hex);
+function changeTheme(hex) {
+    applyTheme(hex);
 }
 
 function saveSettings() {
@@ -60,14 +63,13 @@ function saveSettings() {
     const avatar = document.getElementById('set-avatar').value.trim();
     if(name) {
         localStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
-        window.location.reload();
+        window.location.reload(); // Recarrega para aplicar as mudanças de perfil
     }
 }
 
 function setReply(name, text) {
     selectedReply = { name, text };
-    document.getElementById('reply-name').innerText = name;
-    document.getElementById('reply-text').innerText = text;
+    document.getElementById('reply-text').innerText = `${name}: ${text}`;
     replyContainer.classList.remove('hidden');
     msgInput.focus();
 }
@@ -96,11 +98,10 @@ socket.on('displayTyping', (data) => {
 });
 
 socket.on('updateUserList', (users) => {
-    userCount.innerText = users.length;
     userListDiv.innerHTML = users.map(u => `
-        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#121212] transition cursor-default">
-            <img src="${u.avatar}" class="w-12 h-12 rounded-full object-cover border border-[#262626] p-0.5 shadow-md">
-            <span class="text-sm font-medium text-gray-200 truncate">${u.name}</span>
+        <div class="flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition group">
+            <img src="${u.avatar}" class="w-12 h-12 rounded-full object-cover border-2 border-transparent group-hover:border-theme transition p-0.5">
+            <span class="text-sm font-semibold text-gray-300 group-hover:text-white transition">${u.name}</span>
         </div>
     `).join('');
 });
@@ -118,29 +119,29 @@ socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-2 px-2`;
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
     
     let replyHtml = data.replyTo ? `
-        <div class="bg-white/5 border-l-2 border-theme p-2 mb-2 rounded text-[10px] opacity-60">
-            <b class="text-white">${data.replyTo.name}</b>: ${data.replyTo.text}
+        <div class="bg-black/30 border-l-2 border-white/50 p-2 mb-2 rounded text-[10px] italic">
+            <b>${data.replyTo.name}</b>: ${data.replyTo.text}
         </div>
     ` : '';
 
     const messageContent = isImage 
-        ? `<img src="${data.text}" class="rounded-lg max-w-full h-auto mt-2 border border-[#262626]">`
-        : `<p class="text-[13px] leading-5 font-medium">${data.text}</p>`;
+        ? `<img src="${data.text}" class="rounded-2xl max-w-full h-auto mt-2 border border-white/10 shadow-xl">`
+        : `<p class="text-[14px] leading-relaxed font-medium">${data.text}</p>`;
 
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
-            <img src="${data.avatar}" class="w-8 h-8 rounded-full border border-[#262626] flex-shrink-0">
+            <img src="${data.avatar}" class="w-8 h-8 rounded-full border border-[#222] shadow-lg">
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                <div class="px-4 py-2.5 rounded-[22px] ${isMe ? 'bubble-me text-white' : 'bubble-other text-gray-200'}">
+                <div class="px-5 py-3 rounded-[24px] ${isMe ? 'bubble-me text-white rounded-tr-none' : 'bubble-other text-gray-100 rounded-tl-none border border-[#333]'}">
                     ${replyHtml}
                     ${messageContent}
                 </div>
                 <div class="flex gap-3 mt-1 px-2 items-center">
-                    <span class="text-[10px] text-gray-600">${data.time}</span>
-                    <button onclick="setReply('${data.name}', '${data.text.substring(0,15)}...')" class="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition font-bold">Responder</button>
+                    <span class="text-[9px] text-gray-600 font-bold">${data.time}</span>
+                    <button onclick="setReply('${data.name}', '${data.text.substring(0,15)}...')" class="text-[9px] text-gray-500 opacity-0 group-hover:opacity-100 transition font-extrabold uppercase tracking-tighter">Responder</button>
                 </div>
             </div>
         </div>
