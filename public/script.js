@@ -125,26 +125,31 @@ socket.on('message', (data) => {
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'}`;
 
+    // Estilização dos balões: Mais transparente e legível (Glassmorphism)
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md';
     if(isMe && !isSequencial) bubbleStyle += ' rounded-br-none bubble-glow';
     if(!isMe && !isSequencial) bubbleStyle += ' rounded-bl-none';
 
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm">${txt}</p>`;
+    let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm font-medium tracking-wide">${txt}</p>`;
     
     if(data.msgType === "letreiro") {
         content = `<div class="letreiro-msg">${data.text}</div>`;
     }
 
     const admBadges = getBadges(data.name);
+    // Estilo diferenciado para o nome do ADM no chat
+    const nameStyle = data.name === ADMIN_NAME ? 'color: #FFD700; font-weight: 800;' : 'color: rgba(255,255,255,0.5); font-weight: 600;';
 
     div.innerHTML = `
-        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group">
-            ${!isSequencial ? `<div class="flex items-center gap-1 mb-1">
-                <span class="text-[10px] font-bold opacity-70">${data.name}</span>
+        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group" style="background-color: ${isMe ? 'rgba(0, 149, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)'};">
+            ${!isSequencial ? `<div class="flex items-center gap-1.5 mb-1.5">
+                <span class="text-[10px] uppercase tracking-wider" style="${nameStyle}">${data.name}</span>
                 ${admBadges}
             </div>` : ''}
-            ${content}
+            <div class="message-text-wrapper text-white">
+                ${content}
+            </div>
             <button onclick="setReply('${data.name}', '${data.text}')" class="absolute top-0 -left-8 opacity-0 group-hover:opacity-100 transition">💬</button>
         </div>
     `;
@@ -159,8 +164,8 @@ socket.on('updateUserList', (users) => {
     if(userListElement) {
         userListElement.innerHTML = users.map(u => `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
-                <img src="${u.avatar}" class="w-8 h-8 rounded-full border border-white/10">
-                <span class="text-xs ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-300'}">${u.name}</span>
+                <img src="${u.avatar}" class="w-8 h-8 rounded-full border border-white/10 object-cover">
+                <span class="text-xs tracking-tight ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-400 font-medium'}">${u.name}</span>
             </div>`).join('');
     }
 

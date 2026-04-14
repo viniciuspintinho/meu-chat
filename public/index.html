@@ -8,7 +8,10 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        :root { --theme-color: #0095f6; }
+        :root { 
+            --theme-color: #0095f6; 
+            --theme-rgb: 0, 149, 246;
+        }
         
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -40,7 +43,7 @@
             position: relative; z-index: 10;
         }
 
-        /* --- NOVO PERFIL CIRCULAR --- */
+        /* --- PERFIL CIRCULAR --- */
         .profile-section {
             display: flex;
             flex-direction: column;
@@ -81,7 +84,39 @@
             border: 3px solid #050505;
         }
 
-        /* --- SELOS DE LUXO (MENSAGENS) --- */
+        /* --- ESTILIZAÇÃO DOS BALÕES (GLASSMORPHISM) --- */
+        .bubble-me { 
+            background: rgba(var(--theme-rgb), 0.2) !important; 
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Balão de quem recebe */
+        .bg-white\/5 {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .bubble-glow { 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
+        }
+
+        /* --- ESTILIZAÇÃO DOS NOMES --- */
+        #user-list span {
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* Nome do ADM na Lista Lateral */
+        #user-list .text-yellow-400 {
+            color: #FFD700 !important;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+        }
+
+        /* --- SELOS DE AUTORIDADE --- */
         .badge-authority {
             font-size: 9px;
             font-weight: 900;
@@ -91,22 +126,17 @@
             margin-left: 4px;
             display: inline-flex;
             align-items: center;
-            border: 1px solid rgba(0,0,0,0.3);
         }
 
-        /* Selo Criador: Ouro Metálico */
         .badge-creator {
             background: linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%);
             color: #000 !important;
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
 
-        /* Selo ADM: Neon Vermelho */
         .badge-adm {
             background: #000;
             color: #FF0000 !important;
             border: 1px solid #FF0000;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), inset 0 0 5px rgba(255, 0, 0, 0.2);
         }
 
         .facepile-container { display: flex; align-items: center; padding: 10px; margin-bottom: 5px; justify-content: center; }
@@ -120,7 +150,6 @@
         .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--theme-color), #fff); transition: width 0.5s ease; }
 
         .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; }
-        .bubble-me { background-color: var(--theme-color) !important; color: white !important; }
         
         #messages::-webkit-scrollbar { width: 4px; }
         #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
