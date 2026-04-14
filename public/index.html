@@ -84,6 +84,25 @@
 
         .theme-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); transition: 0.2s; }
         .theme-dot.active { border-color: white; box-shadow: 0 0 10px var(--theme-color); }
+
+        /* FORÇAR VISIBILIDADE DAS BADGES */
+.badge {
+    opacity: 1 !important;
+    filter: none !important;
+    text-shadow: none !important; /* Remove sombras que camuflam o texto */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+    line-height: 1;
+}
+
+/* Garante que o nome do ADM tenha cor sólida se o gradiente falhar */
+.adm-name {
+    font-weight: 900 !important;
+    -webkit-text-fill-color: initial !important; /* Reseta caso esteja camuflando */
+    color: #FFD700 !important;
+}
     </style>
 </head>
 <body>

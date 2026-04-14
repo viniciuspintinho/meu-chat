@@ -18,9 +18,11 @@ function applyTheme(hex) {
 }
 
 function updateXPUI() {
-    document.getElementById('user-level').innerText = userLevel;
-    document.getElementById('user-xp').innerText = userXP;
-    document.getElementById('xp-fill').style.width = (Math.min(userXP, 100)) + "%";
+    if(document.getElementById('user-level')) {
+        document.getElementById('user-level').innerText = userLevel;
+        document.getElementById('user-xp').innerText = userXP;
+        document.getElementById('xp-fill').style.width = (Math.min(userXP, 100)) + "%";
+    }
 }
 
 function gainXP(amount = null) {
@@ -98,6 +100,7 @@ document.getElementById('form').onsubmit = (e) => {
     cancelReply();
 };
 
+// --- RECEBIMENTO DE MENSAGENS ---
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const isSequencial = (data.id === lastSenderId);
@@ -112,60 +115,88 @@ socket.on('message', (data) => {
 
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm">${txt}</p>`;
-    if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
-
-    const badgeHtml = getBadges(data.name, userLevel);
     
-    // SELO DE ADM E CRIADOR CORRIGIDO
+    if(data.msgType === "letreiro") {
+        content = `<div class="letreiro-msg">${data.text}</div>`;
+    }
+
     const admTag = data.name === ADMIN_NAME ? `
-        <span class="badge" style="background: linear-gradient(90deg, #ffd700, #ffae00); color: #000 !important; font-weight: 900; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">👑 CRIADOR</span>
-        <span class="badge" style="background: #ef4444; color: #fff !important; font-weight: 900; margin-left: 3px;">ADM</span>` : '';
+        <span class="badge" style="background: #FFD700; color: #000 !important; font-weight: 900; border: 1px solid #000;">CRIADOR</span>
+        <span class="badge" style="background: #FF0000; color: #FFF !important; font-weight: 900; border: 1px solid #000; margin-left: 3px;">ADM</span>
+    ` : '';
 
     div.innerHTML = `
-        <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">
-            ${isSequencial ? '<div class="w-8"></div>' : `<img src="${data.avatar}" class="w-8 h-8 rounded-full shadow-lg">`}
-            <div class="flex flex-col ${isMe ? 'items-end' : ''}">
-                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 mb-0.5 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name}${admTag}${badgeHtml}</span>`}
-                <div class="px-4 py-2 ${bubbleStyle} relative">
-                    ${data.replyTo ? `<div class="text-[9px] opacity-60 border-l-2 pl-2 mb-1"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : ''}
-                    ${content}
-                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="absolute -bottom-5 ${isMe?'right-0':'left-0'} text-[8px] text-gray-500 opacity-0 group-hover:opacity-100 transition uppercase font-bold">Responder</button>
-                </div>
-            </div>
-        </div>`;
+        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group">
+            ${!isSequencial ? `<div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-bold opacity-70">${data.name}</span>
+                ${admTag}
+            </div>` : ''}
+            ${content}
+            <button onclick="setReply('${data.name}', '${data.text}')" class="absolute top-0 -left-8 opacity-0 group-hover:opacity-100 transition">💬</button>
+        </div>
+    `;
+
     msgContainer.appendChild(div);
-    msgContainer.scrollTop = msgContainer.scrollHeight;
+    msgContainer.scrollTop = msgContainer.scrollHeight; // Sempre rola para o fim
 });
 
+// --- LISTA DE USUÁRIOS E FACEPILE ---
 socket.on('updateUserList', (users) => {
-    document.getElementById('user-list').innerHTML = users.map(u => `
-        <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
-            <img src="${u.avatar}" class="w-8 h-8 rounded-full">
-            <span class="text-xs ${u.name === ADMIN_NAME ? 'adm-name' : 'text-gray-300'}">${u.name}</span>
-        </div>`).join('');
+    const userListElement = document.getElementById('user-list');
+    if(userListElement) {
+        userListElement.innerHTML = users.map(u => `
+            <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
+                <img src="${u.avatar}" class="w-8 h-8 rounded-full">
+                <span class="text-xs ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-300'}">${u.name}</span>
+            </div>`).join('');
+    }
+
     const limit = 4;
-    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}">`).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
+    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => 
+        `<img src="${u.avatar}" class="avatar" style="z-index: ${10 - i}; position: relative;">`
+    ).join('') + (users.length > limit ? `<div class="avatar flex items-center justify-center bg-purple-600 text-[10px] font-bold">+${users.length - limit}</div>` : '');
 });
 
+// --- CONFIGURAÇÕES E UTILITÁRIOS ---
 function openSettings() {
     const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     document.getElementById('set-username').value = user.name || "";
     document.getElementById('set-avatar').value = user.avatar || "";
     document.getElementById('settings-modal').classList.remove('hidden');
 }
+
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
-    if(name) { sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); window.location.reload(); }
+    if(name) { 
+        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); 
+        window.location.reload(); 
+    }
 }
+
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-function changeTheme(hex) { applyTheme(hex); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); event.target.classList.add('active'); }
+
+function changeTheme(hex) { 
+    applyTheme(hex); 
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); 
+    if(event) event.target.classList.add('active'); 
+}
+
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
+
 function setReply(name, text) { 
     selectedReply = { name, text }; 
     document.getElementById('reply-user').innerText = name;
     document.getElementById('reply-text').innerText = text;
     document.getElementById('reply-container').classList.remove('hidden');
 }
-function cancelReply() { selectedReply = null; document.getElementById('reply-container').classList.add('hidden'); }
-function enviarFoto() { const url = prompt("Link da foto:"); if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); }
+
+function cancelReply() { 
+    selectedReply = null; 
+    document.getElementById('reply-container').classList.add('hidden'); 
+}
+
+function enviarFoto() { 
+    const url = prompt("Link da foto:"); 
+    if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); 
+}
