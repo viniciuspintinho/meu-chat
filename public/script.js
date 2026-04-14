@@ -6,9 +6,17 @@ const msgInput = document.getElementById('input');
 const replyContainer = document.getElementById('reply-container');
 
 const ADMIN_NAME = "vn7"; 
-
-// Variável para armazenar a resposta selecionada
 let selectedReply = null;
+let windowFocused = true;
+let unreadCount = 0;
+
+// Sistema de Notificações na Aba
+window.onfocus = () => {
+    windowFocused = true;
+    unreadCount = 0;
+    document.title = "Lux Chat Pro";
+};
+window.onblur = () => { windowFocused = false; };
 
 function applyTheme(hex) {
     document.documentElement.style.setProperty('--theme-color', hex);
@@ -41,14 +49,17 @@ function entrar() {
 }
 
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
+
 function openSettings() {
     const userData = JSON.parse(sessionStorage.getItem('chat_user'));
     document.getElementById('set-username').value = userData.name;
     document.getElementById('set-avatar').value = userData.avatar;
     document.getElementById('settings-modal').classList.remove('hidden');
 }
+
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 function changeTheme(hex) { applyTheme(hex); }
+
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
@@ -58,7 +69,7 @@ function saveSettings() {
     }
 }
 
-// FUNÇÕES DE RESPOSTA
+// Funções de Resposta e Foto
 function setReply(name, text) {
     selectedReply = { name, text };
     document.getElementById('reply-user').innerText = name;
@@ -80,6 +91,7 @@ function enviarFoto() {
     }
 }
 
+// Eventos Socket
 socket.on('systemMessage', (msg) => {
     const div = document.createElement('div');
     div.className = 'system-msg';
@@ -103,17 +115,24 @@ socket.on('updateUserList', (users) => {
 document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
     if (msgInput.value.trim() !== "") {
-        socket.emit('chatMessage', { 
-            text: msgInput.value, 
-            replyTo: selectedReply // Envia a resposta junto
-        });
+        socket.emit('chatMessage', { text: msgInput.value, replyTo: selectedReply });
         msgInput.value = '';
-        cancelReply(); // Limpa a resposta após enviar
+        cancelReply();
     }
 };
 
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
+    const userData = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
+    const myName = userData.name || "";
+    
+    // Sistema de Menção e Notificação
+    const isMentioned = data.text.includes(`@${myName}`) && !isMe;
+    if (!windowFocused) {
+        unreadCount++;
+        document.title = `(${unreadCount}) Novas Mensagens | Lux`;
+    }
+
     const senderIsAdmin = data.name === ADMIN_NAME;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
 
@@ -122,18 +141,19 @@ socket.on('message', (data) => {
     
     const displayName = senderIsAdmin ? `[ADM] ${data.name}` : data.name;
     const badge = senderIsAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
-    const bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
+    
+    let bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
+    if (isMentioned) bubbleStyle += ' mention-me';
 
-    // HTML da Resposta (se houver)
-    let replyHtml = '';
-    if (data.replyTo) {
-        replyHtml = `
-            <div class="bg-black/20 border-l-2 border-white/30 p-2 mb-2 rounded text-[11px] opacity-80">
-                <p class="font-bold">${data.replyTo.name}</p>
-                <p class="truncate max-w-[200px]">${data.replyTo.text}</p>
-            </div>
-        `;
-    }
+    // Processar texto para @Menção
+    let processedText = data.text.replace(/@(\w+)/g, '<span class="mention-text">@$1</span>');
+
+    let replyHtml = data.replyTo ? `
+        <div class="bg-black/20 border-l-2 border-white/30 p-2 mb-2 rounded text-[11px] opacity-80">
+            <p class="font-bold">${data.replyTo.name}</p>
+            <p class="truncate max-w-[200px]">${data.replyTo.text}</p>
+        </div>
+    ` : '';
 
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
@@ -145,11 +165,11 @@ socket.on('message', (data) => {
                 </div>
                 <div class="px-5 py-3 rounded-[24px] ${bubbleStyle} relative">
                     ${replyHtml}
-                    ${isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm">${data.text}</p>`}
+                    ${isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm">${processedText}</p>`}
                 </div>
                 <div class="flex items-center gap-2 mt-1 px-2">
                     <span class="text-[8px] text-gray-600 transition group-hover:opacity-100">${data.time}</span>
-                    <button onclick="setReply('${data.name}', '${data.text}')" class="text-[9px] text-gray-400 font-bold hover:text-white opacity-0 group-hover:opacity-100 transition">RESPONDER</button>
+                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="text-[9px] text-gray-400 font-bold hover:text-white opacity-0 group-hover:opacity-100 transition">RESPONDER</button>
                 </div>
             </div>
         </div>
