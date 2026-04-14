@@ -17,25 +17,22 @@
             position: relative;
         }
 
-        /* --- SISTEMA 1: GLOW DINÂMICO (CORRIGIDO E SE MEXENDO) --- */
+        /* BOLAS SE MEXENDO (SISTEMA 1) */
         .glow-bg {
             position: absolute; width: 600px; height: 600px;
             border-radius: 50%; filter: blur(100px); opacity: 0.5;
             z-index: 0; pointer-events: none;
-            /* Definição da animação moveGlow */
             animation: moveGlow 15s infinite alternate ease-in-out !important;
         }
         .glow-1 { background: var(--theme-color); top: -15%; left: -10%; }
         .glow-2 { background: #7c3aed; bottom: -15%; right: -10%; animation-delay: -5s; }
         
-        /* Chaves da animação que faltavam no seu código */
         @keyframes moveGlow {
             0% { transform: translate(0, 0) scale(1); }
             50% { transform: translate(150px, 50px) scale(1.1); }
             100% { transform: translate(50px, 150px) scale(1.2); }
         }
 
-        /* GLASSMORPHISM */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
@@ -43,10 +40,8 @@
             position: relative; z-index: 10;
         }
         
-        /* Garante que o conteúdo fique na frente das bolas */
         main { position: relative; z-index: 10; }
 
-        /* FACEPILE */
         .facepile-container { display: flex; align-items: center; padding: 10px; margin-bottom: 5px; }
         .face-item {
             width: 35px; height: 35px; border-radius: 50%; border: 2px solid #000;
@@ -59,7 +54,6 @@
             font-size: 10px; font-weight: bold; z-index: 5;
         }
 
-        /* XP & LEVEL */
         .level-container {
             padding: 12px; background: rgba(255, 255, 255, 0.05);
             border-radius: 15px; margin: 10px; border: 1px solid rgba(255, 255, 255, 0.1);
@@ -67,15 +61,21 @@
         .xp-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; overflow: hidden; margin-top: 6px; }
         .xp-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--theme-color), #fff); transition: width 0.5s ease; }
 
-        /* BADGES */
         .badge { font-size: 8px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; font-weight: 800; text-transform: uppercase; vertical-align: middle; }
         .badge-talker { background: #eab308; color: #000; }
 
-        /* MENSAGENS */
         .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; }
         .bubble-me { background-color: var(--theme-color) !important; color: white !important; }
         .bubble-glow { box-shadow: 0 8px 20px -10px var(--theme-color); }
-        .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
+        
+        .adm-name { 
+            background: linear-gradient(to right, #ffd700, #fff, #ffd700); 
+            background-size: 200% auto; 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            animation: shine 2s linear infinite; 
+            font-weight: 800 !important; 
+        }
         @keyframes shine { to { background-position: 200% center; } }
         
         .letreiro-msg { background: #fff; color: #000; font-weight: 900; padding: 10px; border-radius: 10px; text-align: center; width: 100%; }
@@ -90,7 +90,7 @@
     <div class="glow-bg glow-1"></div>
     <div class="glow-bg glow-2"></div>
 
-    <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6 overflow-hidden">
+    <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
         <div class="w-full max-w-sm text-center">
             <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-10">Lux.</h1>
             <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white text-center">
@@ -159,19 +159,10 @@
                     <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
                     <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
                     <div onclick="changeTheme('#22c55e')" class="theme-dot" style="background:#22c55e"></div>
+                    <div onclick="changeTheme('#ff0')" class="theme-dot" style="background:#ff0"></div>
+                    <div onclick="changeTheme('#0033ff')" class="theme-dot" style="background:#0033ff"></div>
+                    <div onclick="changeTheme('#a8589e')" class="theme-dot" style="background:#a8589e"></div>
                     <div onclick="changeTheme('#a855f7')" class="theme-dot" style="background:#a855f7"></div>
-                    <div onclick="changeTheme('#f472b6')" class="theme-dot" style="background:#f472b6"></div>
-                    <div onclick="changeTheme('#fbbf24')" class="theme-dot" style="background:#fbbf24"></div>
-                    <div onclick="changeTheme('#2dd4bf')" class="theme-dot" style="background:#2dd4bf"></div>
-                    <div onclick="changeTheme('#6366f1')" class="theme-dot" style="background:#6366f1"></div>
-                    <div onclick="changeTheme('#ff7a00')" class="theme-dot" style="background:#ff7a00"></div>
-                    <div onclick="changeTheme('#ffffff')" class="theme-dot" style="background:#ffffff"></div>
-                    <div onclick="changeTheme('#4ade80')" class="theme-dot" style="background:#4ade80"></div>
-                    <div onclick="changeTheme('#ec4899')" class="theme-dot" style="background:#ec4899"></div>
-                    <div onclick="changeTheme('#14b8a6')" class="theme-dot" style="background:#14b8a6"></div>
-                    <div onclick="changeTheme('#ef4444')" class="theme-dot" style="background:#ef4444"></div>
-                    <div onclick="changeTheme('#8b5cf6')" class="theme-dot" style="background:#8b5cf6"></div>
-                    <div onclick="changeTheme('#06b6d4')" class="theme-dot" style="background:#06b6d4"></div>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4 mt-8">

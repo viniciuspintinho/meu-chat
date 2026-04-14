@@ -115,7 +115,11 @@ socket.on('message', (data) => {
     if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
 
     const badgeHtml = getBadges(data.name, userLevel);
-    const admTag = data.name === ADMIN_NAME ? '<span class="badge" style="background: linear-gradient(90deg, #ffd700, #ffae00); color: #000 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">👑 CRIADOR</span>' : '';
+    
+    // SELO DE ADM E CRIADOR CORRIGIDO
+    const admTag = data.name === ADMIN_NAME ? `
+        <span class="badge" style="background: linear-gradient(90deg, #ffd700, #ffae00); color: #000 !important; font-weight: 900; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">👑 CRIADOR</span>
+        <span class="badge" style="background: #ef4444; color: #fff !important; font-weight: 900; margin-left: 3px;">ADM</span>` : '';
 
     div.innerHTML = `
         <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">

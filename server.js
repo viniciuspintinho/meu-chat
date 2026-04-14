@@ -20,7 +20,6 @@ io.on('connection', (socket) => {
             id: socket.id,
             isAdmin: data.name === ADMIN_NAME 
         };
-        socket.broadcast.emit('systemMessage', `${data.name} entrou no chat`);
         io.emit('updateUserList', Object.values(usersOnline));
     });
 
