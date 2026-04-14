@@ -115,7 +115,7 @@ socket.on('message', (data) => {
     if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
 
     const badgeHtml = getBadges(data.name, userLevel);
-    const admTag = data.name === ADMIN_NAME ? '<span class="badge" style="background:#ffd700;color:#000">👑 CRIADOR</span>' : '';
+    const admTag = data.name === ADMIN_NAME ? '<span class="badge" style="background: linear-gradient(90deg, #ffd700, #ffae00); color: #000 !important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">👑 CRIADOR</span>' : '';
 
     div.innerHTML = `
         <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">

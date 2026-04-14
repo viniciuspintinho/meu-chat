@@ -17,19 +17,39 @@
             position: relative;
         }
 
-        /* SISTEMA 1: GLOW DINÂMICO */
-        .glow-bg {
-            position: absolute; width: 600px; height: 600px;
-            border-radius: 50%; filter: blur(100px); opacity: 0.4;
-            z-index: 0; animation: move 15s infinite alternate ease-in-out;
-        }
-        .glow-1 { background: var(--theme-color); top: -15%; left: -10%; }
-        .glow-2 { background: #7c3aed; bottom: -15%; right: -10%; animation-delay: -5s; }
-        
-        @keyframes move {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(100px, 100px) scale(1.2); }
-        }
+/* SISTEMA 1: GLOW DINÂMICO (CORRIGIDO) */
+.glow-bg {
+    position: absolute; 
+    width: 600px; 
+    height: 600px;
+    border-radius: 50%; 
+    filter: blur(100px); 
+    opacity: 0.5; /* Aumentei para você ver bem */
+    z-index: -1; /* Joguei para trás de tudo */
+    pointer-events: none; /* Não atrapalha o clique */
+    animation: moveGlow 15s infinite alternate ease-in-out !important;
+}
+.glow-1 { background: var(--theme-color); top: -10%; left: -5%; }
+.glow-2 { background: #7c3aed; bottom: -10%; right: -5%; animation-delay: -5s; }
+
+@keyframes moveGlow {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(150px, 50px) scale(1.1); }
+    100% { transform: translate(50px, 150px) scale(1.2); }
+}
+
+/* BADGES (CORRIGIDO PARA O SEU SELO APARECER) */
+.badge { 
+    font-size: 8px; 
+    padding: 2px 5px; 
+    border-radius: 4px; 
+    margin-left: 5px; 
+    font-weight: 900; /* Mais grosso */
+    text-transform: uppercase; 
+    vertical-align: middle;
+    display: inline-block;
+    color: #000 !important; /* TEXTO PRETO PARA APARECER NO DOURADO */
+}
 
         /* GLASSMORPHISM */
         .glass-panel {
