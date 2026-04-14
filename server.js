@@ -26,11 +26,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('chatMessage', (msg) => {
+    socket.on('chatMessage', (data) => {
         if (usersOnline[socket.id]) {
             io.emit('message', {
                 ...usersOnline[socket.id],
-                text: msg,
+                text: data.text,
+                replyTo: data.replyTo || null, // Adicionado suporte a resposta
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id
             });
