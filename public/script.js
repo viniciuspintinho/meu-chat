@@ -104,7 +104,6 @@ socket.on('message', (data) => {
 
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     
-    // Configuração de cores e classes
     const nameColor = data.name === ADMIN_NAME ? '' : 'rgba(255,255,255,0.7)';
     const nameClass = data.name === ADMIN_NAME ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
 
@@ -116,7 +115,18 @@ socket.on('message', (data) => {
         messageContent = `<div class="letreiro-msg">${data.text}</div>`;
     }
 
-    // --- NOVA ESTRUTURA DE CABEÇALHO REORGANIZADA ---
+    // Estrutura de Resposta Visual (dentro do balão)
+    let replyVisual = "";
+    if (data.replyTo) {
+        replyVisual = `
+            <div class="bg-black/20 border-l-2 border-white/30 p-2 mb-2 rounded text-[10px] opacity-80 italic">
+                <b class="block text-white/50">${data.replyTo.name}</b>
+                <span class="truncate block">${data.replyTo.text}</span>
+            </div>
+        `;
+    }
+
+    // Cabeçalho de Autoridade
     let authorityHeader = '';
     if (data.name === ADMIN_NAME) {
         authorityHeader = `
@@ -132,8 +142,9 @@ socket.on('message', (data) => {
     }
 
     div.innerHTML = `
-        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group shadow-deep-glow">
+        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group shadow-deep-glow cursor-pointer" onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')">
             ${!isSequencial ? authorityHeader : ''}
+            ${replyVisual}
             <div class="text-white/95 leading-relaxed text-sm">
                 ${messageContent}
             </div>
@@ -169,15 +180,25 @@ function openSettings() {
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
-    if(name) { 
-        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); 
-        window.location.reload(); 
-    }
+    if(name) { sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); window.location.reload(); }
 }
 
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 function changeTheme(hex) { applyTheme(hex); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); if(window.event) window.event.target.classList.add('active'); }
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
-function setReply(name, text) { selectedReply = { name, text }; document.getElementById('reply-user').innerText = name; document.getElementById('reply-text').innerText = text; document.getElementById('reply-container').classList.remove('hidden'); }
-function cancelReply() { selectedReply = null; document.getElementById('reply-container').classList.add('hidden'); }
+
+// FUNÇÕES DE REPOSTA
+function setReply(name, text) { 
+    selectedReply = { name, text }; 
+    document.getElementById('reply-user').innerText = name; 
+    document.getElementById('reply-text').innerText = text; 
+    document.getElementById('reply-container').classList.remove('hidden'); 
+    msgInput.focus();
+}
+
+function cancelReply() { 
+    selectedReply = null; 
+    document.getElementById('reply-container').classList.add('hidden'); 
+}
+
 function enviarFoto() { const url = prompt("Link da foto:"); if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); }
