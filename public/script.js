@@ -28,19 +28,16 @@ function gainXP(amount = null) {
     while (userXP >= 100) {
         userLevel++;
         userXP -= 100;
-        console.log("Subiu de Nível!");
     }
     localStorage.setItem('chat_xp', userXP);
     localStorage.setItem('chat_level', userLevel);
     updateXPUI();
 }
 
-// SISTEMA 3: LÓGICA DE BADGES
 function getBadges(name, level) {
     let badges = '';
-    if (name === ADMIN_NAME) return badges; // Adm já tem estilo próprio
+    if (name === ADMIN_NAME) return ''; 
     if (level >= 10) badges += '<span class="badge badge-talker">Tagarela</span>';
-    // Aqui você pode adicionar mais condições para outras badges
     return badges;
 }
 
@@ -117,9 +114,8 @@ socket.on('message', (data) => {
     let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm">${txt}</p>`;
     if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
 
-    // AQUI INTEGRA AS BADGES NO NOME
     const badgeHtml = getBadges(data.name, userLevel);
-    const admTag = data.name === ADMIN_NAME ? '<span class="badge" style="background:#ffd700;color:#000">👑 ADM</span>' : '';
+    const admTag = data.name === ADMIN_NAME ? '<span class="badge" style="background:#ffd700;color:#000">👑 CRIADOR</span>' : '';
 
     div.innerHTML = `
         <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">
@@ -129,7 +125,7 @@ socket.on('message', (data) => {
                 <div class="px-4 py-2 ${bubbleStyle} relative">
                     ${data.replyTo ? `<div class="text-[9px] opacity-60 border-l-2 pl-2 mb-1"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : ''}
                     ${content}
-                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="absolute -bottom-5 ${isMe?'right-0':'left-0'} text-[8px] text-gray-500 opacity-0 group-hover:opacity-100 transition uppercase font-bold tracking-tighter">Responder</button>
+                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="absolute -bottom-5 ${isMe?'right-0':'left-0'} text-[8px] text-gray-500 opacity-0 group-hover:opacity-100 transition uppercase font-bold">Responder</button>
                 </div>
             </div>
         </div>`;
@@ -139,7 +135,7 @@ socket.on('message', (data) => {
 
 socket.on('updateUserList', (users) => {
     document.getElementById('user-list').innerHTML = users.map(u => `
-        <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-default">
+        <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
             <img src="${u.avatar}" class="w-8 h-8 rounded-full">
             <span class="text-xs ${u.name === ADMIN_NAME ? 'adm-name' : 'text-gray-300'}">${u.name}</span>
         </div>`).join('');
