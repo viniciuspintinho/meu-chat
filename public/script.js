@@ -38,14 +38,18 @@ function entrar() {
 }
 
 function logout() { localStorage.removeItem('chat_user'); window.location.reload(); }
+
 function openSettings() {
     const userData = JSON.parse(localStorage.getItem('chat_user'));
     document.getElementById('set-username').value = userData.name;
     document.getElementById('set-avatar').value = userData.avatar;
     document.getElementById('settings-modal').classList.remove('hidden');
 }
+
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+
 function changeTheme(hex) { applyTheme(hex); }
+
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
@@ -60,7 +64,9 @@ function setReply(name, text) {
     document.getElementById('reply-text').innerText = `${name}: ${text}`;
     replyContainer.classList.remove('hidden');
 }
+
 function cancelReply() { selectedReply = null; replyContainer.classList.add('hidden'); }
+
 function enviarFoto() {
     const url = prompt("Link da foto:");
     if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply });
@@ -99,27 +105,29 @@ document.getElementById('form').onsubmit = (e) => {
 };
 
 socket.on('message', (data) => {
+    // CORREÇÃO: Identifica se EU enviei a mensagem pelo ID único do socket
     const isMe = data.id === socket.id;
-    const isAdmin = data.name === ADMIN_NAME;
+    // CORREÇÃO: Verifica se quem enviou (data.name) é o admin
+    const senderIsAdmin = data.name === ADMIN_NAME;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
+    
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
     
     let replyHtml = data.replyTo ? `<div class="bg-black/30 border-l-2 p-2 mb-2 rounded text-[10px] italic"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : '';
     
-    // Prefixo e Badge do ADM
-    const displayName = isAdmin ? `[ADM] ${data.name}` : data.name;
-    const badge = isAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
+    const displayName = senderIsAdmin ? `[ADM] ${data.name}` : data.name;
+    const badge = senderIsAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
 
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
-            <img src="${data.avatar}" class="w-8 h-8 rounded-full border ${isAdmin ? 'border-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.3)]' : 'border-transparent'}">
+            <img src="${data.avatar}" class="w-8 h-8 rounded-full border ${senderIsAdmin ? 'border-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.3)]' : 'border-transparent'}">
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
                 <div class="flex items-center mb-1">
-                    <span class="text-[10px] ${isAdmin ? 'adm-name' : 'text-gray-500'}">${displayName}</span>
+                    <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'}">${displayName}</span>
                     ${badge}
                 </div>
-                <div class="px-5 py-3 rounded-[24px] ${isAdmin ? 'adm-bubble' : ''} ${isMe ? 'bg-theme text-white rounded-tr-none' : 'bg-slate-800 text-gray-100 rounded-tl-none border border-[#333]'}">
+                <div class="px-5 py-3 rounded-[24px] ${senderIsAdmin ? 'adm-bubble' : ''} ${isMe ? 'bg-theme text-white rounded-tr-none' : 'bg-slate-800 text-gray-100 rounded-tl-none border border-[#333]'}">
                     ${replyHtml}
                     ${isImage ? `<img src="${data.text}" class="rounded-xl max-w-full">` : `<p class="text-sm">${data.text}</p>`}
                 </div>
