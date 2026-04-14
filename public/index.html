@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Realtime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="bg-[#0b141a] text-white h-screen flex flex-col overflow-hidden">
+    <div id="login" class="fixed inset-0 bg-[#111b21] z-50 flex flex-col items-center justify-center p-6">
+        <h1 class="text-4xl font-bold text-[#00a884] mb-8">Gemini Chat</h1>
+        <input id="username" type="text" placeholder="Seu nome" class="w-full max-w-xs p-4 rounded-lg bg-[#2a3942] mb-4 outline-none">
+        <input id="avatar" type="text" placeholder="URL da foto (opcional)" class="w-full max-w-xs p-4 rounded-lg bg-[#2a3942] mb-8 outline-none">
+        <button onclick="entrar()" class="bg-[#00a884] text-black font-bold px-12 py-4 rounded-full hover:scale-105 transition">ENTRAR NO CHAT</button>
+    </div>
+
+    <header class="bg-[#202c33] p-4 shadow-md font-bold text-[#00a884]">● CHAT ONLINE</header>
+    <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"></div>
+    <form id="form" class="bg-[#202c33] p-4 flex gap-2">
+        <input id="input" autocomplete="off" placeholder="Digite uma mensagem..." class="flex-1 bg-[#2a3942] p-3 rounded-lg outline-none">
+        <button class="bg-[#00a884] px-6 rounded-lg font-bold text-black">Enviar</button>
+    </form>
+
+    <script src="script.js"></script>
+</body>
+</html>
