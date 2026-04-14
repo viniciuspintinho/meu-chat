@@ -36,11 +36,15 @@ function gainXP(amount = null) {
     updateXPUI();
 }
 
-function getBadges(name, level) {
-    let badges = '';
-    if (name === ADMIN_NAME) return ''; 
-    if (level >= 10) badges += '<span class="badge badge-talker">Tagarela</span>';
-    return badges;
+// Atualizado para os novos selos de autoridade estilizados no CSS
+function getBadges(name) {
+    if (name === ADMIN_NAME) {
+        return `
+            <span class="badge-authority badge-creator">CRIADOR</span>
+            <span class="badge-authority badge-adm">ADM</span>
+        `;
+    }
+    return '';
 }
 
 window.onload = () => {
@@ -48,7 +52,13 @@ window.onload = () => {
     applyTheme(localStorage.getItem('chat_theme_color') || '#0095f6');
     updateXPUI();
     if (sessionUser) {
-        socket.emit('join', JSON.parse(sessionUser));
+        const user = JSON.parse(sessionUser);
+        socket.emit('join', user);
+        
+        // Atualiza o perfil circular na sidebar
+        if(document.getElementById('my-avatar')) document.getElementById('my-avatar').src = user.avatar;
+        if(document.getElementById('my-name')) document.getElementById('my-name').innerText = user.name;
+        
         document.getElementById('login').classList.add('hidden');
     }
 };
@@ -57,8 +67,14 @@ function entrar() {
     const name = document.getElementById('username').value.trim();
     const avatar = document.getElementById('avatar').value.trim() || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
     if(name) {
-        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
-        socket.emit('join', { name, avatar });
+        const userData = { name, avatar };
+        sessionStorage.setItem('chat_user', JSON.stringify(userData));
+        socket.emit('join', userData);
+        
+        // Atualiza a sidebar na entrada
+        if(document.getElementById('my-avatar')) document.getElementById('my-avatar').src = avatar;
+        if(document.getElementById('my-name')) document.getElementById('my-name').innerText = name;
+        
         document.getElementById('login').classList.add('hidden');
     }
 }
@@ -120,16 +136,13 @@ socket.on('message', (data) => {
         content = `<div class="letreiro-msg">${data.text}</div>`;
     }
 
-    const admTag = data.name === ADMIN_NAME ? `
-        <span class="badge" style="background: #FFD700; color: #000 !important; font-weight: 900; border: 1px solid #000;">CRIADOR</span>
-        <span class="badge" style="background: #FF0000; color: #FFF !important; font-weight: 900; border: 1px solid #000; margin-left: 3px;">ADM</span>
-    ` : '';
+    const admBadges = getBadges(data.name);
 
     div.innerHTML = `
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group">
-            ${!isSequencial ? `<div class="flex items-center gap-2 mb-1">
+            ${!isSequencial ? `<div class="flex items-center gap-1 mb-1">
                 <span class="text-[10px] font-bold opacity-70">${data.name}</span>
-                ${admTag}
+                ${admBadges}
             </div>` : ''}
             ${content}
             <button onclick="setReply('${data.name}', '${data.text}')" class="absolute top-0 -left-8 opacity-0 group-hover:opacity-100 transition">💬</button>
@@ -137,7 +150,7 @@ socket.on('message', (data) => {
     `;
 
     msgContainer.appendChild(div);
-    msgContainer.scrollTop = msgContainer.scrollHeight; // Sempre rola para o fim
+    msgContainer.scrollTop = msgContainer.scrollHeight;
 });
 
 // --- LISTA DE USUÁRIOS E FACEPILE ---
@@ -146,15 +159,15 @@ socket.on('updateUserList', (users) => {
     if(userListElement) {
         userListElement.innerHTML = users.map(u => `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
-                <img src="${u.avatar}" class="w-8 h-8 rounded-full">
+                <img src="${u.avatar}" class="w-8 h-8 rounded-full border border-white/10">
                 <span class="text-xs ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-300'}">${u.name}</span>
             </div>`).join('');
     }
 
     const limit = 4;
     facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => 
-        `<img src="${u.avatar}" class="avatar" style="z-index: ${10 - i}; position: relative;">`
-    ).join('') + (users.length > limit ? `<div class="avatar flex items-center justify-center bg-purple-600 text-[10px] font-bold">+${users.length - limit}</div>` : '');
+        `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}; position: relative;">`
+    ).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
 });
 
 // --- CONFIGURAÇÕES E UTILITÁRIOS ---
@@ -179,7 +192,7 @@ function closeSettings() { document.getElementById('settings-modal').classList.a
 function changeTheme(hex) { 
     applyTheme(hex); 
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); 
-    if(event) event.target.classList.add('active'); 
+    if(window.event) window.event.target.classList.add('active'); 
 }
 
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
