@@ -8,52 +8,21 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        
         :root { --theme-color: #0095f6; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; color: #fff; }
-
         .glass-sidebar { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(20px); border-right: 1px solid #222; }
         .insta-input-container { background: #1a1a1a; border: 1px solid #333; border-radius: 30px; transition: 0.3s; }
         .insta-input-container:focus-within { border-color: var(--theme-color); box-shadow: 0 0 15px rgba(0, 149, 246, 0.2); }
-        
-        /* Cor dinâmica para seus balões */
-        .bubble-me { 
-            background-color: var(--theme-color) !important; 
-            color: white !important;
-            box-shadow: 0 4px 15px -5px var(--theme-color);
-        }
-
-        .adm-name {
-            background: linear-gradient(to right, #ffd700, #fff, #ffd700);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shine 2s linear infinite;
-            font-weight: 800 !important;
-        }
-        .badge-criador {
-            background: linear-gradient(45deg, #ffd700, #ff8c00);
-            color: #000 !important;
-            font-size: 9px !important;
-            font-weight: 900;
-            padding: 2px 6px;
-            border-radius: 6px;
-            margin-left: 8px;
-            text-transform: uppercase;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-        }
+        .bubble-me { background-color: var(--theme-color) !important; color: white !important; box-shadow: 0 4px 15px -5px var(--theme-color); }
+        .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
+        .badge-criador { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000 !important; font-size: 9px !important; font-weight: 900; padding: 2px 6px; border-radius: 6px; margin-left: 8px; text-transform: uppercase; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
         .adm-bubble { border: 1px solid rgba(255, 215, 0, 0.4) !important; }
-        
         @keyframes shine { to { background-position: 200% center; } }
-
         .theme-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid rgba(255,255,255,0.1); }
         .theme-dot:hover { transform: scale(1.2); border-color: white; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
-
     <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
         <div class="w-full max-w-sm text-center">
             <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-10">Lux.</h1>
@@ -64,7 +33,6 @@
             </div>
         </div>
     </div>
-
     <aside class="w-20 lg:w-80 glass-sidebar hidden md:flex flex-col p-6">
         <h1 class="text-2xl font-bold mb-10 px-2 tracking-tighter">Mensagens</h1>
         <div class="flex-1 overflow-y-auto space-y-2" id="user-list"></div>
@@ -73,7 +41,6 @@
             <button onclick="logout()" class="text-red-500 text-sm font-bold p-3 hover:underline">Sair</button>
         </div>
     </aside>
-
     <main class="flex-1 flex flex-col bg-black">
         <header class="h-20 border-b border-[#222] flex items-center px-8 justify-between">
             <div class="flex items-center gap-4">
@@ -82,16 +49,13 @@
             </div>
             <div id="typing-indicator" class="text-xs italic" style="color: var(--theme-color)"></div>
         </header>
-
         <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"></div>
-
         <div id="reply-container" class="hidden bg-[#121212] border-t p-4 flex justify-between items-center" style="border-color: var(--theme-color)">
             <div class="border-l-4 pl-4 text-xs text-gray-400" style="border-color: var(--theme-color)">
                 <p id="reply-text" class="truncate w-48 lg:w-80"></p>
             </div>
             <button onclick="cancelReply()">✕</button>
         </div>
-
         <footer class="p-6">
             <div class="max-w-5xl mx-auto flex items-center gap-4">
                 <button onclick="enviarFoto()" class="text-2xl hover:scale-125 transition">🖼️</button>
@@ -102,14 +66,12 @@
             </div>
         </footer>
     </main>
-
     <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
         <div class="bg-[#121212] border border-[#333] p-8 rounded-[32px] w-full max-w-md">
             <h2 class="text-2xl font-bold mb-8 text-center text-white">Configurações</h2>
             <div class="space-y-6">
                 <input id="set-username" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl outline-none text-white">
                 <input id="set-avatar" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl outline-none text-white">
-                
                 <div class="grid grid-cols-4 gap-4 mt-3 justify-items-center">
                     <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
                     <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
@@ -127,7 +89,6 @@
             </div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

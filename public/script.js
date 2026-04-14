@@ -6,9 +6,7 @@ const typingIndicator = document.getElementById('typing-indicator');
 const msgInput = document.getElementById('input');
 const replyContainer = document.getElementById('reply-container');
 
-// DEFINA SEU NOME EXATO AQUI
 const ADMIN_NAME = "vn7"; 
-
 let selectedReply = null;
 let typingTimeout;
 
@@ -17,11 +15,14 @@ function applyTheme(hex) {
     localStorage.setItem('chat_theme_color', hex);
 }
 
+// Carregar tema e verificar login ao abrir
 window.onload = () => {
     const savedUser = localStorage.getItem('chat_user');
     const savedColor = localStorage.getItem('chat_theme_color') || '#0095f6';
     applyTheme(savedColor);
+    
     if (savedUser) {
+        // Envia os dados salvos para o servidor se autenticar
         socket.emit('join', JSON.parse(savedUser));
         loginDiv.classList.add('hidden');
     }
@@ -31,21 +32,28 @@ function entrar() {
     const name = document.getElementById('username').value.trim();
     const avatar = document.getElementById('avatar').value.trim() || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
     if(name) {
-        localStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
-        socket.emit('join', { name, avatar });
+        const userData = { name, avatar };
+        localStorage.setItem('chat_user', JSON.stringify(userData));
+        socket.emit('join', userData);
         loginDiv.classList.add('hidden');
     }
 }
 
-function logout() { localStorage.removeItem('chat_user'); window.location.reload(); }
+function logout() {
+    localStorage.removeItem('chat_user');
+    window.location.reload();
+}
+
 function openSettings() {
     const userData = JSON.parse(localStorage.getItem('chat_user'));
     document.getElementById('set-username').value = userData.name;
     document.getElementById('set-avatar').value = userData.avatar;
     document.getElementById('settings-modal').classList.remove('hidden');
 }
+
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 function changeTheme(hex) { applyTheme(hex); }
+
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
@@ -77,9 +85,11 @@ document.getElementById('form').onsubmit = (e) => {
 };
 
 socket.on('message', (data) => {
+    // IMPORTANTE: isMe compara o ID da mensagem com o ID ATUAL do seu socket
     const isMe = data.id === socket.id;
     const senderIsAdmin = data.name === ADMIN_NAME;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
+    
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
     
@@ -87,7 +97,6 @@ socket.on('message', (data) => {
     const displayName = senderIsAdmin ? `[ADM] ${data.name}` : data.name;
     const badge = senderIsAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
 
-    // Classe 'bubble-me' ativa a cor do tema para você
     const bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
 
     div.innerHTML = `
@@ -111,4 +120,25 @@ socket.on('message', (data) => {
     `;
     msgContainer.appendChild(div);
     msgContainer.scrollTop = msgContainer.scrollHeight;
+});
+
+// Funções Auxiliares
+function setReply(name, text) {
+    selectedReply = { name, text };
+    document.getElementById('reply-text').innerText = `${name}: ${text}`;
+    replyContainer.classList.remove('hidden');
+}
+function cancelReply() { selectedReply = null; replyContainer.classList.add('hidden'); }
+function enviarFoto() {
+    const url = prompt("Link da foto:");
+    if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply });
+    cancelReply();
+}
+msgInput.addEventListener('input', () => {
+    socket.emit('typing', true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => socket.emit('typing', false), 2000);
+});
+socket.on('displayTyping', (data) => {
+    typingIndicator.innerText = data.typing ? `${data.name} digitando...` : '';
 });
