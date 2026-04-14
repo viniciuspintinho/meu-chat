@@ -6,138 +6,126 @@
     <title>Lux Chat Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
-    
-    :root { 
-        --theme-color: #0095f6; 
-        --theme-rgb: 0, 149, 246;
-        --creator-gold: #ffec82;
-        --creator-gold-dark: #b8860b;
-        --adm-red: #ff3040;
-    }
-    
-    body { 
-        font-family: 'Plus Jakarta Sans', sans-serif; 
-        background: #050505; 
-        color: #fff; margin: 0; padding: 0; height: 100vh; display: flex; overflow: hidden;
-        position: relative;
-    }
-
-    /* --- NOVOS ESTILOS DE AUTORIDADE --- */
-    
-    /* Estrutura Flex para Nova Ordem: Ícone > ADM > Nome > Criador */
-    .msg-header-autoridade {
-        display: flex;
-        align-items: center;
-        gap: 6px; /* Espaçamento padrão */
-        margin-bottom: 5px;
-    }
-
-    /* Estilo Base das Badges */
-    .badge-authority {
-        font-size: 8px;
-        font-weight: 800;
-        padding: 2px 6px;
-        border-radius: 4px;
-        text-transform: uppercase;
-        display: inline-flex;
-        align-items: center;
-        letter-spacing: 0.5px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    /* --- SELO ADM PREMIUM (Estilo Neon Dark) --- */
-    .badge-adm {
-        background: #000;
-        color: var(--adm-red) !important;
-        border: 1px solid var(--adm-red);
-        box-shadow: 0 0 8px rgba(255, 48, 64, 0.4);
-    }
-
-    /* --- SELO CRIADOR SUPER PREMIUM (Pós-Nome) --- */
-    /* Destaque máximo: Ouro intenso, glow forte e efeito metálico */
-    .creator-super-premium {
-        background: linear-gradient(135deg, var(--creator-gold) 0%, #daa520 40%, var(--creator-gold-dark) 80%, var(--creator-gold) 100%);
-        color: #050505 !important;
-        font-weight: 800;
-        padding: 3px 9px; /* Levemente maior */
-        border-radius: 12px; /* Mais arredondado pra dar cara de selo */
-        border: 2px solid var(--creator-gold); /* Borda mais grossa */
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
         
-        /* Efeitos Visuais Intensos */
-        text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-        box-shadow: 0 0 18px rgba(255, 236, 130, 0.7), 0 2px 5px rgba(0,0,0,0.5);
+        :root { 
+            --theme-color: #0095f6; 
+            --theme-rgb: 0, 149, 246;
+            --creator-gold: #ffec82;
+            --creator-gold-dark: #daa520;
+            --adm-red: #ff3040;
+        }
         
-        position: relative;
-        overflow: hidden; /* Para o efeito de brilho metálico */
-    }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #050505; 
+            color: #fff; margin: 0; padding: 0; height: 100vh; display: flex; overflow: hidden;
+            position: relative;
+        }
 
-    /* Efeito de brilho metálico passando pelo selo do criador */
-    .creator-super-premium::after {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -150%;
-        width: 100%;
-        height: 200%;
-        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
-        transform: rotate(30deg);
-        animation: metallicShine 4s infinite;
-    }
+        /* --- NOVOS ESTILOS DE AUTORIDADE --- */
+        
+        .msg-header-autoridade {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 5px;
+        }
 
-    @keyframes metallicShine {
-        0% { left: -150%; }
-        100% { left: 150%; }
-    }
+        .badge-authority {
+            font-size: 8px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
 
-    /* --- ESTILO DO NOME DO USUÁRIO --- */
-    .msg-author-name {
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        transition: color 0.2s;
-    }
+        /* Ícone de Coroa 👑 */
+        .admin-icon {
+            color: var(--adm-red);
+            font-size: 12px;
+            filter: drop-shadow(0 0 4px var(--adm-red));
+        }
 
-    /* Cor de destaque para o vn7 */
-    .admin-name-highlight {
-        color: var(--creator-gold) !important;
-        text-shadow: 0 0 10px rgba(255, 236, 130, 0.3);
-    }
+        /* Selo ADM Premium */
+        .badge-adm {
+            background: #000;
+            color: var(--adm-red) !important;
+            border: 1px solid var(--adm-red);
+            box-shadow: 0 0 8px rgba(255, 48, 64, 0.4);
+        }
 
-    /* Ícone de Coroa Pré-ADM */
-    .admin-icon {
-        color: var(--adm-red);
-        font-size: 12px;
-        filter: drop-shadow(0 0 4px var(--adm-red));
-    }
+        /* Selo CRIADOR Super Premium */
+        .creator-super-premium {
+            background: linear-gradient(135deg, var(--creator-gold) 0%, #daa520 40%, #b8860b 80%, var(--creator-gold) 100%);
+            color: #050505 !important;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 12px;
+            border: 2px solid var(--creator-gold);
+            box-shadow: 0 0 18px rgba(255, 236, 130, 0.7), 0 2px 5px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
 
-    /* --- AJUSTE NOS BALÕES E XP (Glow Profundo) --- */
-    .bubble-me { 
-        background: rgba(var(--theme-rgb), 0.2) !important; 
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
+        /* Efeito de brilho metálico animado */
+        .creator-super-premium::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -150%;
+            width: 100%; height: 200%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg);
+            animation: metallicShine 4s infinite;
+        }
 
-    .bg-white\/5 {
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    }
+        @keyframes metallicShine {
+            0% { left: -150%; }
+            100% { left: 150%; }
+        }
 
-    /* Sombra profunda no balão pra dar "vida" */
-    .shadow-deep-glow {
-        box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.6);
-    }
+        .admin-name-highlight {
+            color: var(--creator-gold) !important;
+            text-shadow: 0 0 10px rgba(255, 236, 130, 0.3);
+            font-weight: 800;
+        }
 
-    /* Outros estilos mantidos */
-    .glow-bg { position: absolute; width: 600px; height: 600px; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: 0; pointer-events: none; }
-    .glow-1 { background: var(--theme-color); top: -15%; left: -10%; }
-    .glow-2 { background: #7c3aed; bottom: -15%; right: -10%; }
-    .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); position: relative; z-index: 10; }
-    #messages::-webkit-scrollbar { width: 4px; }
-    #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-</style>
+        /* --- BALÕES E UI --- */
+        .bubble-me { 
+            background: rgba(var(--theme-rgb), 0.2) !important; 
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        .bg-white\/5 {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        .glow-bg { position: absolute; width: 600px; height: 600px; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: 0; pointer-events: none; }
+        .glow-1 { background: var(--theme-color); top: -15%; left: -10%; }
+        .glow-2 { background: #7c3aed; bottom: -15%; right: -10%; }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); position: relative; z-index: 10; }
+        
+        .avatar-main { width: 85px; height: 85px; border-radius: 50%; object-fit: cover; border: 3px solid var(--theme-color); }
+        .lv-badge-circle { position: absolute; bottom: 0; right: 0; background: var(--theme-color); color: white; font-size: 10px; font-weight: 900; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #050505; }
+        
+        .xp-bar-bg { width: 100%; height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--theme-color), #fff); transition: width 0.5s ease; }
+
+        .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; }
+        #messages::-webkit-scrollbar { width: 4px; }
+        #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .theme-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); }
+    </style>
 </head>
 <body>
     <div class="glow-bg glow-1"></div>
@@ -153,8 +141,8 @@
     </div>
 
     <aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 flex-shrink-0">
-        <div class="profile-section">
-            <div class="avatar-wrapper">
+        <div class="profile-section flex flex-col items-center gap-4 py-4">
+            <div class="avatar-wrapper relative">
                 <img id="my-avatar" src="" class="avatar-main">
                 <div id="user-level" class="lv-badge-circle">1</div>
             </div>
@@ -167,7 +155,6 @@
                 <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
             </div>
         </div>
-        <div id="facepile" class="facepile-container"></div>
         <div id="user-list" class="flex-1 overflow-y-auto space-y-2 mt-4"></div>
         <div class="pt-4 border-t border-white/5 space-y-2">
             <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">⚙️ Configurações</button>
@@ -182,6 +169,7 @@
             </h2>
         </header>
         <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
+        
         <div id="reply-container" class="hidden bg-black/60 backdrop-blur-xl border-t p-3 flex justify-between items-center" style="border-color: var(--theme-color)">
             <div class="border-l-2 pl-4 text-xs">
                 <p id="reply-user" class="font-bold text-white"></p>
@@ -189,6 +177,7 @@
             </div>
             <button onclick="cancelReply()" class="text-gray-500">✕</button>
         </div>
+
         <footer class="p-4 bg-transparent flex-shrink-0">
             <div class="max-w-5xl mx-auto flex items-center gap-3">
                 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
@@ -220,6 +209,7 @@
             </div>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

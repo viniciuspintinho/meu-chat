@@ -32,13 +32,6 @@ function gainXP(amount = null) {
     updateXPUI();
 }
 
-function getBadges(name) {
-    if (name === ADMIN_NAME) {
-        return `<span class="badge-authority badge-creator">CRIADOR</span><span class="badge-authority badge-adm">ADM</span>`;
-    }
-    return '';
-}
-
 window.onload = () => {
     const sessionUser = sessionStorage.getItem('chat_user');
     applyTheme(localStorage.getItem('chat_theme_color') || '#0095f6');
@@ -101,8 +94,6 @@ document.getElementById('form').onsubmit = (e) => {
     cancelReply();
 };
 
-// ... (mantenha o restante do código igual até a função socket.on('message'))
-
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const isSequencial = (data.id === lastSenderId);
@@ -113,11 +104,11 @@ socket.on('message', (data) => {
 
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     
-    // Melhora o contraste das cores dos nomes e aplica realce
+    // Configuração de cores e classes
     const nameColor = data.name === ADMIN_NAME ? '' : 'rgba(255,255,255,0.7)';
     const nameClass = data.name === ADMIN_NAME ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
 
-    // Conteúdo da Mensagem (Texto ou Imagem)
+    // Conteúdo da Mensagem
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let messageContent = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="message-text">${txt}</p>`;
     
@@ -125,19 +116,14 @@ socket.on('message', (data) => {
         messageContent = `<div class="letreiro-msg">${data.text}</div>`;
     }
 
-    // --- MONTAGEM DA NOVA ESTRUTURA DE CABEÇALHO ---
-    // Ordem: [Ícone Coroa] + [ADM] + [vn7] + [Criador Super Premium]
-    
+    // --- NOVA ESTRUTURA DE CABEÇALHO REORGANIZADA ---
     let authorityHeader = '';
     if (data.name === ADMIN_NAME) {
         authorityHeader = `
             <div class="msg-header-autoridade">
                 <span class="admin-icon">👑</span>
-                
                 <span class="badge-authority badge-adm">ADM</span>
-                
                 <span class="${nameClass}" style="color: ${nameColor}">${data.name}</span>
-                
                 <span class="badge-authority creator-super-premium">CRIADOR</span>
             </div>
         `;
@@ -158,8 +144,6 @@ socket.on('message', (data) => {
     msgContainer.scrollTop = msgContainer.scrollHeight;
 });
 
-// ... (mantenha o restante do código igual até o final)
-
 socket.on('updateUserList', (users) => {
     const userListElement = document.getElementById('user-list');
     if(userListElement) {
@@ -170,7 +154,9 @@ socket.on('updateUserList', (users) => {
             </div>`).join('');
     }
     const limit = 4;
-    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}; position: relative;">`).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
+    if(facepileDiv) {
+        facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}; position: relative;">`).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
+    }
 });
 
 function openSettings() {
@@ -183,7 +169,10 @@ function openSettings() {
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
-    if(name) { sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); window.location.reload(); }
+    if(name) { 
+        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); 
+        window.location.reload(); 
+    }
 }
 
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
