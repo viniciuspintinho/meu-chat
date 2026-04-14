@@ -1,3 +1,5 @@
+const loginDiv = document.getElementById('login');
+
 function entrar() {
     const name = document.getElementById('username').value;
     const avatar = document.getElementById('avatar').value || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
