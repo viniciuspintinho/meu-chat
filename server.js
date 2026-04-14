@@ -13,12 +13,15 @@ let usersOnline = {};
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        // Vincula a identidade ao ID único da conexão atual
         usersOnline[socket.id] = { 
             name: data.name, 
             avatar: data.avatar,
             id: socket.id 
         };
+        
+        // Avisa os outros que alguém entrou
+        socket.broadcast.emit('systemMessage', `${data.name} entrou no chat`);
+        
         io.emit('updateUserList', Object.values(usersOnline));
     });
 
@@ -29,7 +32,6 @@ io.on('connection', (socket) => {
                 name: user.name,
                 avatar: user.avatar,
                 text: data.text,
-                replyTo: data.replyTo || null,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id 
             });
@@ -37,8 +39,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        delete usersOnline[socket.id];
-        io.emit('updateUserList', Object.values(usersOnline));
+        if (usersOnline[socket.id]) {
+            const userName = usersOnline[socket.id].name;
+            socket.broadcast.emit('systemMessage', `${userName} saiu do chat`);
+            delete usersOnline[socket.id];
+            io.emit('updateUserList', Object.values(usersOnline));
+        }
     });
 });
 

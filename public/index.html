@@ -16,18 +16,11 @@
         .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
         .badge-criador { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000 !important; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 6px; margin-left: 8px; text-transform: uppercase; }
         @keyframes shine { to { background-position: 200% center; } }
-        
-        /* Estilo dos círculos de cores */
-        .theme-dot { 
-            width: 35px; 
-            height: 35px; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            border: 3px solid rgba(255,255,255,0.1); 
-            transition: all 0.2s ease;
-        }
+        .theme-dot { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 3px solid rgba(255,255,255,0.1); transition: 0.2s; }
         .theme-dot:hover { transform: scale(1.15); border-color: white; }
         .theme-dot.active { border-color: white; box-shadow: 0 0 10px var(--theme-color); }
+        /* Estilo da mensagem de sistema */
+        .system-msg { font-size: 11px; color: #555; text-align: center; margin: 10px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
@@ -37,7 +30,7 @@
             <div class="space-y-4">
                 <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl outline-none text-white">
                 <input id="avatar" type="text" placeholder="Link da foto" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl outline-none text-white">
-                <button onclick="entrar()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-500 transition">Entrar</button>
+                <button onclick="entrar()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-500">Entrar</button>
             </div>
         </div>
     </div>
@@ -46,60 +39,48 @@
         <h1 class="text-2xl font-bold mb-10">Mensagens</h1>
         <div class="flex-1 overflow-y-auto space-y-2" id="user-list"></div>
         <div class="mt-auto pt-6 border-t border-[#222]">
-            <button onclick="openSettings()" class="w-full p-3 text-gray-400 text-left hover:text-white transition">⚙️ Configurações</button>
+            <button onclick="openSettings()" class="w-full p-3 text-gray-400 text-left hover:text-white">⚙️ Configurações</button>
             <button onclick="logout()" class="w-full p-3 text-red-500 text-left font-bold hover:underline">Sair</button>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col bg-black">
         <header class="h-20 border-b border-[#222] flex items-center px-8">
-            <h2 class="font-bold text-lg">Canal Principal</h2>
+            <h2 class="font-bold text-lg text-white">Canal Principal</h2>
         </header>
         <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"></div>
         <footer class="p-6">
             <form id="form" class="max-w-5xl mx-auto flex items-center insta-input-container px-6">
                 <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-4 outline-none text-white">
-                <button class="font-bold transition hover:scale-105" style="color: var(--theme-color)">Enviar</button>
+                <button class="font-bold" style="color: var(--theme-color)">Enviar</button>
             </form>
         </footer>
     </main>
 
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-[#121212] border border-[#333] p-8 rounded-[32px] w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6 text-white text-center">Personalizar Lux</h2>
-            <div class="space-y-5">
-                <div>
-                    <label class="text-xs text-gray-500 ml-2 mb-1 block">Seu Nome</label>
-                    <input id="set-username" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl text-white outline-none focus:border-blue-500 transition">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-500 ml-2 mb-1 block">Link do Avatar</label>
-                    <input id="set-avatar" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl text-white outline-none focus:border-blue-500 transition">
-                </div>
-                
-                <div>
-                    <label class="text-xs text-gray-500 ml-2 mb-3 block">Escolha sua Cor</label>
-                    <div class="grid grid-cols-4 gap-4 justify-items-center">
-                        <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
-                        <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
-                        <div onclick="changeTheme('#22c55e')" class="theme-dot" style="background:#22c55e"></div>
-                        <div onclick="changeTheme('#a855f7')" class="theme-dot" style="background:#a855f7"></div>
-                        
-                        <div onclick="changeTheme('#f472b6')" class="theme-dot" style="background:#f472b6"></div>
-                        <div onclick="changeTheme('#fbbf24')" class="theme-dot" style="background:#fbbf24"></div>
-                        <div onclick="changeTheme('#2dd4bf')" class="theme-dot" style="background:#2dd4bf"></div>
-                        <div onclick="changeTheme('#6366f1')" class="theme-dot" style="background:#6366f1"></div>
-                        
-                        <div onclick="changeTheme('#ff7a00')" class="theme-dot" style="background:#ff7a00"></div>
-                        <div onclick="changeTheme('#ffffff')" class="theme-dot" style="background:#ffffff"></div>
-                        <div onclick="changeTheme('#4ade80')" class="theme-dot" style="background:#4ade80"></div>
-                        <div onclick="changeTheme('#ec4899')" class="theme-dot" style="background:#ec4899"></div>
-                    </div>
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6">
+        <div class="bg-[#121212] border border-[#333] p-8 rounded-[32px] w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-8 text-white text-center">Configurações</h2>
+            <div class="space-y-4">
+                <input id="set-username" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl text-white outline-none">
+                <input id="set-avatar" type="text" class="w-full bg-black border border-[#333] p-4 rounded-2xl text-white outline-none">
+                <div class="grid grid-cols-4 gap-4 justify-items-center">
+                    <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
+                    <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
+                    <div onclick="changeTheme('#22c55e')" class="theme-dot" style="background:#22c55e"></div>
+                    <div onclick="changeTheme('#a855f7')" class="theme-dot" style="background:#a855f7"></div>
+                    <div onclick="changeTheme('#f472b6')" class="theme-dot" style="background:#f472b6"></div>
+                    <div onclick="changeTheme('#fbbf24')" class="theme-dot" style="background:#fbbf24"></div>
+                    <div onclick="changeTheme('#2dd4bf')" class="theme-dot" style="background:#2dd4bf"></div>
+                    <div onclick="changeTheme('#6366f1')" class="theme-dot" style="background:#6366f1"></div>
+                    <div onclick="changeTheme('#ff7a00')" class="theme-dot" style="background:#ff7a00"></div>
+                    <div onclick="changeTheme('#ffffff')" class="theme-dot" style="background:#ffffff"></div>
+                    <div onclick="changeTheme('#4ade80')" class="theme-dot" style="background:#4ade80"></div>
+                    <div onclick="changeTheme('#ec4899')" class="theme-dot" style="background:#ec4899"></div>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4 mt-10">
-                <button onclick="closeSettings()" class="bg-[#222] text-white py-4 rounded-2xl hover:bg-[#333] transition">Cancelar</button>
-                <button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-500 transition shadow-lg shadow-blue-900/20">Salvar Tudo</button>
+                <button onclick="closeSettings()" class="bg-[#222] text-white py-4 rounded-2xl">Voltar</button>
+                <button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold">Salvar</button>
             </div>
         </div>
     </div>

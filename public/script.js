@@ -9,14 +9,9 @@ const ADMIN_NAME = "vn7";
 function applyTheme(hex) {
     document.documentElement.style.setProperty('--theme-color', hex);
     localStorage.setItem('chat_theme_color', hex);
-    
-    // Atualiza o feedback visual das bolinhas no modal
     document.querySelectorAll('.theme-dot').forEach(dot => {
         dot.classList.remove('active');
-        if(dot.style.backgroundColor === hex || 
-           dot.getAttribute('style').includes(hex)) {
-            dot.classList.add('active');
-        }
+        if(dot.style.backgroundColor === hex || dot.getAttribute('style').includes(hex)) dot.classList.add('active');
     });
 }
 
@@ -24,7 +19,6 @@ window.onload = () => {
     const sessionUser = sessionStorage.getItem('chat_user');
     const savedColor = localStorage.getItem('chat_theme_color') || '#0095f6';
     applyTheme(savedColor);
-    
     if (sessionUser) {
         socket.emit('join', JSON.parse(sessionUser));
         loginDiv.classList.add('hidden');
@@ -42,41 +36,39 @@ function entrar() {
     }
 }
 
-function logout() {
-    sessionStorage.removeItem('chat_user');
-    window.location.reload();
-}
-
+function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
 function openSettings() {
     const userData = JSON.parse(sessionStorage.getItem('chat_user'));
     document.getElementById('set-username').value = userData.name;
     document.getElementById('set-avatar').value = userData.avatar;
     document.getElementById('settings-modal').classList.remove('hidden');
 }
-
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-
-function changeTheme(hex) {
-    applyTheme(hex);
-}
-
+function changeTheme(hex) { applyTheme(hex); }
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
     if(name) {
-        const userData = { name, avatar };
-        sessionStorage.setItem('chat_user', JSON.stringify(userData));
-        // A página recarrega para aplicar as mudanças de nome/foto e o tema já estará salvo
+        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
         window.location.reload();
     }
 }
+
+// MENSAGEM DE SISTEMA (Entrou/Saiu)
+socket.on('systemMessage', (msg) => {
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.innerText = msg;
+    msgContainer.appendChild(div);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+});
 
 socket.on('updateUserList', (users) => {
     userListDiv.innerHTML = users.map(u => {
         const isAdm = u.name === ADMIN_NAME;
         return `
-            <div class="flex items-center gap-4 p-3 transition hover:bg-white/5 rounded-xl">
-                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.3)]' : 'border-transparent'}">
+            <div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition">
+                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500' : 'border-transparent'}">
                 <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
             </div>
         `;
@@ -109,10 +101,10 @@ socket.on('message', (data) => {
                     <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'} font-semibold">${displayName}</span>
                     ${badge}
                 </div>
-                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle} transition-all">
-                    <p class="text-sm leading-relaxed">${data.text}</p>
+                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle}">
+                    <p class="text-sm">${data.text}</p>
                 </div>
-                <span class="text-[8px] text-gray-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">${data.time}</span>
+                <span class="text-[8px] text-gray-600 mt-1 opacity-0 group-hover:opacity-100 transition">${data.time}</span>
             </div>
         </div>
     `;
