@@ -7,24 +7,29 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Define a pasta public para servir o HTML, CSS e JS
 app.use(express.static(path.join(__dirname, 'public')));
 
-io.on('connection', (socket) => {
-    console.log('Novo usuário conectado:', socket.id);
+let usersOnline = {}; // Objeto para guardar usuários: { socketId: { name, avatar } }
 
-    // Quando o usuário entra, salvamos os dados dele na sessão do socket
+io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        socket.userData = data;
-        console.log(`${data.name} entrou no chat.`);
+        usersOnline[socket.id] = data;
+        io.emit('updateUserList', Object.values(usersOnline)); // Envia lista atualizada
     });
 
-    // Quando o servidor recebe uma mensagem
+    socket.on('typing', (isTyping) => {
+        if (usersOnline[socket.id]) {
+            socket.broadcast.emit('displayTyping', {
+                name: usersOnline[socket.id].name,
+                typing: isTyping
+            });
+        }
+    });
+
     socket.on('chatMessage', (msg) => {
-        if (socket.userData) {
+        if (usersOnline[socket.id]) {
             io.emit('message', {
-                name: socket.userData.name,
-                avatar: socket.userData.avatar,
+                ...usersOnline[socket.id],
                 text: msg,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id
@@ -33,9 +38,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('Usuário desconectado');
+        delete usersOnline[socket.id];
+        io.emit('updateUserList', Object.values(usersOnline));
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Servidor rodando em http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Futurismo ON na porta ${PORT}`));
