@@ -9,27 +9,22 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuração de Administrador Global
 const ADMIN_NAME = "vn7"; 
 let usersOnline = {}; 
 
 io.on('connection', (socket) => {
-    // Quando um usuário entra no chat
     socket.on('join', (data) => {
         const isAuthor = data.name === ADMIN_NAME;
-        
         usersOnline[socket.id] = { 
             name: data.name, 
             avatar: data.avatar,
             id: socket.id,
-            isAdmin: isAuthor,    // Status de Administrador
-            isCreator: isAuthor   // Status de Criador (para o selo de Ouro)
+            isAdmin: isAuthor,
+            isCreator: isAuthor
         };
-        
         io.emit('updateUserList', Object.values(usersOnline));
     });
 
-    // Quando uma mensagem é enviada
     socket.on('chatMessage', (data) => {
         const user = usersOnline[socket.id];
         if (user) {
@@ -40,13 +35,12 @@ io.on('connection', (socket) => {
                 msgType: data.msgType || "normal",
                 replyTo: data.replyTo || null,
                 isAdmin: user.isAdmin,
-                isCreator: user.isCreator, // Envia para o front identificar o Criador
+                isCreator: user.isCreator,
                 id: socket.id 
             });
         }
     });
 
-    // Quando o usuário desconecta
     socket.on('disconnect', () => {
         if (usersOnline[socket.id]) {
             delete usersOnline[socket.id];

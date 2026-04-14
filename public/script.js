@@ -7,7 +7,6 @@ const ADMIN_NAME = "vn7";
 let selectedReply = null;
 let lastSenderId = null;
 
-// Lógica de XP
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
 
@@ -27,22 +26,15 @@ function updateXPUI() {
 
 function gainXP(amount = null) {
     userXP += (amount !== null) ? amount : (Math.floor(Math.random() * 10) + 5);
-    while (userXP >= 100) {
-        userLevel++;
-        userXP -= 100;
-    }
+    while (userXP >= 100) { userLevel++; userXP -= 100; }
     localStorage.setItem('chat_xp', userXP);
     localStorage.setItem('chat_level', userLevel);
     updateXPUI();
 }
 
-// Atualizado para os novos selos de autoridade estilizados no CSS
 function getBadges(name) {
     if (name === ADMIN_NAME) {
-        return `
-            <span class="badge-authority badge-creator">CRIADOR</span>
-            <span class="badge-authority badge-adm">ADM</span>
-        `;
+        return `<span class="badge-authority badge-creator">CRIADOR</span><span class="badge-authority badge-adm">ADM</span>`;
     }
     return '';
 }
@@ -54,11 +46,8 @@ window.onload = () => {
     if (sessionUser) {
         const user = JSON.parse(sessionUser);
         socket.emit('join', user);
-        
-        // Atualiza o perfil circular na sidebar
         if(document.getElementById('my-avatar')) document.getElementById('my-avatar').src = user.avatar;
         if(document.getElementById('my-name')) document.getElementById('my-name').innerText = user.name;
-        
         document.getElementById('login').classList.add('hidden');
     }
 };
@@ -70,11 +59,8 @@ function entrar() {
         const userData = { name, avatar };
         sessionStorage.setItem('chat_user', JSON.stringify(userData));
         socket.emit('join', userData);
-        
-        // Atualiza a sidebar na entrada
         if(document.getElementById('my-avatar')) document.getElementById('my-avatar').src = avatar;
         if(document.getElementById('my-name')) document.getElementById('my-name').innerText = name;
-        
         document.getElementById('login').classList.add('hidden');
     }
 }
@@ -85,7 +71,6 @@ function processCommand(val) {
     const cmd = args[0].toLowerCase();
     const target = args.slice(1).join(' ');
     const isAdm = user.name === ADMIN_NAME;
-
     let res = { text: "", type: "normal", silent: false };
 
     if(cmd === '/setxp' && isAdm) {
@@ -116,7 +101,6 @@ document.getElementById('form').onsubmit = (e) => {
     cancelReply();
 };
 
-// --- RECEBIMENTO DE MENSAGENS ---
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const isSequencial = (data.id === lastSenderId);
@@ -125,31 +109,22 @@ socket.on('message', (data) => {
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'}`;
 
-    // Estilização dos balões: Mais transparente e legível (Glassmorphism)
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md';
-    if(isMe && !isSequencial) bubbleStyle += ' rounded-br-none bubble-glow';
-    if(!isMe && !isSequencial) bubbleStyle += ' rounded-bl-none';
-
+    
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm font-medium tracking-wide">${txt}</p>`;
     
-    if(data.msgType === "letreiro") {
-        content = `<div class="letreiro-msg">${data.text}</div>`;
-    }
+    if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
 
-    const admBadges = getBadges(data.name);
-    // Estilo diferenciado para o nome do ADM no chat
     const nameStyle = data.name === ADMIN_NAME ? 'color: #FFD700; font-weight: 800;' : 'color: rgba(255,255,255,0.5); font-weight: 600;';
 
     div.innerHTML = `
-        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group" style="background-color: ${isMe ? 'rgba(0, 149, 246, 0.2)' : 'rgba(255, 255, 255, 0.03)'};">
+        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group">
             ${!isSequencial ? `<div class="flex items-center gap-1.5 mb-1.5">
                 <span class="text-[10px] uppercase tracking-wider" style="${nameStyle}">${data.name}</span>
-                ${admBadges}
+                ${getBadges(data.name)}
             </div>` : ''}
-            <div class="message-text-wrapper text-white">
-                ${content}
-            </div>
+            <div class="text-white">${content}</div>
             <button onclick="setReply('${data.name}', '${data.text}')" class="absolute top-0 -left-8 opacity-0 group-hover:opacity-100 transition">💬</button>
         </div>
     `;
@@ -158,7 +133,6 @@ socket.on('message', (data) => {
     msgContainer.scrollTop = msgContainer.scrollHeight;
 });
 
-// --- LISTA DE USUÁRIOS E FACEPILE ---
 socket.on('updateUserList', (users) => {
     const userListElement = document.getElementById('user-list');
     if(userListElement) {
@@ -168,14 +142,10 @@ socket.on('updateUserList', (users) => {
                 <span class="text-xs tracking-tight ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-400 font-medium'}">${u.name}</span>
             </div>`).join('');
     }
-
     const limit = 4;
-    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => 
-        `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}; position: relative;">`
-    ).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
+    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}; position: relative;">`).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
 });
 
-// --- CONFIGURAÇÕES E UTILITÁRIOS ---
 function openSettings() {
     const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     document.getElementById('set-username').value = user.name || "";
@@ -186,35 +156,12 @@ function openSettings() {
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
-    if(name) { 
-        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); 
-        window.location.reload(); 
-    }
+    if(name) { sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); window.location.reload(); }
 }
 
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-
-function changeTheme(hex) { 
-    applyTheme(hex); 
-    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); 
-    if(window.event) window.event.target.classList.add('active'); 
-}
-
+function changeTheme(hex) { applyTheme(hex); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); if(window.event) window.event.target.classList.add('active'); }
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
-
-function setReply(name, text) { 
-    selectedReply = { name, text }; 
-    document.getElementById('reply-user').innerText = name;
-    document.getElementById('reply-text').innerText = text;
-    document.getElementById('reply-container').classList.remove('hidden');
-}
-
-function cancelReply() { 
-    selectedReply = null; 
-    document.getElementById('reply-container').classList.add('hidden'); 
-}
-
-function enviarFoto() { 
-    const url = prompt("Link da foto:"); 
-    if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); 
-}
+function setReply(name, text) { selectedReply = { name, text }; document.getElementById('reply-user').innerText = name; document.getElementById('reply-text').innerText = text; document.getElementById('reply-container').classList.remove('hidden'); }
+function cancelReply() { selectedReply = null; document.getElementById('reply-container').classList.add('hidden'); }
+function enviarFoto() { const url = prompt("Link da foto:"); if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); }
