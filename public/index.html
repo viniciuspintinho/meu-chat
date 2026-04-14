@@ -16,16 +16,16 @@
         .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
         .badge-criador { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000 !important; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 6px; margin-left: 8px; text-transform: uppercase; }
         @keyframes shine { to { background-position: 200% center; } }
-        
         .theme-dot { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 3px solid rgba(255,255,255,0.1); transition: 0.2s; }
         .theme-dot:hover { transform: scale(1.15); border-color: white; }
         .theme-dot.active { border-color: white; box-shadow: 0 0 10px var(--theme-color); }
-        
         .system-msg { font-size: 11px; color: #555; text-align: center; margin: 10px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Estilo de Menção */
         .mention-me { background-color: rgba(255, 215, 0, 0.1) !important; border: 1px solid #ffd700 !important; }
         .mention-text { color: var(--theme-color); font-weight: bold; }
+        
+        /* Estilo para o Letreiro */
+        .letreiro-msg { background: #fff; color: #000; font-weight: 900; padding: 10px 20px; border-radius: 10px; text-transform: uppercase; letter-spacing: 4px; animation: pulse-red 1s infinite; text-align: center; width: 100%; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.7); } 70% { box-shadow: 0 0 0 15px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
@@ -53,9 +53,7 @@
         <header class="h-20 border-b border-[#222] flex items-center px-8">
             <h2 class="font-bold text-lg text-white">Canal Principal</h2>
         </header>
-        
         <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"></div>
-
         <div id="reply-container" class="hidden bg-[#121212] border-t p-3 flex justify-between items-center" style="border-color: var(--theme-color)">
             <div class="border-l-2 pl-4 text-xs">
                 <p class="text-gray-500 uppercase font-bold text-[10px]">Respondendo a <span id="reply-user" class="text-white"></span></p>
@@ -63,7 +61,6 @@
             </div>
             <button onclick="cancelReply()" class="text-gray-500 hover:text-white mr-4">✕</button>
         </div>
-
         <footer class="p-6">
             <div class="max-w-5xl mx-auto flex items-center gap-4">
                 <button onclick="enviarFoto()" class="text-2xl hover:scale-110 transition p-2">🖼️</button>

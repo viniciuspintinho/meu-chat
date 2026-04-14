@@ -10,12 +10,7 @@ let selectedReply = null;
 let windowFocused = true;
 let unreadCount = 0;
 
-// Sistema de Notificações na Aba
-window.onfocus = () => {
-    windowFocused = true;
-    unreadCount = 0;
-    document.title = "Lux Chat Pro";
-};
+window.onfocus = () => { windowFocused = true; unreadCount = 0; document.title = "Lux Chat Pro"; };
 window.onblur = () => { windowFocused = false; };
 
 function applyTheme(hex) {
@@ -49,17 +44,14 @@ function entrar() {
 }
 
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
-
 function openSettings() {
     const userData = JSON.parse(sessionStorage.getItem('chat_user'));
     document.getElementById('set-username').value = userData.name;
     document.getElementById('set-avatar').value = userData.avatar;
     document.getElementById('settings-modal').classList.remove('hidden');
 }
-
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 function changeTheme(hex) { applyTheme(hex); }
-
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
@@ -69,7 +61,6 @@ function saveSettings() {
     }
 }
 
-// Funções de Resposta e Foto
 function setReply(name, text) {
     selectedReply = { name, text };
     document.getElementById('reply-user').innerText = name;
@@ -78,10 +69,7 @@ function setReply(name, text) {
     msgInput.focus();
 }
 
-function cancelReply() {
-    selectedReply = null;
-    replyContainer.classList.add('hidden');
-}
+function cancelReply() { selectedReply = null; replyContainer.classList.add('hidden'); }
 
 function enviarFoto() {
     const url = prompt("Insira o link da imagem:");
@@ -91,31 +79,74 @@ function enviarFoto() {
     }
 }
 
-// Eventos Socket
-socket.on('systemMessage', (msg) => {
-    const div = document.createElement('div');
-    div.className = 'system-msg';
-    div.innerText = msg;
-    msgContainer.appendChild(div);
-    msgContainer.scrollTop = msgContainer.scrollHeight;
-});
+// LÓGICA DE COMANDOS
+function processCommand(inputText) {
+    const userData = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
+    const isAdm = userData.name === ADMIN_NAME;
+    const args = inputText.split(' ');
+    const command = args[0].toLowerCase();
+    const target = args.slice(1).join(' ');
 
-socket.on('updateUserList', (users) => {
-    userListDiv.innerHTML = users.map(u => {
-        const isAdm = u.name === ADMIN_NAME;
-        return `
-            <div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition">
-                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500' : 'border-transparent'}">
-                <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
-            </div>
-        `;
-    }).join('');
-});
+    let resultText = "";
+    let type = "normal";
+
+    switch(command) {
+        case '/love':
+            const love = Math.floor(Math.random() * 101);
+            resultText = `❤️ O nível de amor entre **${userData.name}** e **${target || 'alguém'}** é de **${love}%**!`;
+            break;
+        case '/bater':
+            resultText = `👊 **${userData.name}** deu uma bofetada em **${target || 'si mesmo'}**!`;
+            break;
+        case '/abrace':
+            resultText = `🫂 **${userData.name}** deu um abraço carinhoso em **${target || 'alguém'}**!`;
+            break;
+        case '/abracao':
+            resultText = `🫂✨ **${userData.name}** deu um ABRAÇO GIGANTE em **${target || 'todos'}**!`;
+            break;
+        case '/moeda':
+            const face = Math.random() > 0.5 ? "CARA" : "COROA";
+            resultText = `🪙 **${userData.name}** girou a moeda e deu: **${face}**!`;
+            break;
+        case '/dado':
+            const dado = Math.floor(Math.random() * 6) + 1;
+            resultText = `🎲 **${userData.name}** jogou o dado e tirou: **${dado}**!`;
+            break;
+        case '/casar':
+            resultText = `💍 **${userData.name}** pediu a mão de **${target || 'alguém'}** em casamento!`;
+            break;
+        case '/aviso':
+            if(!isAdm) return null;
+            resultText = `⚠️ **AVISO DO ADM:** ${target}`;
+            break;
+        case '/letreiro':
+            resultText = target;
+            type = "letreiro";
+            break;
+        default:
+            return inputText; // Não é comando
+    }
+    return { text: resultText, type: type };
+}
 
 document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
-    if (msgInput.value.trim() !== "") {
-        socket.emit('chatMessage', { text: msgInput.value, replyTo: selectedReply });
+    const rawText = msgInput.value.trim();
+    if (rawText !== "") {
+        const commandResult = processCommand(rawText);
+        
+        if (commandResult === null) {
+            alert("Apenas o ADM pode usar este comando!");
+        } else if (typeof commandResult === 'object') {
+            socket.emit('chatMessage', { 
+                text: commandResult.text, 
+                replyTo: selectedReply,
+                msgType: commandResult.type 
+            });
+        } else {
+            socket.emit('chatMessage', { text: rawText, replyTo: selectedReply });
+        }
+        
         msgInput.value = '';
         cancelReply();
     }
@@ -125,9 +156,8 @@ socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const userData = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     const myName = userData.name || "";
-    
-    // Sistema de Menção e Notificação
     const isMentioned = data.text.includes(`@${myName}`) && !isMe;
+    
     if (!windowFocused) {
         unreadCount++;
         document.title = `(${unreadCount}) Novas Mensagens | Lux`;
@@ -145,8 +175,14 @@ socket.on('message', (data) => {
     let bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
     if (isMentioned) bubbleStyle += ' mention-me';
 
-    // Processar texto para @Menção
-    let processedText = data.text.replace(/@(\w+)/g, '<span class="mention-text">@$1</span>');
+    let processedText = data.text.replace(/@(\w+)/g, '<span class="mention-text">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+    let contentHtml = isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm">${processedText}</p>`;
+
+    // Se for comando letreiro
+    if(data.msgType === "letreiro") {
+        contentHtml = `<div class="letreiro-msg">${data.text}</div>`;
+    }
 
     let replyHtml = data.replyTo ? `
         <div class="bg-black/20 border-l-2 border-white/30 p-2 mb-2 rounded text-[11px] opacity-80">
@@ -165,7 +201,7 @@ socket.on('message', (data) => {
                 </div>
                 <div class="px-5 py-3 rounded-[24px] ${bubbleStyle} relative">
                     ${replyHtml}
-                    ${isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm">${processedText}</p>`}
+                    ${contentHtml}
                 </div>
                 <div class="flex items-center gap-2 mt-1 px-2">
                     <span class="text-[8px] text-gray-600 transition group-hover:opacity-100">${data.time}</span>
@@ -176,4 +212,24 @@ socket.on('message', (data) => {
     `;
     msgContainer.appendChild(div);
     msgContainer.scrollTop = msgContainer.scrollHeight;
+});
+
+socket.on('systemMessage', (msg) => {
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.innerText = msg;
+    msgContainer.appendChild(div);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+});
+
+socket.on('updateUserList', (users) => {
+    userListDiv.innerHTML = users.map(u => {
+        const isAdm = u.name === ADMIN_NAME;
+        return `
+            <div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition">
+                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500' : 'border-transparent'}">
+                <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
+            </div>
+        `;
+    }).join('');
 });
