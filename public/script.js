@@ -8,6 +8,7 @@ let selectedReply = null;
 let lastSenderId = null;
 
 function applyTheme(hex) {
+    if(!hex) return;
     document.documentElement.style.setProperty('--theme-color', hex);
     localStorage.setItem('chat_theme_color', hex);
 }
@@ -33,18 +34,18 @@ function entrar() {
 }
 
 function processCommand(val) {
-    const myName = JSON.parse(sessionStorage.getItem('chat_user')).name;
+    const user = JSON.parse(sessionStorage.getItem('chat_user'));
     const args = val.split(' ');
     const cmd = args[0].toLowerCase();
     const target = args.slice(1).join(' ');
     let res = { text: "", type: "normal" };
 
-    if(cmd === '/love') res.text = `❤️ Nível de amor entre **${myName}** e **${target}**: ${Math.floor(Math.random()*101)}%`;
-    else if(cmd === '/bater') res.text = `👊 **${myName}** deu uma bofetada em **${target}**!`;
-    else if(cmd === '/abrace') res.text = `🫂 **${myName}** abraçou **${target}**!`;
-    else if(cmd === '/moeda') res.text = `🪙 Girou a moeda e deu: **${Math.random() > 0.5 ? "CARA" : "COROA"}**!`;
-    else if(cmd === '/dado') res.text = `🎲 Jogou o dado e tirou: **${Math.floor(Math.random()*6)+1}**!`;
-    else if(cmd === '/aviso' && myName === ADMIN_NAME) res.text = `⚠️ **AVISO:** ${target}`;
+    if(cmd === '/love') res.text = `❤️ Amor entre **${user.name}** e **${target}**: ${Math.floor(Math.random()*101)}%`;
+    else if(cmd === '/bater') res.text = `👊 **${user.name}** bateu em **${target}**!`;
+    else if(cmd === '/abrace') res.text = `🫂 **${user.name}** abraçou **${target}**!`;
+    else if(cmd === '/moeda') res.text = `🪙 Deu **${Math.random() > 0.5 ? "CARA" : "COROA"}**!`;
+    else if(cmd === '/dado') res.text = `🎲 Tirou **${Math.floor(Math.random()*6)+1}**!`;
+    else if(cmd === '/aviso' && user.name === ADMIN_NAME) res.text = `⚠️ **AVISO:** ${target}`;
     else if(cmd === '/letreiro') { res.text = target; res.type = "letreiro"; }
     else return val;
     return res;
@@ -58,13 +59,12 @@ document.getElementById('form').onsubmit = (e) => {
     const payload = typeof cmd === 'object' ? { text: cmd.text, msgType: cmd.type, replyTo: selectedReply } : { text: val, replyTo: selectedReply };
     socket.emit('chatMessage', payload);
     msgInput.value = '';
-    selectedReply = null;
-    document.getElementById('reply-container').classList.add('hidden');
+    cancelReply();
 };
 
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
-    const myName = JSON.parse(sessionStorage.getItem('chat_user') || "{}").name;
+    const userData = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     const isSequencial = (data.id === lastSenderId);
     lastSenderId = data.id;
 
@@ -72,9 +72,9 @@ socket.on('message', (data) => {
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'}`;
 
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/10 rounded-2xl border border-white/5 backdrop-blur-sm';
-    if(isMe && !isSequencial) bubbleStyle += ' rounded-br-none';
+    if(isMe && !isSequencial) bubbleStyle += ' rounded-br-none bubble-glow';
     if(!isMe && !isSequencial) bubbleStyle += ' rounded-bl-none';
-    if(data.text.includes(`@${myName}`)) bubbleStyle += ' bg-yellow-500/20 border-yellow-500/50';
+    if(data.text.includes(`@${userData.name}`)) bubbleStyle += ' mention-me';
 
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg">` : `<p class="text-sm">${txt}</p>`;
@@ -84,20 +84,19 @@ socket.on('message', (data) => {
         <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">
             ${isSequencial ? '<div class="w-8"></div>' : `<img src="${data.avatar}" class="w-8 h-8 rounded-full">`}
             <div class="flex flex-col ${isMe ? 'items-end' : ''}">
-                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name}</span>`}
-                <div class="px-4 py-2 ${bubbleStyle}">
-                    ${data.replyTo ? `<div class="text-[9px] opacity-60 border-l p-1 mb-1"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : ''}
+                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 mb-0.5 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name}</span>`}
+                <div class="px-4 py-2 ${bubbleStyle} relative">
+                    ${data.replyTo ? `<div class="text-[9px] opacity-60 border-l-2 pl-2 mb-1"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : ''}
                     ${content}
+                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="absolute -bottom-4 ${isMe?'right-0':'left-0'} text-[8px] text-gray-500 opacity-0 group-hover:opacity-100 transition">RESPONDER</button>
                 </div>
             </div>
-        </div>
-    `;
+        </div>`;
     msgContainer.appendChild(div);
     msgContainer.scrollTop = msgContainer.scrollHeight;
 });
 
 socket.on('updateUserList', (users) => {
-    // Atualiza Lista Lateral
     document.getElementById('user-list').innerHTML = users.map(u => `
         <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition">
             <img src="${u.avatar}" class="w-8 h-8 rounded-full">
@@ -105,25 +104,47 @@ socket.on('updateUserList', (users) => {
         </div>
     `).join('');
 
-    // Atualiza Facepile (Item 5)
     const limit = 4;
-    const displayed = users.slice(0, limit);
     const more = users.length - limit;
-    
-    facepileDiv.innerHTML = displayed.map((u, i) => `
-        <img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}" title="${u.name}">
-    `).join('') + (more > 0 ? `<div class="face-more">+${more}</div>` : '');
+    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}">`).join('') + (more > 0 ? `<div class="face-more">+${more}</div>` : '');
 });
 
-// Outras funções (Settings, Foto, etc) mantidas igual...
-function openSettings() { document.getElementById('settings-modal').classList.remove('hidden'); }
+// FUNÇÕES DE PERFIL E TEMA CORRIGIDAS
+function openSettings() {
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
+    document.getElementById('set-username').value = user.name || "";
+    document.getElementById('set-avatar').value = user.avatar || "";
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
-function setReply(name, text) { 
-    selectedReply = { name, text }; 
+
+function changeTheme(hex) {
+    applyTheme(hex);
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function saveSettings() {
+    const name = document.getElementById('set-username').value.trim();
+    const avatar = document.getElementById('set-avatar').value.trim();
+    if(name) {
+        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
+        socket.emit('join', { name, avatar });
+        window.location.reload(); 
+    }
+}
+
+function setReply(name, text) {
+    selectedReply = { name, text };
     document.getElementById('reply-user').innerText = name;
     document.getElementById('reply-text').innerText = text;
     document.getElementById('reply-container').classList.remove('hidden');
 }
+
 function cancelReply() { selectedReply = null; document.getElementById('reply-container').classList.add('hidden'); }
-function enviarFoto() { const url = prompt("Link da foto:"); if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); }
+
+function enviarFoto() {
+    const url = prompt("Link da foto:");
+    if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply });
+}

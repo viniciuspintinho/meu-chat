@@ -10,68 +10,52 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
         :root { --theme-color: #0095f6; }
         
-        /* Fundo com Gradiente para destacar o Glassmorphism */
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
-            color: #fff; margin: 0; padding: 0; height: 100vh; display: flex;
+            color: #fff; margin: 0; padding: 0; height: 100vh; display: flex; overflow: hidden;
         }
 
-        /* --- ITEM 1: GLASSMORPHISM --- */
+        /* GLASSMORPHISM */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        /* --- ITEM 5: FACEPILE --- */
-        .facepile-container {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
+        /* FACEPILE */
+        .facepile-container { display: flex; align-items: center; padding: 10px; margin-bottom: 20px; }
         .face-item {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: 2px solid #000;
-            margin-right: -12px; /* Sobreposição */
-            transition: transform 0.2s, z-index 0.2s;
-            cursor: pointer;
-            position: relative;
+            width: 35px; height: 35px; border-radius: 50%; border: 2px solid #000;
+            margin-right: -12px; transition: transform 0.2s, z-index 0.2s; cursor: pointer; position: relative;
         }
-        .face-item:hover {
-            transform: scale(1.2);
-            z-index: 50;
-        }
+        .face-item:hover { transform: scale(1.2); z-index: 50; }
         .face-more {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: var(--theme-color);
-            border: 2px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            z-index: 5;
+            width: 35px; height: 35px; border-radius: 50%; background: var(--theme-color);
+            border: 2px solid #000; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; z-index: 5;
         }
 
-        /* Outros estilos estáveis */
+        /* ESTILOS ESTÁVEIS */
         .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; backdrop-filter: blur(5px); }
         .bubble-me { background-color: var(--theme-color) !important; color: white !important; }
+        .bubble-glow { box-shadow: 0 4px 15px -5px var(--theme-color); }
         .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
         @keyframes shine { to { background-position: 200% center; } }
         .mention-me { background-color: rgba(255, 215, 0, 0.1) !important; border: 1px solid #ffd700 !important; }
-        .letreiro-msg { background: #fff; color: #000; font-weight: 900; padding: 10px; border-radius: 10px; text-align: center; }
+        .letreiro-msg { background: #fff; color: #000; font-weight: 900; padding: 10px; border-radius: 10px; text-align: center; width: 100%; }
         
+        /* SCROLLBAR */
         #messages::-webkit-scrollbar { width: 4px; }
         #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        /* CORES MODAL */
+        .theme-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); transition: 0.2s; }
+        .theme-dot:hover { transform: scale(1.1); border-color: white; }
+        .theme-dot.active { border-color: white; box-shadow: 0 0 10px var(--theme-color); }
     </style>
 </head>
-<body class="flex">
+<body>
     <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
         <div class="w-full max-w-sm text-center">
             <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-10">Lux.</h1>
@@ -83,11 +67,8 @@
 
     <aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 z-10">
         <h2 class="text-xl font-bold mb-4 px-2">Comunidade</h2>
-        
         <div id="facepile" class="facepile-container"></div>
-
         <div id="user-list" class="flex-1 overflow-y-auto space-y-2"></div>
-        
         <div class="pt-4 border-t border-white/10 space-y-2">
             <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">⚙️ Configurações</button>
             <button onclick="logout()" class="w-full text-left text-red-500 text-sm p-2 font-bold">Sair</button>
@@ -111,7 +92,7 @@
 
         <footer class="p-4 bg-transparent">
             <div class="max-w-5xl mx-auto flex items-center gap-3">
-                <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
+                <button onclick="enviarFoto()" class="text-xl">📷</button>
                 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
                     <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
                     <button class="font-bold text-sm" style="color: var(--theme-color)">Enviar</button>
@@ -120,16 +101,36 @@
         </footer>
     </main>
 
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-6">
-        <div class="bg-[#121212] border border-[#333] p-6 rounded-3xl w-full max-w-sm">
-            <h2 class="text-xl font-bold mb-6 text-center">Configurações</h2>
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
+        <div class="bg-[#121212] border border-white/10 p-8 rounded-[32px] w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-bold mb-8 text-white text-center">Editar Perfil</h2>
             <div class="space-y-4">
-                <input id="set-username" type="text" class="w-full bg-black border border-[#333] p-3 rounded-xl text-white outline-none">
-                <input id="set-avatar" type="text" class="w-full bg-black border border-[#333] p-3 rounded-xl text-white outline-none">
+                <input id="set-username" type="text" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
+                <input id="set-avatar" type="text" placeholder="URL Foto" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
+                
+                <label class="text-[10px] text-gray-500 font-bold ml-2 block mt-4">COR DO TEMA (16 CORES)</label>
+                <div class="grid grid-cols-4 gap-3 justify-items-center bg-black/40 p-4 rounded-2xl border border-white/5">
+                    <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
+                    <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
+                    <div onclick="changeTheme('#22c55e')" class="theme-dot" style="background:#22c55e"></div>
+                    <div onclick="changeTheme('#a855f7')" class="theme-dot" style="background:#a855f7"></div>
+                    <div onclick="changeTheme('#f472b6')" class="theme-dot" style="background:#f472b6"></div>
+                    <div onclick="changeTheme('#fbbf24')" class="theme-dot" style="background:#fbbf24"></div>
+                    <div onclick="changeTheme('#2dd4bf')" class="theme-dot" style="background:#2dd4bf"></div>
+                    <div onclick="changeTheme('#6366f1')" class="theme-dot" style="background:#6366f1"></div>
+                    <div onclick="changeTheme('#ff7a00')" class="theme-dot" style="background:#ff7a00"></div>
+                    <div onclick="changeTheme('#ffffff')" class="theme-dot" style="background:#ffffff"></div>
+                    <div onclick="changeTheme('#4ade80')" class="theme-dot" style="background:#4ade80"></div>
+                    <div onclick="changeTheme('#ec4899')" class="theme-dot" style="background:#ec4899"></div>
+                    <div onclick="changeTheme('#14b8a6')" class="theme-dot" style="background:#14b8a6"></div>
+                    <div onclick="changeTheme('#ef4444')" class="theme-dot" style="background:#ef4444"></div>
+                    <div onclick="changeTheme('#8b5cf6')" class="theme-dot" style="background:#8b5cf6"></div>
+                    <div onclick="changeTheme('#06b6d4')" class="theme-dot" style="background:#06b6d4"></div>
+                </div>
             </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeSettings()" class="flex-1 bg-[#222] py-3 rounded-xl">Voltar</button>
-                <button onclick="saveSettings()" class="flex-1 bg-blue-600 py-3 rounded-xl font-bold">Salvar</button>
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button onclick="closeSettings()" class="bg-[#222] text-white py-4 rounded-2xl text-sm">Cancelar</button>
+                <button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm">Salvar</button>
             </div>
         </div>
     </div>
