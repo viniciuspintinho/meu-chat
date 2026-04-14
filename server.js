@@ -13,8 +13,27 @@ let usersOnline = {};
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        usersOnline[socket.id] = { ...data, id: socket.id };
+        // O servidor guarda a identidade real vinculada ao ID do socket
+        usersOnline[socket.id] = { 
+            name: data.name, 
+            avatar: data.avatar, 
+            id: socket.id 
+        };
         io.emit('updateUserList', Object.values(usersOnline));
+    });
+
+    socket.on('chatMessage', (data) => {
+        const user = usersOnline[socket.id];
+        if (user) {
+            io.emit('message', {
+                name: user.name, // Usa o nome guardado no servidor
+                avatar: user.avatar, // Usa o avatar guardado no servidor
+                text: data.text,
+                replyTo: data.replyTo || null,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                id: socket.id
+            });
+        }
     });
 
     socket.on('typing', (isTyping) => {
@@ -22,20 +41,6 @@ io.on('connection', (socket) => {
             socket.broadcast.emit('displayTyping', {
                 name: usersOnline[socket.id].name,
                 typing: isTyping
-            });
-        }
-    });
-
-    socket.on('chatMessage', (data) => {
-        if (usersOnline[socket.id]) {
-            io.emit('message', {
-                name: usersOnline[socket.id].name,
-                avatar: usersOnline[socket.id].avatar,
-                text: data.text,
-                replyTo: data.replyTo || null,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                id: socket.id,
-                isAdmin: usersOnline[socket.id].name === "vn7" // Altere para seu nome exato
             });
         }
     });
