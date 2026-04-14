@@ -29,6 +29,7 @@ io.on('connection', (socket) => {
                 name: user.name,
                 avatar: user.avatar,
                 text: data.text,
+                replyTo: data.replyTo || null, // Adicionado aqui
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id 
             });

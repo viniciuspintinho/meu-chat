@@ -3,8 +3,12 @@ const loginDiv = document.getElementById('login');
 const msgContainer = document.getElementById('messages');
 const userListDiv = document.getElementById('user-list');
 const msgInput = document.getElementById('input');
+const replyContainer = document.getElementById('reply-container');
 
 const ADMIN_NAME = "vn7"; 
+
+// Variável para armazenar a resposta selecionada
+let selectedReply = null;
 
 function applyTheme(hex) {
     document.documentElement.style.setProperty('--theme-color', hex);
@@ -54,11 +58,25 @@ function saveSettings() {
     }
 }
 
-// FUNÇÃO PARA ENVIAR FOTO
+// FUNÇÕES DE RESPOSTA
+function setReply(name, text) {
+    selectedReply = { name, text };
+    document.getElementById('reply-user').innerText = name;
+    document.getElementById('reply-text').innerText = text;
+    replyContainer.classList.remove('hidden');
+    msgInput.focus();
+}
+
+function cancelReply() {
+    selectedReply = null;
+    replyContainer.classList.add('hidden');
+}
+
 function enviarFoto() {
     const url = prompt("Insira o link da imagem:");
     if (url && url.trim() !== "") {
-        socket.emit('chatMessage', { text: url });
+        socket.emit('chatMessage', { text: url, replyTo: selectedReply });
+        cancelReply();
     }
 }
 
@@ -85,17 +103,19 @@ socket.on('updateUserList', (users) => {
 document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
     if (msgInput.value.trim() !== "") {
-        socket.emit('chatMessage', { text: msgInput.value });
+        socket.emit('chatMessage', { 
+            text: msgInput.value, 
+            replyTo: selectedReply // Envia a resposta junto
+        });
         msgInput.value = '';
+        cancelReply(); // Limpa a resposta após enviar
     }
 };
 
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const senderIsAdmin = data.name === ADMIN_NAME;
-    
-    // Verifica se a mensagem é um link de imagem
-    const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null || data.text.includes('images.unsplash.com');
+    const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
 
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
@@ -103,6 +123,17 @@ socket.on('message', (data) => {
     const displayName = senderIsAdmin ? `[ADM] ${data.name}` : data.name;
     const badge = senderIsAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
     const bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
+
+    // HTML da Resposta (se houver)
+    let replyHtml = '';
+    if (data.replyTo) {
+        replyHtml = `
+            <div class="bg-black/20 border-l-2 border-white/30 p-2 mb-2 rounded text-[11px] opacity-80">
+                <p class="font-bold">${data.replyTo.name}</p>
+                <p class="truncate max-w-[200px]">${data.replyTo.text}</p>
+            </div>
+        `;
+    }
 
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
@@ -112,10 +143,14 @@ socket.on('message', (data) => {
                     <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'} font-semibold">${displayName}</span>
                     ${badge}
                 </div>
-                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle}">
-                    ${isImage ? `<img src="${data.text}" class="max-w-full rounded-lg mt-1 mb-1 shadow-md" style="max-height: 300px;">` : `<p class="text-sm">${data.text}</p>`}
+                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle} relative">
+                    ${replyHtml}
+                    ${isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm">${data.text}</p>`}
                 </div>
-                <span class="text-[8px] text-gray-600 mt-1 opacity-0 group-hover:opacity-100 transition">${data.time}</span>
+                <div class="flex items-center gap-2 mt-1 px-2">
+                    <span class="text-[8px] text-gray-600 transition group-hover:opacity-100">${data.time}</span>
+                    <button onclick="setReply('${data.name}', '${data.text}')" class="text-[9px] text-gray-400 font-bold hover:text-white opacity-0 group-hover:opacity-100 transition">RESPONDER</button>
+                </div>
             </div>
         </div>
     `;
