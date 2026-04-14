@@ -11,11 +11,9 @@ const themeStyle = document.getElementById('theme-style-container');
 let selectedReply = null;
 let typingTimeout;
 
-// INICIALIZAÇÃO
 window.onload = () => {
     const savedUser = localStorage.getItem('chat_user');
-    const savedColor = localStorage.getItem('chat_theme_color') || '#6366f1';
-    
+    const savedColor = localStorage.getItem('chat_theme_color') || '#0095f6';
     themeStyle.style.setProperty('--theme-color', savedColor);
 
     if (savedUser) {
@@ -41,7 +39,6 @@ function logout() {
     window.location.reload();
 }
 
-// CONFIGURAÇÕES E TEMAS
 function openSettings() {
     const userData = JSON.parse(localStorage.getItem('chat_user'));
     document.getElementById('set-username').value = userData.name;
@@ -67,7 +64,6 @@ function saveSettings() {
     }
 }
 
-// RESPOSTAS E FOTOS
 function setReply(name, text) {
     selectedReply = { name, text };
     document.getElementById('reply-name').innerText = name;
@@ -89,7 +85,6 @@ function enviarFoto() {
     }
 }
 
-// SOCKET EVENTS
 msgInput.addEventListener('input', () => {
     socket.emit('typing', true);
     clearTimeout(typingTimeout);
@@ -103,9 +98,9 @@ socket.on('displayTyping', (data) => {
 socket.on('updateUserList', (users) => {
     userCount.innerText = users.length;
     userListDiv.innerHTML = users.map(u => `
-        <div class="flex items-center gap-4 p-3 rounded-2xl">
-            <img src="${u.avatar}" class="w-12 h-12 rounded-2xl border border-slate-700 object-cover">
-            <span class="text-sm font-medium text-slate-200">${u.name}</span>
+        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-[#121212] transition cursor-default">
+            <img src="${u.avatar}" class="w-12 h-12 rounded-full object-cover border border-[#262626] p-0.5 shadow-md">
+            <span class="text-sm font-medium text-gray-200 truncate">${u.name}</span>
         </div>
     `).join('');
 });
@@ -123,31 +118,30 @@ socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-4 px-4`;
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-2 px-2`;
     
     let replyHtml = data.replyTo ? `
-        <div class="bg-black/20 border-l-4 border-theme p-2 mb-2 rounded text-[10px] opacity-70">
-            <b class="text-theme">${data.replyTo.name}</b>: ${data.replyTo.text}
+        <div class="bg-white/5 border-l-2 border-theme p-2 mb-2 rounded text-[10px] opacity-60">
+            <b class="text-white">${data.replyTo.name}</b>: ${data.replyTo.text}
         </div>
     ` : '';
 
     const messageContent = isImage 
-        ? `<img src="${data.text}" class="rounded-xl max-w-full h-auto mt-2 border border-slate-700 shadow-md">`
-        : `<p class="text-sm leading-relaxed">${data.text}</p>`;
+        ? `<img src="${data.text}" class="rounded-lg max-w-full h-auto mt-2 border border-[#262626]">`
+        : `<p class="text-[13px] leading-5 font-medium">${data.text}</p>`;
 
     div.innerHTML = `
-        <div class="flex gap-4 max-w-[80%] ${isMe ? 'flex-row-reverse' : 'flex-row'}">
-            <img src="${data.avatar}" class="w-12 h-12 rounded-2xl shadow-lg flex-shrink-0 border-2 border-slate-800 object-cover">
-            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} group">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-400">${data.name}</span>
-                    <button onclick="setReply('${data.name}', '${data.text.substring(0,15)}...')" class="text-[10px] text-theme opacity-0 group-hover:opacity-100 transition underline cursor-pointer">Responder</button>
-                </div>
-                <div class="p-4 rounded-2xl ${isMe ? 'bg-theme text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'} border border-white/5">
+        <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
+            <img src="${data.avatar}" class="w-8 h-8 rounded-full border border-[#262626] flex-shrink-0">
+            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                <div class="px-4 py-2.5 rounded-[22px] ${isMe ? 'bubble-me text-white' : 'bubble-other text-gray-200'}">
                     ${replyHtml}
                     ${messageContent}
                 </div>
-                <span class="text-[9px] text-slate-600 mt-1">${data.time}</span>
+                <div class="flex gap-3 mt-1 px-2 items-center">
+                    <span class="text-[10px] text-gray-600">${data.time}</span>
+                    <button onclick="setReply('${data.name}', '${data.text.substring(0,15)}...')" class="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition font-bold">Responder</button>
+                </div>
             </div>
         </div>
     `;

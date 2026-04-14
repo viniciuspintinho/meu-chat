@@ -3,88 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Chat Pro</title>
+    <title>Chat Modern</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
-        .reply-preview { border-left: 4px solid #6366f1; background: rgba(99, 102, 241, 0.1); }
-        #theme-style-container { --theme-color: #6366f1; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root { --theme-color: #0095f6; } /* Azul Instagram padrão */
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #000000; /* Fundo totalmente preto estilo OLED */
+            color: #f5f5f5;
+        }
+
+        /* Efeito de Vidro Escuro */
+        .glass-ui { 
+            background: #121212; 
+            border: 1px solid #262626; 
+        }
+
+        /* Estilo das Bolhas */
+        .bubble-me {
+            background: linear-gradient(45deg, #373737, #262626);
+            border: 1px solid #333;
+        }
+        
+        .bubble-other {
+            background: #121212;
+            border: 1px solid #262626;
+        }
+
+        /* Scrollbar Invisível/Moderna */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
         .bg-theme { background-color: var(--theme-color) !important; }
         .text-theme { color: var(--theme-color) !important; }
         .border-theme { border-color: var(--theme-color) !important; }
+
+        .insta-input {
+            background: #121212;
+            border: 1px solid #363636;
+            border-radius: 22px;
+        }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden" id="theme-style-container">
 
-    <div id="login" class="fixed inset-0 bg-[#0f172a] z-[100] flex items-center justify-center p-6">
-        <div class="glass-card p-10 rounded-3xl w-full max-w-md shadow-2xl text-center border border-white/10">
-            <h1 class="text-3xl font-bold mb-8">Acessar Chat</h1>
-            <input id="username" type="text" placeholder="Seu nome" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl mb-4 outline-none focus:border-indigo-500 transition text-white">
-            <input id="avatar" type="text" placeholder="URL da foto (opcional)" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl mb-8 outline-none focus:border-indigo-500 transition text-white">
-            <button onclick="entrar()" class="w-full bg-theme text-white font-semibold py-4 rounded-xl transition shadow-xl shadow-indigo-500/20">Acessar</button>
+    <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
+        <div class="w-full max-w-sm text-center">
+            <h1 class="text-4xl font-bold mb-10 tracking-tighter italic">ChatApp</h1>
+            <div class="space-y-4">
+                <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#262626] p-4 rounded-lg outline-none focus:border-gray-500 text-sm">
+                <input id="avatar" type="text" placeholder="Link da foto (URL)" class="w-full bg-[#121212] border border-[#262626] p-4 rounded-lg outline-none focus:border-gray-500 text-sm">
+                <button onclick="entrar()" class="w-full bg-theme text-white font-bold py-3 rounded-lg text-sm mt-4 active:opacity-70 transition">Entrar</button>
+            </div>
         </div>
     </div>
 
-    <aside class="w-24 md:w-72 glass-card m-4 rounded-3xl flex flex-col p-6 hidden md:flex border border-white/5">
-        <h2 class="text-lg font-bold mb-6">Online <span id="user-count" class="text-xs bg-theme px-2 py-0.5 rounded-full text-white">0</span></h2>
-        <div id="user-list" class="flex flex-col gap-4 overflow-y-auto"></div>
+    <aside class="w-20 md:w-80 border-r border-[#262626] flex flex-col p-4 hidden md:flex">
+        <div class="p-4 mb-8">
+            <h1 class="text-2xl font-bold tracking-tighter">Mensagens</h1>
+        </div>
         
-        <div class="mt-auto flex flex-col gap-3">
-            <button onclick="openSettings()" class="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition px-2">
+        <div class="px-4 mb-4 flex justify-between items-center text-sm font-bold">
+            <span>Online</span>
+            <span id="user-count" class="text-gray-500">0</span>
+        </div>
+
+        <div id="user-list" class="flex flex-col gap-2 overflow-y-auto px-2"></div>
+        
+        <div class="mt-auto border-t border-[#262626] pt-4 flex flex-col gap-4 px-4">
+            <button onclick="openSettings()" class="flex items-center gap-3 text-sm font-medium hover:text-gray-400 transition">
                 <span>⚙️ Configurações</span>
             </button>
-            <button onclick="logout()" class="text-xs text-slate-500 hover:text-red-400 transition text-left px-2 underline">Sair da conta</button>
+            <button onclick="logout()" class="text-xs text-red-500 font-bold hover:underline transition text-left">Sair</button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col m-4 ml-0 md:ml-0 relative">
-        <header class="glass-card p-5 rounded-t-3xl border-b-0 flex justify-between items-center border border-white/5">
-            <div>
-                <h3 class="font-bold text-slate-200"># Canal Principal</h3>
-                <div id="typing-indicator" class="text-xs text-theme h-4 italic"></div>
+    <main class="flex-1 flex flex-col relative bg-black">
+        <header class="h-16 border-b border-[#262626] flex items-center px-6 justify-between bg-black/80 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="font-bold text-sm tracking-tight">Canal Geral</span>
             </div>
+            <div id="typing-indicator" class="text-[10px] text-gray-500 italic"></div>
         </header>
 
-        <div id="messages" class="flex-1 glass-card border-y-0 p-6 space-y-6 overflow-y-auto border-x border-white/5"></div>
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-6 flex flex-col"></div>
 
-        <div id="reply-container" class="hidden glass-card mx-0 p-3 border-x border-t border-white/5 flex justify-between items-center reply-preview border-theme">
-            <div class="text-sm">
-                <span class="text-theme font-bold block text-xs">Respondendo a: <span id="reply-name"></span></span>
-                <span id="reply-text" class="text-slate-400 truncate block max-w-md"></span>
+        <div id="reply-container" class="hidden bg-[#121212] border-t border-[#262626] p-3 flex justify-between items-center animate-slide-up">
+            <div class="text-xs border-l-2 border-theme pl-3">
+                <p class="text-gray-500 font-medium">Respondendo a <span id="reply-name" class="text-white font-bold"></span></p>
+                <p id="reply-text" class="text-gray-400 truncate w-64"></p>
             </div>
-            <button onclick="cancelReply()" class="text-slate-500 hover:text-white">✕</button>
+            <button onclick="cancelReply()" class="text-gray-500 text-lg pr-2">✕</button>
         </div>
 
-        <form id="form" class="glass-card p-4 rounded-b-3xl flex gap-3 items-center border border-white/5">
-            <button type="button" onclick="enviarFoto()" class="text-slate-400 hover:text-theme transition p-2">📷</button>
-            <input id="input" autocomplete="off" placeholder="Digite uma mensagem..." class="flex-1 bg-slate-900/50 border border-slate-700 p-4 rounded-2xl outline-none focus:border-theme transition text-sm text-white">
-            <button class="bg-theme p-4 rounded-2xl hover:opacity-90 text-white transition">➤</button>
-        </form>
+        <footer class="p-4 bg-black">
+            <div class="max-w-4xl mx-auto relative flex items-center gap-3">
+                <button type="button" onclick="enviarFoto()" class="text-2xl hover:scale-110 transition">🖼️</button>
+                <form id="form" class="flex-1 flex items-center insta-input px-4 py-1">
+                    <input id="input" autocomplete="off" placeholder="Enviar mensagem..." class="flex-1 bg-transparent py-3 outline-none text-sm">
+                    <button class="text-theme font-bold text-sm ml-2 hover:text-white transition">Enviar</button>
+                </form>
+            </div>
+        </footer>
     </main>
 
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
-        <div class="glass-card p-8 rounded-3xl w-full max-w-sm border border-white/10 shadow-2xl">
-            <h2 class="text-xl font-bold mb-6">Editar Perfil & Tema</h2>
-            <label class="block text-xs text-slate-400 mb-1">Seu Nome</label>
-            <input id="set-username" type="text" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl mb-4 text-white">
-            <label class="block text-xs text-slate-400 mb-1">Link da Foto</label>
-            <input id="set-avatar" type="text" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl mb-6 text-white">
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-[#262626] p-8 rounded-2xl w-full max-w-xs shadow-2xl">
+            <h2 class="text-lg font-bold mb-6 text-center">Configurações</h2>
             
-            <label class="block text-xs text-slate-400 mb-2">Cor do Tema</label>
-            <div class="flex gap-3 mb-8">
-                <button onclick="changeTheme('indigo', '#6366f1')" class="w-8 h-8 rounded-full bg-[#6366f1] border-2 border-transparent focus:border-white"></button>
-                <button onclick="changeTheme('emerald', '#10b981')" class="w-8 h-8 rounded-full bg-[#10b981] border-2 border-transparent focus:border-white"></button>
-                <button onclick="changeTheme('pink', '#ec4899')" class="w-8 h-8 rounded-full bg-[#ec4899] border-2 border-transparent focus:border-white"></button>
-                <button onclick="changeTheme('amber', '#f59e0b')" class="w-8 h-8 rounded-full bg-[#f59e0b] border-2 border-transparent focus:border-white"></button>
+            <div class="space-y-4 text-sm">
+                <div>
+                    <label class="text-gray-500 text-[10px] uppercase font-bold">Nome</label>
+                    <input id="set-username" type="text" class="w-full bg-[#121212] border border-[#363636] p-3 rounded-lg mt-1 outline-none">
+                </div>
+                <div>
+                    <label class="text-gray-500 text-[10px] uppercase font-bold">Foto URL</label>
+                    <input id="set-avatar" type="text" class="w-full bg-[#121212] border border-[#363636] p-3 rounded-lg mt-1 outline-none">
+                </div>
+                <div>
+                    <label class="text-gray-500 text-[10px] uppercase font-bold">Cor do Destaque</label>
+                    <div class="flex gap-3 mt-2">
+                        <button onclick="changeTheme('blue', '#0095f6')" class="w-6 h-6 rounded-full bg-[#0095f6]"></button>
+                        <button onclick="changeTheme('purple', '#a855f7')" class="w-6 h-6 rounded-full bg-[#a855f7]"></button>
+                        <button onclick="changeTheme('red', '#ff3040')" class="w-6 h-6 rounded-full bg-[#ff3040]"></button>
+                        <button onclick="changeTheme('gold', '#ffca28')" class="w-6 h-6 rounded-full bg-[#ffca28]"></button>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="closeSettings()" class="flex-1 bg-slate-700 py-3 rounded-xl font-semibold">Voltar</button>
-                <button onclick="saveSettings()" class="flex-1 bg-theme py-3 rounded-xl font-semibold text-white">Salvar</button>
+
+            <div class="flex flex-col gap-2 mt-10">
+                <button onclick="saveSettings()" class="w-full bg-theme py-3 rounded-lg font-bold text-sm text-white">Salvar</button>
+                <button onclick="closeSettings()" class="w-full text-white text-sm py-2">Cancelar</button>
             </div>
         </div>
     </div>
