@@ -9,12 +9,13 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-let usersOnline = {}; // Objeto para guardar usuários: { socketId: { name, avatar } }
+let usersOnline = {}; 
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        usersOnline[socket.id] = data;
-        io.emit('updateUserList', Object.values(usersOnline)); // Envia lista atualizada
+        // Salvamos o ID para saber quem é quem
+        usersOnline[socket.id] = { ...data, id: socket.id };
+        io.emit('updateUserList', Object.values(usersOnline));
     });
 
     socket.on('typing', (isTyping) => {
@@ -44,4 +45,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Futurismo ON na porta ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Chat Premium rodando!`));

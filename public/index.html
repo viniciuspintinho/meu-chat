@@ -3,50 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Chat Futurista</title>
+    <title>Premium Chat v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Rajdhani', sans-serif; background: #050505; }
-        .neon-border { border: 1px solid rgba(0, 255, 157, 0.3); box-shadow: 0 0 15px rgba(0, 255, 157, 0.1); }
-        .glass { background: rgba(20, 20, 25, 0.8); backdrop-filter: blur(10px); }
-        .neon-text { text-shadow: 0 0 10px #00ff9d; color: #00ff9d; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #00ff9d; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
     </style>
 </head>
-<body class="h-screen flex text-gray-100 overflow-hidden">
+<body class="h-screen flex overflow-hidden">
 
-    <div id="login" class="fixed inset-0 bg-[#050505] z-[100] flex flex-col items-center justify-center p-6">
-        <h1 class="text-5xl font-bold neon-text mb-2 font-['Orbitron']">GEMINI OS</h1>
-        <p class="text-xs tracking-[0.5em] text-emerald-500/50 mb-12">ENCRYPTED CONNECTION</p>
-        <div class="glass neon-border p-8 rounded-2xl w-full max-w-sm">
-            <input id="username" type="text" placeholder="ACCESS_ID" class="w-full bg-black/50 border border-emerald-500/30 p-4 rounded-lg mb-4 outline-none focus:border-emerald-400 transition">
-            <input id="avatar" type="text" placeholder="AVATAR_URL" class="w-full bg-black/50 border border-emerald-500/30 p-4 rounded-lg mb-8 outline-none focus:border-emerald-400 transition">
-            <button onclick="entrar()" class="w-full bg-emerald-500 text-black font-bold py-4 rounded-lg hover:bg-emerald-400 transition shadow-[0_0_20px_rgba(0,255,157,0.4)]">INITIALIZE</button>
+    <div id="login" class="fixed inset-0 bg-[#0f172a] z-[100] flex items-center justify-center p-6">
+        <div class="glass-card p-10 rounded-3xl w-full max-w-md shadow-2xl text-center">
+            <div class="w-20 h-20 bg-indigo-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Bem-vindo</h1>
+            <p class="text-slate-400 mb-8">Conecte-se ao chat premium</p>
+            <input id="username" type="text" placeholder="Seu nome" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl mb-4 outline-none focus:border-indigo-500 transition">
+            <input id="avatar" type="text" placeholder="URL da foto (opcional)" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl mb-8 outline-none focus:border-indigo-500 transition">
+            <button onclick="entrar()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-4 rounded-xl transition-all transform hover:scale-[1.02] shadow-xl shadow-indigo-500/20">Entrar agora</button>
         </div>
     </div>
 
-    <aside class="w-20 md:w-64 glass border-r border-emerald-500/20 flex flex-col items-center md:items-start p-4 hidden md:flex">
-        <h2 class="neon-text font-bold mb-6 hidden md:block">ONLINE_USERS</h2>
-        <div id="user-list" class="flex flex-col gap-4 w-full"></div>
+    <aside class="w-24 md:w-72 glass-card m-4 rounded-3xl flex flex-col p-6 hidden md:flex">
+        <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
+            Online <span id="user-count" class="text-xs bg-indigo-600 px-2 py-0.5 rounded-full">0</span>
+        </h2>
+        <div id="user-list" class="flex flex-col gap-4 overflow-y-auto"></div>
     </aside>
 
-    <main class="flex-1 flex flex-col relative">
-        <header class="p-6 glass border-b border-emerald-500/20 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#00ff9d]"></div>
-                <span class="font-bold tracking-widest uppercase">Main_Channel</span>
+    <main class="flex-1 flex flex-col m-4 ml-0 md:ml-0">
+        <header class="glass-card p-5 rounded-t-3xl border-b-0 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <div class="w-3 h-3 bg-green-500 rounded-full absolute bottom-0 right-0 border-2 border-slate-900"></div>
+                    <div class="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 font-bold">#</div>
+                </div>
+                <div>
+                    <h3 class="font-bold">Chat Geral</h3>
+                    <div id="typing-indicator" class="text-xs text-indigo-400 h-4"></div>
+                </div>
             </div>
-            <div id="typing-indicator" class="text-xs text-emerald-400/60 italic"></div>
         </header>
 
-        <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"></div>
+        <div id="messages" class="flex-1 glass-card border-y-0 p-6 space-y-6 overflow-y-auto"></div>
 
-        <form id="form" class="p-6 glass border-t border-emerald-500/20 flex gap-4">
-            <input id="input" autocomplete="off" placeholder="TYPE_MESSAGE..." class="flex-1 bg-black/40 border border-emerald-500/20 p-4 rounded-xl outline-none focus:border-emerald-500/50 transition">
-            <button class="bg-emerald-500/10 border border-emerald-500 text-emerald-500 px-8 rounded-xl font-bold hover:bg-emerald-500 hover:text-black transition">SEND</button>
+        <form id="form" class="glass-card p-4 rounded-b-3xl flex gap-3">
+            <input id="input" autocomplete="off" placeholder="Escreva sua mensagem..." class="flex-1 bg-slate-900/50 border border-slate-700 p-4 rounded-2xl outline-none focus:border-indigo-500 transition text-sm">
+            <button class="bg-indigo-600 p-4 rounded-2xl hover:bg-indigo-500 transition shadow-lg shadow-indigo-500/20">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </button>
         </form>
     </main>
 
