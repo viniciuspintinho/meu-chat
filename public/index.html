@@ -6,119 +6,138 @@
     <title>Lux Chat Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-        :root { 
-            --theme-color: #0095f6; 
-            --theme-rgb: 0, 149, 246;
-        }
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+    
+    :root { 
+        --theme-color: #0095f6; 
+        --theme-rgb: 0, 149, 246;
+        --creator-gold: #ffec82;
+        --creator-gold-dark: #b8860b;
+        --adm-red: #ff3040;
+    }
+    
+    body { 
+        font-family: 'Plus Jakarta Sans', sans-serif; 
+        background: #050505; 
+        color: #fff; margin: 0; padding: 0; height: 100vh; display: flex; overflow: hidden;
+        position: relative;
+    }
+
+    /* --- NOVOS ESTILOS DE AUTORIDADE --- */
+    
+    /* Estrutura Flex para Nova Ordem: Ícone > ADM > Nome > Criador */
+    .msg-header-autoridade {
+        display: flex;
+        align-items: center;
+        gap: 6px; /* Espaçamento padrão */
+        margin-bottom: 5px;
+    }
+
+    /* Estilo Base das Badges */
+    .badge-authority {
+        font-size: 8px;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* --- SELO ADM PREMIUM (Estilo Neon Dark) --- */
+    .badge-adm {
+        background: #000;
+        color: var(--adm-red) !important;
+        border: 1px solid var(--adm-red);
+        box-shadow: 0 0 8px rgba(255, 48, 64, 0.4);
+    }
+
+    /* --- SELO CRIADOR SUPER PREMIUM (Pós-Nome) --- */
+    /* Destaque máximo: Ouro intenso, glow forte e efeito metálico */
+    .creator-super-premium {
+        background: linear-gradient(135deg, var(--creator-gold) 0%, #daa520 40%, var(--creator-gold-dark) 80%, var(--creator-gold) 100%);
+        color: #050505 !important;
+        font-weight: 800;
+        padding: 3px 9px; /* Levemente maior */
+        border-radius: 12px; /* Mais arredondado pra dar cara de selo */
+        border: 2px solid var(--creator-gold); /* Borda mais grossa */
         
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #050505; 
-            color: #fff; margin: 0; padding: 0; height: 100vh; display: flex; overflow: hidden;
-            position: relative;
-        }
-
-        .glow-bg {
-            position: absolute; width: 600px; height: 600px;
-            border-radius: 50%; filter: blur(100px); opacity: 0.5;
-            z-index: 0; pointer-events: none;
-            animation: moveGlow 15s infinite alternate ease-in-out !important;
-        }
-        .glow-1 { background: var(--theme-color); top: -15%; left: -10%; }
-        .glow-2 { background: #7c3aed; bottom: -15%; right: -10%; animation-delay: -5s; }
+        /* Efeitos Visuais Intensos */
+        text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        box-shadow: 0 0 18px rgba(255, 236, 130, 0.7), 0 2px 5px rgba(0,0,0,0.5);
         
-        @keyframes moveGlow {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(150px, 50px) scale(1.1); }
-            100% { transform: translate(50px, 150px) scale(1.2); }
-        }
+        position: relative;
+        overflow: hidden; /* Para o efeito de brilho metálico */
+    }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            position: relative; z-index: 10;
-        }
+    /* Efeito de brilho metálico passando pelo selo do criador */
+    .creator-super-premium::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -150%;
+        width: 100%;
+        height: 200%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+        transform: rotate(30deg);
+        animation: metallicShine 4s infinite;
+    }
 
-        .profile-section {
-            display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 12px;
-        }
+    @keyframes metallicShine {
+        0% { left: -150%; }
+        100% { left: 150%; }
+    }
 
-        .avatar-wrapper { position: relative; width: 85px; height: 85px; }
+    /* --- ESTILO DO NOME DO USUÁRIO --- */
+    .msg-author-name {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        transition: color 0.2s;
+    }
 
-        .avatar-main {
-            width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
-            border: 3px solid var(--theme-color); box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
+    /* Cor de destaque para o vn7 */
+    .admin-name-highlight {
+        color: var(--creator-gold) !important;
+        text-shadow: 0 0 10px rgba(255, 236, 130, 0.3);
+    }
 
-        .lv-badge-circle {
-            position: absolute; bottom: 0; right: 0; background: var(--theme-color);
-            color: white; font-size: 10px; font-weight: 900; width: 24px; height: 24px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #050505;
-        }
+    /* Ícone de Coroa Pré-ADM */
+    .admin-icon {
+        color: var(--adm-red);
+        font-size: 12px;
+        filter: drop-shadow(0 0 4px var(--adm-red));
+    }
 
-        /* --- BALÕES (GLASSMORPHISM) --- */
-        .bubble-me { 
-            background: rgba(var(--theme-rgb), 0.15) !important; 
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-        }
+    /* --- AJUSTE NOS BALÕES E XP (Glow Profundo) --- */
+    .bubble-me { 
+        background: rgba(var(--theme-rgb), 0.2) !important; 
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
 
-        .bg-white\/5 {
-            background: rgba(255, 255, 255, 0.04) !important;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
+    .bg-white\/5 {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
 
-        /* --- SELOS PREMIUM ATUALIZADOS --- */
-        .badge-authority { 
-            font-size: 8px; 
-            font-weight: 900; 
-            padding: 2px 8px; 
-            border-radius: 4px; 
-            text-transform: uppercase; 
-            margin-left: 4px; 
-            display: inline-flex; 
-            align-items: center; 
-            letter-spacing: 0.5px;
-        }
-        
-        .badge-creator { 
-            background: linear-gradient(135deg, #ffec82 0%, #daa520 50%, #b8860b 100%); 
-            color: #1a1a1a !important; 
-            border: 1px solid #ffeeaa;
-            box-shadow: 0 0 12px rgba(218, 165, 32, 0.4);
-        }
-        
-        .badge-adm { 
-            background: #000; 
-            color: #ff3040 !important; 
-            border: 1px solid #ff3040;
-            box-shadow: 0 0 10px rgba(255, 48, 64, 0.5);
-        }
+    /* Sombra profunda no balão pra dar "vida" */
+    .shadow-deep-glow {
+        box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.6);
+    }
 
-        .msg-author-name {
-            font-size: 11px !important;
-            font-weight: 700 !important;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .facepile-container { display: flex; align-items: center; padding: 10px; margin-bottom: 5px; justify-content: center; }
-        .face-item { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #000; margin-right: -12px; transition: transform 0.2s; cursor: pointer; }
-        .face-item:hover { transform: scale(1.2); z-index: 50; }
-
-        .xp-bar-bg { width: 100%; height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; margin-top: 5px; }
-        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--theme-color), #fff); transition: width 0.5s ease; }
-
-        .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; }
-        #messages::-webkit-scrollbar { width: 4px; }
-        #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .theme-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); }
-    </style>
+    /* Outros estilos mantidos */
+    .glow-bg { position: absolute; width: 600px; height: 600px; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: 0; pointer-events: none; }
+    .glow-1 { background: var(--theme-color); top: -15%; left: -10%; }
+    .glow-2 { background: #7c3aed; bottom: -15%; right: -10%; }
+    .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); position: relative; z-index: 10; }
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+</style>
 </head>
 <body>
     <div class="glow-bg glow-1"></div>

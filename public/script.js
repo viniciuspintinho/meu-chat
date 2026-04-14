@@ -101,6 +101,8 @@ document.getElementById('form').onsubmit = (e) => {
     cancelReply();
 };
 
+// ... (mantenha o restante do código igual até a função socket.on('message'))
+
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const isSequencial = (data.id === lastSenderId);
@@ -109,29 +111,54 @@ socket.on('message', (data) => {
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'}`;
 
-    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md';
+    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     
-    let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm font-medium tracking-wide">${txt}</p>`;
-    
-    if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
+    // Melhora o contraste das cores dos nomes e aplica realce
+    const nameColor = data.name === ADMIN_NAME ? '' : 'rgba(255,255,255,0.7)';
+    const nameClass = data.name === ADMIN_NAME ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
 
-    const nameColor = data.name === ADMIN_NAME ? '#FFD700' : 'rgba(255,255,255,0.6)';
+    // Conteúdo da Mensagem (Texto ou Imagem)
+    let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    let messageContent = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="message-text">${txt}</p>`;
+    
+    if(data.msgType === "letreiro") {
+        messageContent = `<div class="letreiro-msg">${data.text}</div>`;
+    }
+
+    // --- MONTAGEM DA NOVA ESTRUTURA DE CABEÇALHO ---
+    // Ordem: [Ícone Coroa] + [ADM] + [vn7] + [Criador Super Premium]
+    
+    let authorityHeader = '';
+    if (data.name === ADMIN_NAME) {
+        authorityHeader = `
+            <div class="msg-header-autoridade">
+                <span class="admin-icon">👑</span>
+                
+                <span class="badge-authority badge-adm">ADM</span>
+                
+                <span class="${nameClass}" style="color: ${nameColor}">${data.name}</span>
+                
+                <span class="badge-authority creator-super-premium">CRIADOR</span>
+            </div>
+        `;
+    } else {
+        authorityHeader = `<span class="${nameClass}" style="color: ${nameColor}">${data.name}</span>`;
+    }
 
     div.innerHTML = `
-        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group">
-            ${!isSequencial ? `<div class="flex items-center gap-1.5 mb-1">
-                <span class="msg-author-name" style="color: ${nameColor}">${data.name}</span>
-                <div class="flex items-center">${getBadges(data.name)}</div>
-            </div>` : ''}
-            <div class="text-white">${content}</div>
-            <button onclick="setReply('${data.name}', '${data.text}')" class="absolute top-0 -left-8 opacity-0 group-hover:opacity-100 transition">💬</button>
+        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group shadow-deep-glow">
+            ${!isSequencial ? authorityHeader : ''}
+            <div class="text-white/95 leading-relaxed text-sm">
+                ${messageContent}
+            </div>
         </div>
     `;
 
     msgContainer.appendChild(div);
     msgContainer.scrollTop = msgContainer.scrollHeight;
 });
+
+// ... (mantenha o restante do código igual até o final)
 
 socket.on('updateUserList', (users) => {
     const userListElement = document.getElementById('user-list');
