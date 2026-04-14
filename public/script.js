@@ -1,11 +1,8 @@
-const socket = io();
-const loginDiv = document.getElementById('login');
-const msgContainer = document.getElementById('messages');
-
 function entrar() {
     const name = document.getElementById('username').value;
     const avatar = document.getElementById('avatar').value || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
-    if(name) {
+    
+    if (name) {
         socket.emit('join', { name, avatar });
         loginDiv.classList.add('hidden');
     }
