@@ -9,15 +9,21 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// CONFIGURAÇÃO DE SEGURANÇA DO ADM
+const ADMIN_NAME = "vn7"; 
+
 let usersOnline = {}; 
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
+        // O servidor verifica se o nome é o seu e marca como isAdmin
         usersOnline[socket.id] = { 
             name: data.name, 
             avatar: data.avatar,
-            id: socket.id 
+            id: socket.id,
+            isAdmin: data.name === ADMIN_NAME 
         };
+        
         socket.broadcast.emit('systemMessage', `${data.name} entrou no chat`);
         io.emit('updateUserList', Object.values(usersOnline));
     });
@@ -29,7 +35,9 @@ io.on('connection', (socket) => {
                 name: user.name,
                 avatar: user.avatar,
                 text: data.text,
-                replyTo: data.replyTo || null, // Adicionado aqui
+                msgType: data.msgType || "normal", // Suporte para letreiros e comandos
+                replyTo: data.replyTo || null,
+                isAdmin: user.isAdmin, // Confirmação de cargo vinda do servidor
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id 
             });
@@ -47,4 +55,7 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Lux Chat Online`));
+server.listen(PORT, () => {
+    console.log(`🚀 Lux Chat Online`);
+    console.log(`👑 Administrador configurado: ${ADMIN_NAME}`);
+});

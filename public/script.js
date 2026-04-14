@@ -2,7 +2,7 @@ const socket = io();
 const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
 const facepileDiv = document.getElementById('facepile');
-const ADMIN_NAME = "vn7";
+const ADMIN_NAME = "vn7"; // SEU NOME DEFINIDO COMO ADM
 
 let selectedReply = null;
 let lastSenderId = null;
@@ -20,16 +20,25 @@ function applyTheme(hex) {
 function updateXPUI() {
     document.getElementById('user-level').innerText = userLevel;
     document.getElementById('user-xp').innerText = userXP;
-    document.getElementById('xp-fill').style.width = (userXP / 100 * 100) + "%";
+    // Barra de XP baseada em 100 pontos por nível
+    document.getElementById('xp-fill').style.width = (Math.min(userXP, 100) / 100 * 100) + "%";
 }
 
-function gainXP() {
-    userXP += Math.floor(Math.random() * 10) + 5;
-    if (userXP >= 100) {
-        userLevel++;
-        userXP = 0;
-        alert(`⭐ LEVEL UP! Você agora é Nível ${userLevel}!`);
+function gainXP(amount = null) {
+    // Se amount for passado (via comando adm), ele soma direto
+    if(amount !== null) {
+        userXP += amount;
+    } else {
+        userXP += Math.floor(Math.random() * 10) + 5;
     }
+
+    // Lógica para subir múltiplos níveis se o XP for muito alto
+    while (userXP >= 100) {
+        userLevel++;
+        userXP -= 100;
+        console.log(`⭐ LEVEL UP! Novo Nível: ${userLevel}`);
+    }
+
     localStorage.setItem('chat_xp', userXP);
     localStorage.setItem('chat_level', userLevel);
     updateXPUI();
@@ -61,16 +70,27 @@ function processCommand(val) {
     const args = val.split(' ');
     const cmd = args[0].toLowerCase();
     const target = args.slice(1).join(' ');
-    let res = { text: "", type: "normal" };
+    const isAdm = user.name === ADMIN_NAME;
 
-    if(cmd === '/love') res.text = `❤️ Amor entre **${user.name}** e **${target}**: ${Math.floor(Math.random()*101)}%`;
+    let res = { text: "", type: "normal", silent: false };
+
+    // COMANDO EXCLUSIVO ADM: SET XP
+    if(cmd === '/setxp' && isAdm) {
+        const amount = parseInt(args[1]);
+        if(!isNaN(amount)) {
+            gainXP(amount);
+            res.silent = true; // Não envia pro chat, apenas executa
+        }
+    }
+    else if(cmd === '/love') res.text = `❤️ Amor entre **${user.name}** e **${target}**: ${Math.floor(Math.random()*101)}%`;
     else if(cmd === '/bater') res.text = `👊 **${user.name}** bateu em **${target}**!`;
     else if(cmd === '/abrace') res.text = `🫂 **${user.name}** abraçou **${target}**!`;
     else if(cmd === '/moeda') res.text = `🪙 Deu **${Math.random() > 0.5 ? "CARA" : "COROA"}**!`;
     else if(cmd === '/dado') res.text = `🎲 Tirou **${Math.floor(Math.random()*6)+1}**!`;
-    else if(cmd === '/aviso' && user.name === ADMIN_NAME) res.text = `⚠️ **AVISO:** ${target}`;
+    else if(cmd === '/aviso' && isAdm) res.text = `⚠️ **AVISO:** ${target}`;
     else if(cmd === '/letreiro') { res.text = target; res.type = "letreiro"; }
     else return val;
+
     return res;
 }
 
@@ -78,10 +98,19 @@ document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
     const val = msgInput.value.trim();
     if(!val) return;
-    const cmd = processCommand(val);
-    const payload = typeof cmd === 'object' ? { text: cmd.text, msgType: cmd.type, replyTo: selectedReply } : { text: val, replyTo: selectedReply };
+    
+    const cmdResult = processCommand(val);
+    
+    // Se for um comando silencioso (como o /setxp), não emite pro servidor
+    if(cmdResult.silent) {
+        msgInput.value = '';
+        return;
+    }
+
+    const payload = typeof cmdResult === 'object' ? { text: cmdResult.text, msgType: cmdResult.type, replyTo: selectedReply } : { text: val, replyTo: selectedReply };
+    
     socket.emit('chatMessage', payload);
-    gainXP(); // Ganhando XP ao enviar
+    gainXP(); 
     msgInput.value = '';
     cancelReply();
 };
@@ -107,7 +136,7 @@ socket.on('message', (data) => {
         <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">
             ${isSequencial ? '<div class="w-8"></div>' : `<img src="${data.avatar}" class="w-8 h-8 rounded-full">`}
             <div class="flex flex-col ${isMe ? 'items-end' : ''}">
-                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 mb-0.5 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name}</span>`}
+                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 mb-0.5 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name === ADMIN_NAME ? '[ADM] ' : ''}${data.name}</span>`}
                 <div class="px-4 py-2 ${bubbleStyle} relative">
                     ${data.replyTo ? `<div class="text-[9px] opacity-60 border-l-2 pl-2 mb-1"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : ''}
                     ${content}
