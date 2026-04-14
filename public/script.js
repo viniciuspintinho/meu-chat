@@ -2,7 +2,7 @@ const socket = io();
 const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
 const facepileDiv = document.getElementById('facepile');
-const ADMIN_NAME = "vn7"; // SEU NOME DEFINIDO COMO ADM
+const ADMIN_NAME = "vn7";
 
 let selectedReply = null;
 let lastSenderId = null;
@@ -20,28 +20,28 @@ function applyTheme(hex) {
 function updateXPUI() {
     document.getElementById('user-level').innerText = userLevel;
     document.getElementById('user-xp').innerText = userXP;
-    // Barra de XP baseada em 100 pontos por nível
-    document.getElementById('xp-fill').style.width = (Math.min(userXP, 100) / 100 * 100) + "%";
+    document.getElementById('xp-fill').style.width = (Math.min(userXP, 100)) + "%";
 }
 
 function gainXP(amount = null) {
-    // Se amount for passado (via comando adm), ele soma direto
-    if(amount !== null) {
-        userXP += amount;
-    } else {
-        userXP += Math.floor(Math.random() * 10) + 5;
-    }
-
-    // Lógica para subir múltiplos níveis se o XP for muito alto
+    userXP += (amount !== null) ? amount : (Math.floor(Math.random() * 10) + 5);
     while (userXP >= 100) {
         userLevel++;
         userXP -= 100;
-        console.log(`⭐ LEVEL UP! Novo Nível: ${userLevel}`);
+        console.log("Subiu de Nível!");
     }
-
     localStorage.setItem('chat_xp', userXP);
     localStorage.setItem('chat_level', userLevel);
     updateXPUI();
+}
+
+// SISTEMA 3: LÓGICA DE BADGES
+function getBadges(name, level) {
+    let badges = '';
+    if (name === ADMIN_NAME) return badges; // Adm já tem estilo próprio
+    if (level >= 10) badges += '<span class="badge badge-talker">Tagarela</span>';
+    // Aqui você pode adicionar mais condições para outras badges
+    return badges;
 }
 
 window.onload = () => {
@@ -58,9 +58,8 @@ function entrar() {
     const name = document.getElementById('username').value.trim();
     const avatar = document.getElementById('avatar').value.trim() || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
     if(name) {
-        const userData = { name, avatar };
-        sessionStorage.setItem('chat_user', JSON.stringify(userData));
-        socket.emit('join', userData);
+        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
+        socket.emit('join', { name, avatar });
         document.getElementById('login').classList.add('hidden');
     }
 }
@@ -74,13 +73,9 @@ function processCommand(val) {
 
     let res = { text: "", type: "normal", silent: false };
 
-    // COMANDO EXCLUSIVO ADM: SET XP
     if(cmd === '/setxp' && isAdm) {
         const amount = parseInt(args[1]);
-        if(!isNaN(amount)) {
-            gainXP(amount);
-            res.silent = true; // Não envia pro chat, apenas executa
-        }
+        if(!isNaN(amount)) { gainXP(amount); res.silent = true; }
     }
     else if(cmd === '/love') res.text = `❤️ Amor entre **${user.name}** e **${target}**: ${Math.floor(Math.random()*101)}%`;
     else if(cmd === '/bater') res.text = `👊 **${user.name}** bateu em **${target}**!`;
@@ -90,7 +85,6 @@ function processCommand(val) {
     else if(cmd === '/aviso' && isAdm) res.text = `⚠️ **AVISO:** ${target}`;
     else if(cmd === '/letreiro') { res.text = target; res.type = "letreiro"; }
     else return val;
-
     return res;
 }
 
@@ -98,17 +92,9 @@ document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
     const val = msgInput.value.trim();
     if(!val) return;
-    
     const cmdResult = processCommand(val);
-    
-    // Se for um comando silencioso (como o /setxp), não emite pro servidor
-    if(cmdResult.silent) {
-        msgInput.value = '';
-        return;
-    }
-
+    if(cmdResult.silent) { msgInput.value = ''; return; }
     const payload = typeof cmdResult === 'object' ? { text: cmdResult.text, msgType: cmdResult.type, replyTo: selectedReply } : { text: val, replyTo: selectedReply };
-    
     socket.emit('chatMessage', payload);
     gainXP(); 
     msgInput.value = '';
@@ -117,30 +103,33 @@ document.getElementById('form').onsubmit = (e) => {
 
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
-    const userData = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     const isSequencial = (data.id === lastSenderId);
     lastSenderId = data.id;
 
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'}`;
 
-    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/10 rounded-2xl border border-white/5 backdrop-blur-sm';
+    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md';
     if(isMe && !isSequencial) bubbleStyle += ' rounded-br-none bubble-glow';
     if(!isMe && !isSequencial) bubbleStyle += ' rounded-bl-none';
 
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg">` : `<p class="text-sm">${txt}</p>`;
+    let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="text-sm">${txt}</p>`;
     if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
+
+    // AQUI INTEGRA AS BADGES NO NOME
+    const badgeHtml = getBadges(data.name, userLevel);
+    const admTag = data.name === ADMIN_NAME ? '<span class="badge" style="background:#ffd700;color:#000">👑 ADM</span>' : '';
 
     div.innerHTML = `
         <div class="flex gap-2 max-w-[85%] ${isMe ? 'flex-row-reverse' : ''} items-end group">
-            ${isSequencial ? '<div class="w-8"></div>' : `<img src="${data.avatar}" class="w-8 h-8 rounded-full">`}
+            ${isSequencial ? '<div class="w-8"></div>' : `<img src="${data.avatar}" class="w-8 h-8 rounded-full shadow-lg">`}
             <div class="flex flex-col ${isMe ? 'items-end' : ''}">
-                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 mb-0.5 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name === ADMIN_NAME ? '[ADM] ' : ''}${data.name}</span>`}
+                ${isSequencial ? '' : `<span class="text-[10px] text-gray-500 mb-0.5 ${data.name === ADMIN_NAME ? 'adm-name' : ''}">${data.name}${admTag}${badgeHtml}</span>`}
                 <div class="px-4 py-2 ${bubbleStyle} relative">
                     ${data.replyTo ? `<div class="text-[9px] opacity-60 border-l-2 pl-2 mb-1"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : ''}
                     ${content}
-                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="absolute -bottom-4 ${isMe?'right-0':'left-0'} text-[8px] text-gray-500 opacity-0 group-hover:opacity-100 transition">RESPONDER</button>
+                    <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="absolute -bottom-5 ${isMe?'right-0':'left-0'} text-[8px] text-gray-500 opacity-0 group-hover:opacity-100 transition uppercase font-bold tracking-tighter">Responder</button>
                 </div>
             </div>
         </div>`;
@@ -150,7 +139,7 @@ socket.on('message', (data) => {
 
 socket.on('updateUserList', (users) => {
     document.getElementById('user-list').innerHTML = users.map(u => `
-        <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition">
+        <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-default">
             <img src="${u.avatar}" class="w-8 h-8 rounded-full">
             <span class="text-xs ${u.name === ADMIN_NAME ? 'adm-name' : 'text-gray-300'}">${u.name}</span>
         </div>`).join('');
@@ -167,10 +156,7 @@ function openSettings() {
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
-    if(name) {
-        sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
-        window.location.reload(); 
-    }
+    if(name) { sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar })); window.location.reload(); }
 }
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 function changeTheme(hex) { applyTheme(hex); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); event.target.classList.add('active'); }

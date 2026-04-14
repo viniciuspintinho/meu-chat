@@ -12,15 +12,30 @@
         
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
+            background: #0a0b10; /* Fundo mais escuro para o Glow brilhar */
             color: #fff; margin: 0; padding: 0; height: 100vh; display: flex; overflow: hidden;
+            position: relative;
+        }
+
+        /* SISTEMA 1: GLOW DINÂMICO (FUNDO) */
+        .glow-bg {
+            position: absolute; width: 500px; height: 500px;
+            border-radius: 50%; filter: blur(120px); opacity: 0.15;
+            z-index: -1; animation: move 20s infinite alternate;
+        }
+        .glow-1 { background: var(--theme-color); top: -10%; left: -10%; }
+        .glow-2 { background: #a855f7; bottom: -10%; right: -10%; animation-delay: -5s; }
+        
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(100px, 100px) scale(1.2); }
         }
 
         /* GLASSMORPHISM */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         /* FACEPILE */
@@ -36,31 +51,28 @@
             font-size: 10px; font-weight: bold; z-index: 5;
         }
 
-        /* SISTEMA DE NÍVEL (XP) */
+        /* XP & LEVEL */
         .level-container {
-            padding: 12px; background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px; margin: 10px; border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px; background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px; margin: 10px; border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .xp-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.3); border-radius: 10px; overflow: hidden; margin-top: 6px; }
+        .xp-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.4); border-radius: 10px; overflow: hidden; margin-top: 6px; }
         .xp-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--theme-color), #fff); transition: width 0.5s ease; }
 
-        /* ESTILOS DE MENSAGEM */
-        .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; }
-        .bubble-me { background-color: var(--theme-color) !important; color: white !important; }
-        .bubble-glow { box-shadow: 0 4px 15px -5px var(--theme-color); }
-        
-        /* ESTILO ADM VN7 */
-        .adm-name { 
-            background: linear-gradient(to right, #ffd700, #fff, #ffd700); 
-            background-size: 200% auto; 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            animation: shine 2s linear infinite; 
-            font-weight: 800 !important; 
+        /* SISTEMA 3: BADGES */
+        .badge {
+            font-size: 8px; padding: 2px 4px; border-radius: 4px; margin-left: 4px;
+            font-weight: 800; text-transform: uppercase; vertical-align: middle;
         }
+        .badge-early { background: #22c55e; color: #000; } /* Pioneiro */
+        .badge-talker { background: #eab308; color: #000; } /* Tagarela */
+
+        /* ESTILOS DE MENSAGEM */
+        .insta-input-container { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 30px; }
+        .bubble-me { background-color: var(--theme-color) !important; color: white !important; }
+        .bubble-glow { box-shadow: 0 8px 20px -10px var(--theme-color); }
+        .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
         @keyframes shine { to { background-position: 200% center; } }
-        
-        .letreiro-msg { background: #fff; color: #000; font-weight: 900; padding: 10px; border-radius: 10px; text-align: center; width: 100%; }
         
         #messages::-webkit-scrollbar { width: 4px; }
         #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
@@ -70,12 +82,15 @@
     </style>
 </head>
 <body>
+    <div class="glow-bg glow-1"></div>
+    <div class="glow-bg glow-2"></div>
+
     <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
         <div class="w-full max-w-sm text-center">
             <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-10">Lux.</h1>
-            <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white">
-            <input id="avatar" type="text" placeholder="Link da foto" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white">
-            <button onclick="entrar()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl">Entrar</button>
+            <input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white text-center">
+            <input id="avatar" type="text" placeholder="URL da foto (opcional)" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white text-center">
+            <button onclick="entrar()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-500 transition">Entrar no Lux</button>
         </div>
     </div>
 
@@ -85,22 +100,27 @@
         
         <div class="level-container">
             <div class="flex justify-between items-center">
-                <span class="text-[10px] font-extrabold text-blue-400">NÍVEL <span id="user-level">1</span></span>
-                <span class="text-[9px] text-gray-500"><span id="user-xp">0</span> / 100 XP</span>
+                <span class="text-[10px] font-extrabold text-blue-400">STATUS DE XP</span>
+                <span class="text-[9px] text-gray-500">NÍVEL <span id="user-level">1</span></span>
             </div>
             <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+            <p class="text-[8px] text-gray-600 mt-2 text-center uppercase tracking-widest"><span id="user-xp">0</span> / 100 XP para subir</p>
         </div>
 
-        <div id="user-list" class="flex-1 overflow-y-auto space-y-2"></div>
-        <div class="pt-4 border-t border-white/10 space-y-2">
+        <div id="user-list" class="flex-1 overflow-y-auto space-y-2 mt-4"></div>
+        
+        <div class="pt-4 border-t border-white/5 space-y-2">
             <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">⚙️ Configurações</button>
-            <button onclick="logout()" class="w-full text-left text-red-500 text-sm p-2 font-bold">Sair</button>
+            <button onclick="logout()" class="w-full text-left text-red-500 text-sm p-2 font-bold hover:bg-red-500/10 rounded-lg transition">Sair</button>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col relative bg-transparent">
-        <header class="h-16 border-b border-white/10 flex items-center px-6 backdrop-blur-md">
-            <h2 class="font-bold text-white">Canal Principal</h2>
+        <header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md z-20">
+            <h2 class="font-bold text-white flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                Canal Principal
+            </h2>
         </header>
 
         <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
@@ -113,12 +133,12 @@
             <button onclick="cancelReply()" class="text-gray-500">✕</button>
         </div>
 
-        <footer class="p-4 bg-transparent">
+        <footer class="p-4 bg-transparent z-20">
             <div class="max-w-5xl mx-auto flex items-center gap-3">
-                <button onclick="enviarFoto()" class="text-xl">🖼️</button>
+                <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
                 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
-                    <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
-                    <button class="font-bold text-sm" style="color: var(--theme-color)">Enviar</button>
+                    <input id="input" autocomplete="off" placeholder="Escreva algo..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
+                    <button class="font-bold text-sm transition hover:scale-105" style="color: var(--theme-color)">Enviar</button>
                 </form>
             </div>
         </footer>
@@ -126,11 +146,11 @@
 
     <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
         <div class="bg-[#121212] border border-white/10 p-8 rounded-[32px] w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-bold mb-8 text-white text-center">Editar Perfil</h2>
+            <h2 class="text-2xl font-bold mb-8 text-white text-center">Configurações</h2>
             <div class="space-y-4">
-                <input id="set-username" type="text" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
-                <input id="set-avatar" type="text" placeholder="URL Foto" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
-                <div class="grid grid-cols-4 gap-3 justify-items-center bg-black/40 p-4 rounded-2xl border border-white/5">
+                <input id="set-username" type="text" placeholder="Seu nome" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
+                <input id="set-avatar" type="text" placeholder="URL da foto" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
+                <div class="grid grid-cols-4 gap-3 bg-black/40 p-4 rounded-2xl">
                     <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
                     <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
                     <div onclick="changeTheme('#22c55e')" class="theme-dot" style="background:#22c55e"></div>
@@ -140,7 +160,7 @@
                     <div onclick="changeTheme('#2dd4bf')" class="theme-dot" style="background:#2dd4bf"></div>
                     <div onclick="changeTheme('#6366f1')" class="theme-dot" style="background:#6366f1"></div>
                     <div onclick="changeTheme('#ff7a00')" class="theme-dot" style="background:#ff7a00"></div>
-                    <div onclick="changeTheme('#ff0000')" class="theme-dot" style="background:#ff0000"></div>
+                    <div onclick="changeTheme('#ffffff')" class="theme-dot" style="background:#ffffff"></div>
                     <div onclick="changeTheme('#4ade80')" class="theme-dot" style="background:#4ade80"></div>
                     <div onclick="changeTheme('#ec4899')" class="theme-dot" style="background:#ec4899"></div>
                     <div onclick="changeTheme('#14b8a6')" class="theme-dot" style="background:#14b8a6"></div>
@@ -150,8 +170,8 @@
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="closeSettings()" class="bg-[#222] text-white py-4 rounded-2xl text-sm">Cancelar</button>
-                <button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm">Salvar</button>
+                <button onclick="closeSettings()" class="bg-[#222] text-white py-4 rounded-2xl">Voltar</button>
+                <button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold">Salvar</button>
             </div>
         </div>
     </div>
