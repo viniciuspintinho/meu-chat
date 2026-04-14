@@ -116,13 +116,13 @@ socket.on('message', (data) => {
     
     if(data.msgType === "letreiro") content = `<div class="letreiro-msg">${data.text}</div>`;
 
-    const nameStyle = data.name === ADMIN_NAME ? 'color: #FFD700; font-weight: 800;' : 'color: rgba(255,255,255,0.5); font-weight: 600;';
+    const nameColor = data.name === ADMIN_NAME ? '#FFD700' : 'rgba(255,255,255,0.6)';
 
     div.innerHTML = `
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group">
-            ${!isSequencial ? `<div class="flex items-center gap-1.5 mb-1.5">
-                <span class="text-[10px] uppercase tracking-wider" style="${nameStyle}">${data.name}</span>
-                ${getBadges(data.name)}
+            ${!isSequencial ? `<div class="flex items-center gap-1.5 mb-1">
+                <span class="msg-author-name" style="color: ${nameColor}">${data.name}</span>
+                <div class="flex items-center">${getBadges(data.name)}</div>
             </div>` : ''}
             <div class="text-white">${content}</div>
             <button onclick="setReply('${data.name}', '${data.text}')" class="absolute top-0 -left-8 opacity-0 group-hover:opacity-100 transition">💬</button>
