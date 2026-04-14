@@ -26,12 +26,14 @@ io.on('connection', (socket) => {
         }
     });
 
+    // AQUI ESTÁ O SEGREDO: Recebe um objeto 'data'
     socket.on('chatMessage', (data) => {
         if (usersOnline[socket.id]) {
             io.emit('message', {
-                ...usersOnline[socket.id],
-                text: data.text,
-                replyTo: data.replyTo || null, // Adicionado suporte a resposta
+                name: usersOnline[socket.id].name,
+                avatar: usersOnline[socket.id].avatar,
+                text: data.text, // Pega o texto de dentro do objeto
+                replyTo: data.replyTo || null, // Pega a resposta se houver
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id
             });
