@@ -7,7 +7,7 @@ const msgInput = document.getElementById('input');
 const replyContainer = document.getElementById('reply-container');
 
 // ADICIONE SEU NOME AQUI PARA O SELO FUNCIONAR
-const ADMIN_NAME = "SEU_NOME_AQUI"; 
+const ADMIN_NAME = "vn7"; 
 
 let selectedReply = null;
 let typingTimeout;
