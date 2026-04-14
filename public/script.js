@@ -9,10 +9,18 @@ const ADMIN_NAME = "vn7";
 function applyTheme(hex) {
     document.documentElement.style.setProperty('--theme-color', hex);
     localStorage.setItem('chat_theme_color', hex);
+    
+    // Atualiza o feedback visual das bolinhas no modal
+    document.querySelectorAll('.theme-dot').forEach(dot => {
+        dot.classList.remove('active');
+        if(dot.style.backgroundColor === hex || 
+           dot.getAttribute('style').includes(hex)) {
+            dot.classList.add('active');
+        }
+    });
 }
 
 window.onload = () => {
-    // CORREÇÃO: Usamos sessionStorage para que a conta não fique presa ao reiniciar
     const sessionUser = sessionStorage.getItem('chat_user');
     const savedColor = localStorage.getItem('chat_theme_color') || '#0095f6';
     applyTheme(savedColor);
@@ -47,7 +55,10 @@ function openSettings() {
 }
 
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-function changeTheme(hex) { applyTheme(hex); }
+
+function changeTheme(hex) {
+    applyTheme(hex);
+}
 
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
@@ -55,6 +66,7 @@ function saveSettings() {
     if(name) {
         const userData = { name, avatar };
         sessionStorage.setItem('chat_user', JSON.stringify(userData));
+        // A página recarrega para aplicar as mudanças de nome/foto e o tema já estará salvo
         window.location.reload();
     }
 }
@@ -63,8 +75,8 @@ socket.on('updateUserList', (users) => {
     userListDiv.innerHTML = users.map(u => {
         const isAdm = u.name === ADMIN_NAME;
         return `
-            <div class="flex items-center gap-4 p-3">
-                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500' : 'border-transparent'}">
+            <div class="flex items-center gap-4 p-3 transition hover:bg-white/5 rounded-xl">
+                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.3)]' : 'border-transparent'}">
                 <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
             </div>
         `;
@@ -90,17 +102,17 @@ socket.on('message', (data) => {
     const bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
 
     div.innerHTML = `
-        <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end">
+        <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
             <img src="${data.avatar}" class="w-8 h-8 rounded-full border ${senderIsAdmin ? 'border-yellow-500' : 'border-transparent'}">
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
                 <div class="flex items-center mb-1">
-                    <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'}">${displayName}</span>
+                    <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'} font-semibold">${displayName}</span>
                     ${badge}
                 </div>
-                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle}">
-                    <p class="text-sm">${data.text}</p>
+                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle} transition-all">
+                    <p class="text-sm leading-relaxed">${data.text}</p>
                 </div>
-                <span class="text-[8px] text-gray-600 mt-1">${data.time}</span>
+                <span class="text-[8px] text-gray-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">${data.time}</span>
             </div>
         </div>
     `;
