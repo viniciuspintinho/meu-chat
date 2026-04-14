@@ -13,10 +13,10 @@ let usersOnline = {};
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        // O servidor guarda a identidade real vinculada ao ID do socket
+        // Vincula a identidade ao ID único da conexão atual
         usersOnline[socket.id] = { 
             name: data.name, 
-            avatar: data.avatar, 
+            avatar: data.avatar,
             id: socket.id 
         };
         io.emit('updateUserList', Object.values(usersOnline));
@@ -26,21 +26,12 @@ io.on('connection', (socket) => {
         const user = usersOnline[socket.id];
         if (user) {
             io.emit('message', {
-                name: user.name, // Usa o nome guardado no servidor
-                avatar: user.avatar, // Usa o avatar guardado no servidor
+                name: user.name,
+                avatar: user.avatar,
                 text: data.text,
                 replyTo: data.replyTo || null,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                id: socket.id
-            });
-        }
-    });
-
-    socket.on('typing', (isTyping) => {
-        if (usersOnline[socket.id]) {
-            socket.broadcast.emit('displayTyping', {
-                name: usersOnline[socket.id].name,
-                typing: isTyping
+                id: socket.id 
             });
         }
     });
