@@ -7,15 +7,38 @@ const ADMIN_NAME = "vn7";
 let selectedReply = null;
 let lastSenderId = null;
 
+// Lógica de XP
+let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
+let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
+
 function applyTheme(hex) {
     if(!hex) return;
     document.documentElement.style.setProperty('--theme-color', hex);
     localStorage.setItem('chat_theme_color', hex);
 }
 
+function updateXPUI() {
+    document.getElementById('user-level').innerText = userLevel;
+    document.getElementById('user-xp').innerText = userXP;
+    document.getElementById('xp-fill').style.width = (userXP / 100 * 100) + "%";
+}
+
+function gainXP() {
+    userXP += Math.floor(Math.random() * 10) + 5;
+    if (userXP >= 100) {
+        userLevel++;
+        userXP = 0;
+        alert(`⭐ LEVEL UP! Você agora é Nível ${userLevel}!`);
+    }
+    localStorage.setItem('chat_xp', userXP);
+    localStorage.setItem('chat_level', userLevel);
+    updateXPUI();
+}
+
 window.onload = () => {
     const sessionUser = sessionStorage.getItem('chat_user');
     applyTheme(localStorage.getItem('chat_theme_color') || '#0095f6');
+    updateXPUI();
     if (sessionUser) {
         socket.emit('join', JSON.parse(sessionUser));
         document.getElementById('login').classList.add('hidden');
@@ -58,6 +81,7 @@ document.getElementById('form').onsubmit = (e) => {
     const cmd = processCommand(val);
     const payload = typeof cmd === 'object' ? { text: cmd.text, msgType: cmd.type, replyTo: selectedReply } : { text: val, replyTo: selectedReply };
     socket.emit('chatMessage', payload);
+    gainXP(); // Ganhando XP ao enviar
     msgInput.value = '';
     cancelReply();
 };
@@ -74,7 +98,6 @@ socket.on('message', (data) => {
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/10 rounded-2xl border border-white/5 backdrop-blur-sm';
     if(isMe && !isSequencial) bubbleStyle += ' rounded-br-none bubble-glow';
     if(!isMe && !isSequencial) bubbleStyle += ' rounded-bl-none';
-    if(data.text.includes(`@${userData.name}`)) bubbleStyle += ' mention-me';
 
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let content = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg">` : `<p class="text-sm">${txt}</p>`;
@@ -101,50 +124,33 @@ socket.on('updateUserList', (users) => {
         <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition">
             <img src="${u.avatar}" class="w-8 h-8 rounded-full">
             <span class="text-xs ${u.name === ADMIN_NAME ? 'adm-name' : 'text-gray-300'}">${u.name}</span>
-        </div>
-    `).join('');
-
+        </div>`).join('');
     const limit = 4;
-    const more = users.length - limit;
-    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}">`).join('') + (more > 0 ? `<div class="face-more">+${more}</div>` : '');
+    facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}">`).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
 });
 
-// FUNÇÕES DE PERFIL E TEMA CORRIGIDAS
 function openSettings() {
     const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     document.getElementById('set-username').value = user.name || "";
     document.getElementById('set-avatar').value = user.avatar || "";
     document.getElementById('settings-modal').classList.remove('hidden');
 }
-
-function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-
-function changeTheme(hex) {
-    applyTheme(hex);
-    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
-    event.target.classList.add('active');
-}
-
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
     if(name) {
         sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
-        socket.emit('join', { name, avatar });
         window.location.reload(); 
     }
 }
-
-function setReply(name, text) {
-    selectedReply = { name, text };
+function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+function changeTheme(hex) { applyTheme(hex); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); event.target.classList.add('active'); }
+function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
+function setReply(name, text) { 
+    selectedReply = { name, text }; 
     document.getElementById('reply-user').innerText = name;
     document.getElementById('reply-text').innerText = text;
     document.getElementById('reply-container').classList.remove('hidden');
 }
-
 function cancelReply() { selectedReply = null; document.getElementById('reply-container').classList.add('hidden'); }
-
-function enviarFoto() {
-    const url = prompt("Link da foto:");
-    if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply });
-}
+function enviarFoto() { const url = prompt("Link da foto:"); if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); }

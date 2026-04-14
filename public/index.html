@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -24,7 +24,7 @@
         }
         
         /* FACEPILE */
-        .facepile-container { display: flex; align-items: center; padding: 10px; margin-bottom: 20px; }
+        .facepile-container { display: flex; align-items: center; padding: 10px; margin-bottom: 5px; }
         .face-item {
             width: 35px; height: 35px; border-radius: 50%; border: 2px solid #000;
             margin-right: -12px; transition: transform 0.2s, z-index 0.2s; cursor: pointer; position: relative;
@@ -36,22 +36,26 @@
             font-size: 10px; font-weight: bold; z-index: 5;
         }
 
-        /* ESTILOS ESTÁVEIS */
-        .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; backdrop-filter: blur(5px); }
+        /* SISTEMA DE NÍVEL (XP) */
+        .level-container {
+            padding: 12px; background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px; margin: 10px; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .xp-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.3); border-radius: 10px; overflow: hidden; margin-top: 6px; }
+        .xp-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--theme-color), #fff); transition: width 0.5s ease; }
+
+        /* ESTILOS DE MENSAGEM */
+        .insta-input-container { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; }
         .bubble-me { background-color: var(--theme-color) !important; color: white !important; }
         .bubble-glow { box-shadow: 0 4px 15px -5px var(--theme-color); }
         .adm-name { background: linear-gradient(to right, #ffd700, #fff, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 2s linear infinite; font-weight: 800 !important; }
         @keyframes shine { to { background-position: 200% center; } }
-        .mention-me { background-color: rgba(255, 215, 0, 0.1) !important; border: 1px solid #ffd700 !important; }
         .letreiro-msg { background: #fff; color: #000; font-weight: 900; padding: 10px; border-radius: 10px; text-align: center; width: 100%; }
         
-        /* SCROLLBAR */
         #messages::-webkit-scrollbar { width: 4px; }
         #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
-        /* CORES MODAL */
         .theme-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); transition: 0.2s; }
-        .theme-dot:hover { transform: scale(1.1); border-color: white; }
         .theme-dot.active { border-color: white; box-shadow: 0 0 10px var(--theme-color); }
     </style>
 </head>
@@ -68,6 +72,15 @@
     <aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 z-10">
         <h2 class="text-xl font-bold mb-4 px-2">Comunidade</h2>
         <div id="facepile" class="facepile-container"></div>
+        
+        <div class="level-container">
+            <div class="flex justify-between items-center">
+                <span class="text-[10px] font-extrabold text-blue-400">NÍVEL <span id="user-level">1</span></span>
+                <span class="text-[9px] text-gray-500"><span id="user-xp">0</span> / 100 XP</span>
+            </div>
+            <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
+        </div>
+
         <div id="user-list" class="flex-1 overflow-y-auto space-y-2"></div>
         <div class="pt-4 border-t border-white/10 space-y-2">
             <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">⚙️ Configurações</button>
@@ -92,7 +105,7 @@
 
         <footer class="p-4 bg-transparent">
             <div class="max-w-5xl mx-auto flex items-center gap-3">
-                <button onclick="enviarFoto()" class="text-xl">📷</button>
+                <button onclick="enviarFoto()" class="text-xl">🖼️</button>
                 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
                     <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
                     <button class="font-bold text-sm" style="color: var(--theme-color)">Enviar</button>
@@ -107,8 +120,6 @@
             <div class="space-y-4">
                 <input id="set-username" type="text" placeholder="Nome" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
                 <input id="set-avatar" type="text" placeholder="URL Foto" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
-                
-                <label class="text-[10px] text-gray-500 font-bold ml-2 block mt-4">COR DO TEMA (16 CORES)</label>
                 <div class="grid grid-cols-4 gap-3 justify-items-center bg-black/40 p-4 rounded-2xl border border-white/5">
                     <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
                     <div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
@@ -119,7 +130,7 @@
                     <div onclick="changeTheme('#2dd4bf')" class="theme-dot" style="background:#2dd4bf"></div>
                     <div onclick="changeTheme('#6366f1')" class="theme-dot" style="background:#6366f1"></div>
                     <div onclick="changeTheme('#ff7a00')" class="theme-dot" style="background:#ff7a00"></div>
-                    <div onclick="changeTheme('#ffffff')" class="theme-dot" style="background:#ffffff"></div>
+                    <div onclick="changeTheme('#ff0000')" class="theme-dot" style="background:#ff0000"></div>
                     <div onclick="changeTheme('#4ade80')" class="theme-dot" style="background:#4ade80"></div>
                     <div onclick="changeTheme('#ec4899')" class="theme-dot" style="background:#ec4899"></div>
                     <div onclick="changeTheme('#14b8a6')" class="theme-dot" style="background:#14b8a6"></div>
@@ -134,7 +145,6 @@
             </div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
-</html>
+</html>]
