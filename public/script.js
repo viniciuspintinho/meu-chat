@@ -10,6 +10,9 @@ let selectedReply = null;
 let windowFocused = true;
 let unreadCount = 0;
 
+// Variável para controle de agrupamento (Refinamento 1)
+let lastMessageSenderId = null;
+
 window.onfocus = () => { windowFocused = true; unreadCount = 0; document.title = "Lux Chat Pro"; };
 window.onblur = () => { windowFocused = false; };
 
@@ -79,14 +82,12 @@ function enviarFoto() {
     }
 }
 
-// LÓGICA DE COMANDOS
 function processCommand(inputText) {
     const userData = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     const isAdm = userData.name === ADMIN_NAME;
     const args = inputText.split(' ');
     const command = args[0].toLowerCase();
     const target = args.slice(1).join(' ');
-
     let resultText = "";
     let type = "normal";
 
@@ -123,8 +124,7 @@ function processCommand(inputText) {
             resultText = target;
             type = "letreiro";
             break;
-        default:
-            return inputText; // Não é comando
+        default: return inputText;
     }
     return { text: resultText, type: type };
 }
@@ -134,19 +134,13 @@ document.getElementById('form').onsubmit = (e) => {
     const rawText = msgInput.value.trim();
     if (rawText !== "") {
         const commandResult = processCommand(rawText);
-        
         if (commandResult === null) {
             alert("Apenas o ADM pode usar este comando!");
         } else if (typeof commandResult === 'object') {
-            socket.emit('chatMessage', { 
-                text: commandResult.text, 
-                replyTo: selectedReply,
-                msgType: commandResult.type 
-            });
+            socket.emit('chatMessage', { text: commandResult.text, replyTo: selectedReply, msgType: commandResult.type });
         } else {
             socket.emit('chatMessage', { text: rawText, replyTo: selectedReply });
         }
-        
         msgInput.value = '';
         cancelReply();
     }
@@ -163,23 +157,40 @@ socket.on('message', (data) => {
         document.title = `(${unreadCount}) Novas Mensagens | Lux`;
     }
 
+    // --- REFINAMENTO MENSAGENS (1) - Lógica de Agrupamento ---
+    const isSequencial = (data.id === lastMessageSenderId);
+    lastMessageSenderId = data.id; // Atualiza o último emissor
+
     const senderIsAdmin = data.name === ADMIN_NAME;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
 
+    // --- EFEITOS VISUAIS (4) - Adiciona classe de animação e controle de margem ---
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
+    // Se for sequencial, removemos a margem padrão do Tailwind para colar
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full px-2 message-animation ${isSequencial ? '' : 'mt-4'}`;
     
     const displayName = senderIsAdmin ? `[ADM] ${data.name}` : data.name;
     const badge = senderIsAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
     
-    let bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
+    // Estilo Base
+    let bubbleStyle = isMe ? 'bubble-me' : 'bg-[#262626] text-gray-100 border border-[#333]';
+    
+    // --- REFINAMENTO MENSAGENS (1) - Cantos Arredondados Dinâmicos ---
+    // Se for minha, arredonda tudo menos o canto inferior direito (ponta)
+    // Se for do outro, arredonda tudo menos o canto inferior esquerdo (ponta)
+    // Se for sequencial, arredonda os dois lados igualmente
+    if (isMe) {
+        bubbleStyle += isSequencial ? ' rounded-[18px]' : ' rounded-[24px] rounded-br-none';
+    } else {
+        bubbleStyle += isSequencial ? ' rounded-[18px]' : ' rounded-[24px] rounded-bl-none';
+    }
+
     if (isMentioned) bubbleStyle += ' mention-me';
+    if (!isImage && !isSequencial && isMe) bubbleStyle += ' bubble-glow'; // Glow apenas na mensagem principal do usuário
 
     let processedText = data.text.replace(/@(\w+)/g, '<span class="mention-text">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    let contentHtml = isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm leading-relaxed">${processedText}</p>`;
 
-    let contentHtml = isImage ? `<img src="${data.text}" class="max-w-full rounded-lg shadow-md" style="max-height: 250px;">` : `<p class="text-sm">${processedText}</p>`;
-
-    // Se for comando letreiro
     if(data.msgType === "letreiro") {
         contentHtml = `<div class="letreiro-msg">${data.text}</div>`;
     }
@@ -191,19 +202,28 @@ socket.on('message', (data) => {
         </div>
     ` : '';
 
+    // --- REFINAMENTO MENSAGENS (1) - Esconder Avatar/Nome se Sequencial ---
+    const avatarHtml = isSequencial 
+        ? `<div class="w-8"></div>` // Espaço vazio para manter o alinhamento
+        : `<img src="${data.avatar}" class="w-8 h-8 rounded-full border ${senderIsAdmin ? 'border-yellow-500 shadow-md' : 'border-transparent'}">`;
+
+    const nameHtml = isSequencial
+        ? '' // Nome escondido
+        : `<div class="flex items-center mb-1">
+                <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'} font-semibold">${displayName}</span>
+                ${badge}
+           </div>`;
+
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
-            <img src="${data.avatar}" class="w-8 h-8 rounded-full border ${senderIsAdmin ? 'border-yellow-500' : 'border-transparent'}">
+            ${avatarHtml}
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                <div class="flex items-center mb-1">
-                    <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'} font-semibold">${displayName}</span>
-                    ${badge}
-                </div>
-                <div class="px-5 py-3 rounded-[24px] ${bubbleStyle} relative">
+                ${nameHtml}
+                <div class="px-5 py-3 ${bubbleStyle} relative transition-all duration-200">
                     ${replyHtml}
                     ${contentHtml}
                 </div>
-                <div class="flex items-center gap-2 mt-1 px-2">
+                <div class="flex items-center gap-2 mt-1 px-2 ${isMe ? 'flex-row-reverse' : ''}">
                     <span class="text-[8px] text-gray-600 transition group-hover:opacity-100">${data.time}</span>
                     <button onclick="setReply('${data.name}', '${data.text.replace(/'/g, "\\'")}')" class="text-[9px] text-gray-400 font-bold hover:text-white opacity-0 group-hover:opacity-100 transition">RESPONDER</button>
                 </div>
@@ -214,6 +234,7 @@ socket.on('message', (data) => {
     msgContainer.scrollTop = msgContainer.scrollHeight;
 });
 
+// Outros eventos socket sem alterações
 socket.on('systemMessage', (msg) => {
     const div = document.createElement('div');
     div.className = 'system-msg';
@@ -225,9 +246,10 @@ socket.on('systemMessage', (msg) => {
 socket.on('updateUserList', (users) => {
     userListDiv.innerHTML = users.map(u => {
         const isAdm = u.name === ADMIN_NAME;
+        // --- MELHORIA SIDEBAR (2) - Classes user-item adicionadas ---
         return `
-            <div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition">
-                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500' : 'border-transparent'}">
+            <div class="flex items-center gap-4 p-3 user-item cursor-pointer">
+                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500 shadow-lg' : 'border-transparent'}">
                 <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
             </div>
         `;
