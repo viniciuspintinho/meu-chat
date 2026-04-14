@@ -1,7 +1,9 @@
-const loginDiv = document.getElementById('login');
+const socket = io(); // Adicione essa linha se não tiver
+const loginDiv = document.getElementById('login'); // ESSA LINHA É ESSENCIAL
 
 function entrar() {
     const name = document.getElementById('username').value;
+    // ... resto do seu código
     const avatar = document.getElementById('avatar').value || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
     
     if (name) {
