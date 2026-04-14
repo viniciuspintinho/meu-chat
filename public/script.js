@@ -6,7 +6,7 @@ const typingIndicator = document.getElementById('typing-indicator');
 const msgInput = document.getElementById('input');
 const replyContainer = document.getElementById('reply-container');
 
-// SEU NOME PARA O SISTEMA DE ADM
+// DEFINA SEU NOME EXATO AQUI
 const ADMIN_NAME = "vn7"; 
 
 let selectedReply = null;
@@ -31,9 +31,8 @@ function entrar() {
     const name = document.getElementById('username').value.trim();
     const avatar = document.getElementById('avatar').value.trim() || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
     if(name) {
-        const userData = { name, avatar };
-        localStorage.setItem('chat_user', JSON.stringify(userData));
-        socket.emit('join', userData);
+        localStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
+        socket.emit('join', { name, avatar });
         loginDiv.classList.add('hidden');
     }
 }
@@ -61,7 +60,7 @@ socket.on('updateUserList', (users) => {
         const isAdm = u.name === ADMIN_NAME;
         return `
             <div class="flex items-center gap-4 p-3">
-                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500' : 'border-transparent'}">
+                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500 shadow-lg' : 'border-transparent'}">
                 <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
             </div>
         `;
@@ -81,14 +80,15 @@ socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const senderIsAdmin = data.name === ADMIN_NAME;
     const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
-    
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
     
-    let replyHtml = data.replyTo ? `<div class="bg-black/30 border-l-2 p-2 mb-2 rounded text-[10px] italic text-gray-400"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : '';
-    
+    let replyHtml = data.replyTo ? `<div class="bg-black/30 border-l-2 p-2 mb-2 rounded text-[10px] italic"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : '';
     const displayName = senderIsAdmin ? `[ADM] ${data.name}` : data.name;
     const badge = senderIsAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
+
+    // Classe 'bubble-me' ativa a cor do tema para você
+    const bubbleStyle = isMe ? 'bubble-me rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]';
 
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
@@ -98,7 +98,7 @@ socket.on('message', (data) => {
                     <span class="text-[10px] ${senderIsAdmin ? 'adm-name' : 'text-gray-500'}">${displayName}</span>
                     ${badge}
                 </div>
-                <div class="px-5 py-3 rounded-[24px] ${senderIsAdmin ? 'adm-bubble' : ''} ${isMe ? 'bg-theme text-white rounded-tr-none' : 'bg-[#262626] text-gray-100 rounded-tl-none border border-[#333]'}">
+                <div class="px-5 py-3 rounded-[24px] ${senderIsAdmin ? 'adm-bubble' : ''} ${bubbleStyle}">
                     ${replyHtml}
                     ${isImage ? `<img src="${data.text}" class="rounded-xl max-w-full">` : `<p class="text-sm">${data.text}</p>`}
                 </div>
