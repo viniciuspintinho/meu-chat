@@ -18,10 +18,7 @@ io.on('connection', (socket) => {
             avatar: data.avatar,
             id: socket.id 
         };
-        
-        // Avisa os outros que alguém entrou
         socket.broadcast.emit('systemMessage', `${data.name} entrou no chat`);
-        
         io.emit('updateUserList', Object.values(usersOnline));
     });
 

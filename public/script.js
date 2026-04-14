@@ -54,7 +54,14 @@ function saveSettings() {
     }
 }
 
-// MENSAGEM DE SISTEMA (Entrou/Saiu)
+// FUNÇÃO PARA ENVIAR FOTO
+function enviarFoto() {
+    const url = prompt("Insira o link da imagem:");
+    if (url && url.trim() !== "") {
+        socket.emit('chatMessage', { text: url });
+    }
+}
+
 socket.on('systemMessage', (msg) => {
     const div = document.createElement('div');
     div.className = 'system-msg';
@@ -86,6 +93,10 @@ document.getElementById('form').onsubmit = (e) => {
 socket.on('message', (data) => {
     const isMe = data.id === socket.id;
     const senderIsAdmin = data.name === ADMIN_NAME;
+    
+    // Verifica se a mensagem é um link de imagem
+    const isImage = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null || data.text.includes('images.unsplash.com');
+
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
     
@@ -102,7 +113,7 @@ socket.on('message', (data) => {
                     ${badge}
                 </div>
                 <div class="px-5 py-3 rounded-[24px] ${bubbleStyle}">
-                    <p class="text-sm">${data.text}</p>
+                    ${isImage ? `<img src="${data.text}" class="max-w-full rounded-lg mt-1 mb-1 shadow-md" style="max-height: 300px;">` : `<p class="text-sm">${data.text}</p>`}
                 </div>
                 <span class="text-[8px] text-gray-600 mt-1 opacity-0 group-hover:opacity-100 transition">${data.time}</span>
             </div>

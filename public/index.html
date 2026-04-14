@@ -19,7 +19,6 @@
         .theme-dot { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 3px solid rgba(255,255,255,0.1); transition: 0.2s; }
         .theme-dot:hover { transform: scale(1.15); border-color: white; }
         .theme-dot.active { border-color: white; box-shadow: 0 0 10px var(--theme-color); }
-        /* Estilo da mensagem de sistema */
         .system-msg { font-size: 11px; color: #555; text-align: center; margin: 10px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
@@ -50,10 +49,13 @@
         </header>
         <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"></div>
         <footer class="p-6">
-            <form id="form" class="max-w-5xl mx-auto flex items-center insta-input-container px-6">
-                <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-4 outline-none text-white">
-                <button class="font-bold" style="color: var(--theme-color)">Enviar</button>
-            </form>
+            <div class="max-w-5xl mx-auto flex items-center gap-4">
+                <button onclick="enviarFoto()" class="text-2xl hover:scale-110 transition p-2">🖼️</button>
+                <form id="form" class="flex-1 flex items-center insta-input-container px-6">
+                    <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-4 outline-none text-white">
+                    <button class="font-bold" style="color: var(--theme-color)">Enviar</button>
+                </form>
+            </div>
         </footer>
     </main>
 
