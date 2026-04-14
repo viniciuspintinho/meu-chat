@@ -13,7 +13,6 @@ let usersOnline = {};
 
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        // Salvamos o ID para saber quem é quem
         usersOnline[socket.id] = { ...data, id: socket.id };
         io.emit('updateUserList', Object.values(usersOnline));
     });
@@ -45,4 +44,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Chat Premium rodando!`));
+server.listen(PORT, () => console.log(`🚀 Servidor Online`));
