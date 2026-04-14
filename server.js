@@ -35,8 +35,7 @@ io.on('connection', (socket) => {
                 replyTo: data.replyTo || null,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 id: socket.id,
-                // Altere 'SEU_NOME_AQUI' para o seu nome de usuário real
-                isAdmin: usersOnline[socket.id].name === "vn7" 
+                isAdmin: usersOnline[socket.id].name === "vn7" // Altere para seu nome exato
             });
         }
     });

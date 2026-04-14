@@ -6,7 +6,7 @@ const typingIndicator = document.getElementById('typing-indicator');
 const msgInput = document.getElementById('input');
 const replyContainer = document.getElementById('reply-container');
 
-// ADICIONE SEU NOME AQUI PARA O SELO FUNCIONAR
+// DEFINA SEU NOME EXATO AQUI
 const ADMIN_NAME = "vn7"; 
 
 let selectedReply = null;
@@ -78,12 +78,15 @@ socket.on('displayTyping', (data) => {
 });
 
 socket.on('updateUserList', (users) => {
-    userListDiv.innerHTML = users.map(u => `
-        <div class="flex items-center gap-4 p-3">
-            <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${u.name === ADMIN_NAME ? 'border-yellow-500' : 'border-transparent'}">
-            <span class="text-sm ${u.name === ADMIN_NAME ? 'adm-name' : 'text-gray-300'}">${u.name}</span>
-        </div>
-    `).join('');
+    userListDiv.innerHTML = users.map(u => {
+        const isAdm = u.name === ADMIN_NAME;
+        return `
+            <div class="flex items-center gap-4 p-3">
+                <img src="${u.avatar}" class="w-10 h-10 rounded-full border-2 ${isAdm ? 'border-yellow-500 shadow-lg' : 'border-transparent'}">
+                <span class="text-sm ${isAdm ? 'adm-name' : 'text-gray-300'} font-bold">${isAdm ? '[ADM] ' : ''}${u.name}</span>
+            </div>
+        `;
+    }).join('');
 });
 
 document.getElementById('form').onsubmit = (e) => {
@@ -103,13 +106,19 @@ socket.on('message', (data) => {
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mb-3 px-2`;
     
     let replyHtml = data.replyTo ? `<div class="bg-black/30 border-l-2 p-2 mb-2 rounded text-[10px] italic"><b>${data.replyTo.name}</b>: ${data.replyTo.text}</div>` : '';
-    const badge = isAdmin ? `<span style="font-size: 8px; background: #ffd700; color: #000; padding: 1px 4px; border-radius: 4px; margin-left: 5px; font-weight: 900;">CRIADOR</span>` : '';
+    
+    // Prefixo e Badge do ADM
+    const displayName = isAdmin ? `[ADM] ${data.name}` : data.name;
+    const badge = isAdmin ? `<span class="badge-criador">CRIADOR</span>` : '';
 
     div.innerHTML = `
         <div class="flex gap-3 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end group">
             <img src="${data.avatar}" class="w-8 h-8 rounded-full border ${isAdmin ? 'border-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.3)]' : 'border-transparent'}">
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                <span class="text-[10px] mb-1 ${isAdmin ? 'adm-name' : 'text-gray-500'}">${data.name}${badge}</span>
+                <div class="flex items-center mb-1">
+                    <span class="text-[10px] ${isAdmin ? 'adm-name' : 'text-gray-500'}">${displayName}</span>
+                    ${badge}
+                </div>
                 <div class="px-5 py-3 rounded-[24px] ${isAdmin ? 'adm-bubble' : ''} ${isMe ? 'bg-theme text-white rounded-tr-none' : 'bg-slate-800 text-gray-100 rounded-tl-none border border-[#333]'}">
                     ${replyHtml}
                     ${isImage ? `<img src="${data.text}" class="rounded-xl max-w-full">` : `<p class="text-sm">${data.text}</p>`}

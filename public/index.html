@@ -19,16 +19,29 @@
         .bubble-me { background: var(--theme-color); box-shadow: 0 4px 15px -5px var(--theme-color); }
         .bubble-other { background: #262626; }
 
-        /* Estilos do ADM */
+        /* Estilos de ADM Corrigidos */
         .adm-name {
-            background: linear-gradient(to right, #fff, #fff5b1, #ff8c00, #ffd700);
+            background: linear-gradient(to right, #ffd700, #fff, #ffd700);
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: shine 2s linear infinite;
             font-weight: 800 !important;
         }
+        .badge-criador {
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            color: #000 !important;
+            font-size: 9px !important;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-left: 8px;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+            -webkit-text-fill-color: #000 !important;
+        }
         .adm-bubble { border: 1px solid rgba(255, 215, 0, 0.4) !important; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1) !important; }
+        
         @keyframes shine { to { background-position: 200% center; } }
 
         .theme-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
