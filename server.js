@@ -35,7 +35,7 @@ io.on('connection', (socket) => {
                 msgType: data.msgType || "normal",
                 replyTo: data.replyTo || null,
                 isAdmin: user.isAdmin,
-                isCreator: user.isCreator,
+                //isCreator: user.isCreator,
                 id: socket.id 
             });
         }

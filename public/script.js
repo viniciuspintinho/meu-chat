@@ -134,7 +134,7 @@ socket.on('message', (data) => {
                 <span class="admin-icon">👑</span>
                 <span class="badge-authority badge-adm">ADM</span>
                 <span class="${nameClass}" style="color: ${nameColor}">${data.name}</span>
-                <span class="badge-authority creator-super-premium">CRIADOR</span>
+                
             </div>
         `;
     } else {
