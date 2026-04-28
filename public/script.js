@@ -266,4 +266,104 @@ function cancelReply() {
     document.getElementById('reply-container').classList.add('hidden'); 
 }
 
+// COLE NO FINAL DO script.js
+
+// =========================
+// GARTIC CLIENT
+// =========================
+
+const garticBox = document.getElementById("gartic-box");
+const canvas = document.getElementById("garticCanvas");
+const clearBtn = document.getElementById("clearBtn");
+const rankingDiv = document.getElementById("ranking");
+const garticInfo = document.getElementById("garticInfo");
+
+const ctx = canvas.getContext("2d");
+
+let desenhando = false;
+let podeDesenhar = false;
+
+function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = 350;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+ctx.lineWidth = 4;
+ctx.lineCap = "round";
+ctx.strokeStyle = "#111";
+
+function startDraw(e) {
+    if (!podeDesenhar) return;
+    desenhando = true;
+    draw(e);
+}
+
+function endDraw() {
+    desenhando = false;
+    ctx.beginPath();
+}
+
+function draw(e) {
+    if (!desenhando || !podeDesenhar) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+
+    socket.emit("draw", { x, y });
+}
+
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mouseup", endDraw);
+canvas.addEventListener("mouseleave", endDraw);
+canvas.addEventListener("mousemove", draw);
+
+// mobile
+canvas.addEventListener("touchstart", (e) => {
+    startDraw(e.touches[0]);
+});
+canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    draw(e.touches[0]);
+});
+canvas.addEventListener("touchend", endDraw);
+
+clearBtn.onclick = () => socket.emit("clearMyCanvas");
+
+socket.on("draw", (data) => {
+    ctx.lineTo(data.x, data.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(data.x, data.y);
+});
+
+socket.on("clearCanvas", () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
+socket.on("garticStatus", (data) => {
+    garticBox.classList.remove("hidden");
+    garticInfo.innerText = `🎨 ${data.desenhista} está desenhando`;
+    podeDesenhar = false;
+});
+
+socket.on("garticPalavra", (palavra) => {
+    garticBox.classList.remove("hidden");
+    garticInfo.innerText = `✏️ Sua palavra: ${palavra}`;
+    podeDesenhar = true;
+});
+
+socket.on("garticRanking", (ranking) => {
+    rankingDiv.innerHTML = Object.entries(ranking)
+        .map(([nome, pts]) => `🏆 ${nome}: ${pts} pts`)
+        .join("<br>");
+});
+
 function enviarFoto() { const url = prompt("Link da foto:"); if(url) socket.emit('chatMessage', { text: url, replyTo: selectedReply }); }

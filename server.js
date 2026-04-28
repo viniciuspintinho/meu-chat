@@ -26,6 +26,75 @@ const filterText = (text) => {
     return cleaned;
 };
 
+// COLE NO server.js
+// ACIMA DO io.on('connection')
+
+// =========================
+// GARTIC SERVER
+// =========================
+
+const palavras = [
+    "gato", "cachorro", "banana", "pizza",
+    "carro", "casa", "sol", "lua",
+    "livro", "árvore", "avião", "flor"
+];
+
+let gartic = {
+    ativo: false,
+    desenhista: null,
+    palavra: "",
+    rodada: 0,
+    pontos: {},
+    ordem: []
+};
+
+function palavraAleatoria() {
+    return palavras[Math.floor(Math.random() * palavras.length)];
+}
+
+function proximoDesenhista() {
+    if (gartic.ordem.length === 0) return null;
+    gartic.rodada++;
+    return gartic.ordem[(gartic.rodada - 1) % gartic.ordem.length];
+}
+
+function iniciarRodada() {
+    if (Object.keys(usersOnline).length < 2) {
+        gartic.ativo = false;
+        return;
+    }
+
+    gartic.ordem = Object.keys(usersOnline);
+    gartic.desenhista = proximoDesenhista();
+    gartic.palavra = palavraAleatoria();
+
+    const user = usersOnline[gartic.desenhista];
+
+    io.emit("clearCanvas");
+
+    io.emit("garticStatus", {
+        desenhista: user.name
+    });
+
+    io.to(gartic.desenhista).emit(
+        "garticPalavra",
+        gartic.palavra
+    );
+
+    io.emit("message", {
+        name: "Lux Bot",
+        text: `🎨 ${user.name} está desenhando!`,
+        id: "bot"
+    });
+}
+
+function iniciarGartic() {
+    gartic.ativo = true;
+    gartic.rodada = 0;
+    gartic.pontos = {};
+    iniciarRodada();
+}
+
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
         if (bannedUsers.has(data.name)) {
