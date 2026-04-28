@@ -412,11 +412,6 @@ function enviarFoto() {
     }
 }
 
-/* =====================================================
-SUBSTITUA APENAS SEU BLOCO FINAL "GARTIC CLIENT"
-não mexa no resto do arquivo
-===================================================== */
-
 // =========================
 // GARTIC PRO CLIENT
 // =========================
@@ -434,6 +429,17 @@ let podeDesenhar = false;
 
 let lastX = 0;
 let lastY = 0;
+
+// NOVO: Função para alternar a visibilidade do Gartic
+function toggleGarticView() {
+    if (garticBox.classList.contains("hidden")) {
+        garticBox.classList.remove("hidden");
+        resizeCanvas();
+        socket.emit("startGartic"); // Notifica o servidor para pegar o status atual
+    } else {
+        garticBox.classList.add("hidden");
+    }
+}
 
 // =========================
 // RESIZE
@@ -536,9 +542,7 @@ socket.on("clearCanvas", () => {
 // ESTADO DO JOGO (CORRIGIDO PARA garticStatus)
 // =========================
 socket.on("garticStatus", (data) => {
-    garticBox.classList.remove("hidden");
-    resizeCanvas(); // Garante o tamanho correto ao aparecer
-
+    // Agora não forçamos a remoção da classe 'hidden' aqui, apenas se o usuário já estiver com o box aberto
     const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
     
     if (data.desenhista !== meuUser.name) {
@@ -559,8 +563,6 @@ socket.on("garticRanking", (points) => {
 // PALAVRA SECRETA (CORRIGIDO PARA garticPalavra)
 // =========================
 socket.on("garticPalavra", (palavra) => {
-    garticBox.classList.remove("hidden");
-    resizeCanvas();
     garticInfo.innerText = `Sua palavra é: ${palavra}`;
     podeDesenhar = true;
 });

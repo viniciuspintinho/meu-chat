@@ -236,7 +236,6 @@ pointer-events:none;
 <div class="glow-bg glow-1"></div>
 <div class="glow-bg glow-2"></div>
 
-<!-- LOGIN -->
 <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
 <div class="w-full max-w-sm text-center">
 <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-10">Lux.</h1>
@@ -251,7 +250,6 @@ Entrar
 </div>
 </div>
 
-<!-- SIDEBAR -->
 <aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 flex-shrink-0">
 
 <div class="profile-section flex flex-col items-center gap-4 py-4">
@@ -278,6 +276,10 @@ Entrar
 <div id="user-list" class="flex-1 overflow-y-auto space-y-2 mt-4"></div>
 
 <div class="pt-4 border-t border-white/5 space-y-2">
+<button onclick="toggleGarticView()" class="w-full text-left text-blue-400 text-sm p-2 hover:bg-blue-500/10 rounded-lg transition font-bold">
+🎨 Gartic
+</button>
+
 <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">
 ⚙️ Configurações
 </button>
@@ -289,7 +291,6 @@ Sair
 
 </aside>
 
-<!-- MAIN -->
 <main class="flex-1 flex flex-col bg-transparent overflow-hidden">
 
 <header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md flex-shrink-0">
@@ -311,7 +312,6 @@ Canal Principal
 <button onclick="cancelReply()" class="text-gray-500">✕</button>
 </div>
 
-<!-- GARTIC -->
 <div id="gartic-box" class="hidden px-4 pb-3">
 <div class="max-w-5xl mx-auto bg-black/30 border border-white/10 rounded-3xl p-4 backdrop-blur-xl">
 
@@ -335,7 +335,6 @@ Limpar
 </div>
 </div>
 
-<!-- FOOTER -->
 <footer class="p-4 bg-transparent flex-shrink-0">
 <div class="max-w-5xl mx-auto flex items-center gap-3">
 
@@ -354,7 +353,6 @@ Enviar
 
 </main>
 
-<!-- SETTINGS -->
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
 
 <div class="bg-[#121212] border border-white/10 p-8 rounded-[32px] w-full max-w-md">
