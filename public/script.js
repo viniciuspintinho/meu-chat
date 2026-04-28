@@ -13,6 +13,29 @@ let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
 
 // =========================
+// PREVIEW DE LINKS AUTOMÁTICO (NOVO)
+// =========================
+function generatePreview(text) {
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const imgRegex = /\.(jpeg|jpg|gif|png|webp)$/i;
+
+    if (youtubeRegex.test(text)) {
+        const id = text.match(youtubeRegex)[1];
+        return `<div class="mt-2 rounded-lg overflow-hidden border border-white/10">
+                    <iframe width="100%" height="180" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>
+                </div>`;
+    }
+    
+    if (imgRegex.test(text)) {
+        return `<img src="${text}" class="max-w-full mt-2 rounded-lg shadow-xl border border-white/10">`;
+    }
+    
+    let txt = text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>')
+                  .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    return `<p>${txt}</p>`;
+}
+
+// =========================
 // SOM
 // =========================
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -266,7 +289,7 @@ document.getElementById('form').onsubmit = (e) => {
 };
 
 // =========================
-// RECEBER MSG
+// RECEBER MSG (ATUALIZADO COM PREVIEW)
 // =========================
 socket.on('message', (data) => {
 
@@ -305,14 +328,8 @@ socket.on('message', (data) => {
 
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    let txt = data.text
-        .replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>')
-        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-
-    let messageContent =
-        data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i)
-            ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">`
-            : `<p>${txt}</p>`;
+    // Uso do novo sistema de Preview
+    const messageContent = generatePreview(data.text);
 
     div.innerHTML = `
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
@@ -413,7 +430,7 @@ function enviarFoto() {
 }
 
 // =========================
-// GARTIC PRO CLIENT
+// GARTIC PRO CLIENT (ATUALIZADO COM CORES E TAMANHOS)
 // =========================
 
 const garticBox = document.getElementById("gartic-box");
@@ -421,6 +438,8 @@ const canvas = document.getElementById("garticCanvas");
 const clearBtn = document.getElementById("clearBtn");
 const rankingDiv = document.getElementById("ranking");
 const garticInfo = document.getElementById("garticInfo");
+const colorPicker = document.getElementById("colorPicker"); // Novo
+const penSize = document.getElementById("penSize");         // Novo
 
 const ctx = canvas.getContext("2d");
 
@@ -430,36 +449,27 @@ let podeDesenhar = false;
 let lastX = 0;
 let lastY = 0;
 
-// NOVO: Função para alternar a visibilidade do Gartic
 function toggleGarticView() {
     if (garticBox.classList.contains("hidden")) {
         garticBox.classList.remove("hidden");
         resizeCanvas();
-        socket.emit("startGartic"); // Notifica o servidor para pegar o status atual
+        socket.emit("startGartic"); 
     } else {
         garticBox.classList.add("hidden");
     }
 }
 
-// =========================
-// RESIZE
-// =========================
 function resizeCanvas() {
     canvas.width = canvas.offsetWidth;
     canvas.height = 350;
 
-    ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = "#111";
 }
 resizeCanvas();
 
 window.addEventListener("resize", resizeCanvas);
 
-// =========================
-// POSIÇÃO
-// =========================
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
 
@@ -476,81 +486,64 @@ function getPos(e) {
     };
 }
 
-// =========================
-// COMEÇAR DESENHO
-// =========================
+function renderStroke(data) {
+    ctx.beginPath();
+    ctx.strokeStyle = data.color || "#000000";
+    ctx.lineWidth = data.size || 5;
+    ctx.moveTo(data.x1, data.y1);
+    ctx.lineTo(data.x2, data.y2);
+    ctx.stroke();
+}
+
 function startDraw(e) {
     if (!podeDesenhar) return;
 
     desenhando = true;
-
     const pos = getPos(e);
-
     lastX = pos.x;
     lastY = pos.y;
 }
 
-// =========================
-// DESENHAR
-// =========================
 function draw(e) {
     if (!desenhando || !podeDesenhar) return;
 
     const pos = getPos(e);
 
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
-
-    socket.emit("draw", {
+    const drawData = {
         x1: lastX,
         y1: lastY,
         x2: pos.x,
-        y2: pos.y
-    });
+        y2: pos.y,
+        color: colorPicker.value,
+        size: penSize.value
+    };
+
+    renderStroke(drawData);
+    socket.emit("draw", drawData);
 
     lastX = pos.x;
     lastY = pos.y;
 }
 
-// =========================
-// PARAR
-// =========================
 function endDraw() {
     desenhando = false;
 }
 
-// =========================
-// RECEBER DESENHO
-// =========================
 socket.on("draw", (data) => {
-    ctx.beginPath();
-    ctx.moveTo(data.x1, data.y1);
-    ctx.lineTo(data.x2, data.y2);
-    ctx.stroke();
+    renderStroke(data);
 });
 
-// =========================
-// LIMPAR
-// =========================
 socket.on("clearCanvas", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 
-// =========================
-// ESTADO DO JOGO (CORRIGIDO PARA garticStatus)
-// =========================
 socket.on("garticStatus", (data) => {
-    // Agora não forçamos a remoção da classe 'hidden' aqui, apenas se o usuário já estiver com o box aberto
     const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
     
     if (data.desenhista !== meuUser.name) {
         podeDesenhar = false;
         garticInfo.innerText = `🎨 ${data.desenhista} está desenhando...`;
     }
-
-    // O ranking agora vem do servidor pelo evento garticRanking
 });
 
 socket.on("garticRanking", (points) => {
@@ -559,32 +552,20 @@ socket.on("garticRanking", (points) => {
         .join(" | ");
 });
 
-// =========================
-// PALAVRA SECRETA (CORRIGIDO PARA garticPalavra)
-// =========================
 socket.on("garticPalavra", (palavra) => {
     garticInfo.innerText = `Sua palavra é: ${palavra}`;
     podeDesenhar = true;
 });
 
-// =========================
-// BOTÃO LIMPAR (CORRIGIDO PARA clearMyCanvas)
-// =========================
 clearBtn.onclick = () => {
     socket.emit("clearMyCanvas");
 };
 
-// =========================
-// MOUSE
-// =========================
 canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", draw);
 canvas.addEventListener("mouseup", endDraw);
 canvas.addEventListener("mouseleave", endDraw);
 
-// =========================
-// TOUCH
-// =========================
 canvas.addEventListener("touchstart", (e) => {
     if (podeDesenhar) e.preventDefault();
     startDraw(e);

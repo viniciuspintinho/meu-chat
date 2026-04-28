@@ -2,10 +2,14 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const Datastore = require("nedb"); // NOVO: Banco de dados local
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// NOVO: Inicialização do Banco de Dados
+const db = new Datastore({ filename: "database.db", autoload: true });
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -14,20 +18,19 @@ app.use(express.static(path.join(__dirname, "public")));
 ========================= */
 
 const ADMINS = ["vn7", "pl"];
-
 let usersOnline = {};
 let bannedUsers = new Set();
-
 const badWords = ["palavrao1", "palavrao2", "toxic"];
+
+// NOVO: Controle de Anti-Flood
+const msgHistory = {};
 
 function filterText(text = "") {
     let cleaned = text;
-
     badWords.forEach(word => {
         const reg = new RegExp(word, "gi");
         cleaned = cleaned.replace(reg, "****");
     });
-
     return cleaned;
 }
 
@@ -110,6 +113,17 @@ io.on("connection", (socket) => {
             return socket.disconnect();
         }
 
+        // NOVO: Recuperação de pontos do Banco de Dados
+        db.findOne({ name: data.name }, (err, doc) => {
+            if (doc) {
+                gartic.points[data.name] = doc.points || 0;
+            } else {
+                db.insert({ name: data.name, points: 0 });
+                gartic.points[data.name] = 0;
+            }
+            io.emit("garticRanking", gartic.points);
+        });
+
         const isAdmin = ADMINS.includes(data.name);
 
         usersOnline[socket.id] = {
@@ -118,10 +132,6 @@ io.on("connection", (socket) => {
             avatar: data.avatar,
             isAdmin
         };
-
-        if (!gartic.points[data.name]) {
-            gartic.points[data.name] = 0;
-        }
 
         io.emit("updateUserList", Object.values(usersOnline));
 
@@ -137,6 +147,16 @@ io.on("connection", (socket) => {
 
         const user = usersOnline[socket.id];
         if (!user) return;
+
+        // NOVO: Lógica Anti-Flood (Máximo 5 mensagens em 3 segundos)
+        const now = Date.now();
+        if (!msgHistory[socket.id]) msgHistory[socket.id] = [];
+        msgHistory[socket.id] = msgHistory[socket.id].filter(t => now - t < 3000);
+        
+        if (msgHistory[socket.id].length >= 5) {
+            return socket.emit("message", { name: "SISTEMA", text: "🚫 Você está enviando mensagens rápido demais!", id: "bot" });
+        }
+        msgHistory[socket.id].push(now);
 
         const texto = filterText(data.text || "");
 
@@ -190,6 +210,9 @@ io.on("connection", (socket) => {
         ) {
             gartic.points[user.name] += 10;
 
+            // NOVO: Salva os pontos no Banco de Dados
+            db.update({ name: user.name }, { $inc: { points: 10 } }, {});
+
             io.emit("message", {
                 name: "Lux Bot",
                 text: `🏆 **${user.name}** acertou a palavra: **${gartic.palavra}**`,
@@ -229,7 +252,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    /* DESENHO */
+    /* DESENHO ATUALIZADO (Suporta cores e tamanhos) */
     socket.on("draw", (ponto) => {
         if (!gartic.ativo) return;
         if (socket.id !== gartic.drawerId) return;
@@ -245,7 +268,6 @@ io.on("connection", (socket) => {
     /* START PELO BOTÃO (Sincroniza apenas quem clicou) */
     socket.on("startGartic", () => {
         if (gartic.ativo) {
-            // Se o jogo já está rolando, envia os dados atuais para o usuário que clicou
             socket.emit("garticStatus", {
                 desenhista: gartic.drawer
             });
@@ -254,7 +276,6 @@ io.on("connection", (socket) => {
                 socket.emit("garticPalavra", gartic.palavra);
             }
         } else {
-            // Se não houver jogo, inicia para todos
             iniciarRodada();
         }
     });
@@ -264,6 +285,7 @@ io.on("connection", (socket) => {
         if (usersOnline[socket.id]) {
             const saiu = usersOnline[socket.id].name;
             delete usersOnline[socket.id];
+            delete msgHistory[socket.id]; // Limpa histórico do flood
             io.emit("updateUserList", Object.values(usersOnline));
             io.emit("message", {
                 name: "Lux Bot",

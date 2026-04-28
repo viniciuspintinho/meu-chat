@@ -315,15 +315,24 @@ Canal Principal
 <div id="gartic-box" class="hidden px-4 pb-3">
 <div class="max-w-5xl mx-auto bg-black/30 border border-white/10 rounded-3xl p-4 backdrop-blur-xl">
 
-<div class="flex items-center justify-between mb-3">
+<div class="flex items-center justify-between mb-3 flex-wrap gap-2">
 <div>
 <h3 class="font-bold text-white">🎨 Gartic Lux</h3>
 <p id="garticInfo" class="text-xs text-gray-400">Aguardando partida...</p>
 </div>
 
-<button id="clearBtn" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold">
-Limpar
-</button>
+<div class="flex items-center gap-3 bg-black/40 p-2 rounded-2xl border border-white/5">
+    <input type="color" id="colorPicker" value="#000000" class="w-8 h-8 border-none bg-transparent cursor-pointer rounded">
+    <select id="penSize" class="bg-transparent text-white text-xs outline-none cursor-pointer">
+        <option value="2">Fino</option>
+        <option value="5" selected>Médio</option>
+        <option value="10">Grosso</option>
+        <option value="20">Gigante</option>
+    </select>
+    <button id="clearBtn" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold hover:bg-red-500/30 transition">
+        Limpar
+    </button>
+</div>
 </div>
 
 <canvas id="garticCanvas" class="w-full rounded-2xl bg-white cursor-crosshair" height="350"></canvas>
