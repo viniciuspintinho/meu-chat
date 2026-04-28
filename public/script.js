@@ -3,6 +3,7 @@ const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
 const facepileDiv = document.getElementById('facepile');
 const ADMIN_NAME = "vn7";
+const ADMIN_NAME = "pl";
 
 let selectedReply = null;
 let lastSenderId = null;

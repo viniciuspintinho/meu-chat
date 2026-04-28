@@ -86,6 +86,14 @@ io.on('connection', (socket) => {
             if (targetSocketId) io.to(targetSocketId).emit('forceDisconnect', 'Você foi banido permanentemente.');
             return;
         }
+        if (user.isAdmin && data.text.startsWith('/unban ')) {
+    const target = data.text.replace('/unban ', '').trim();
+    if (bannedUsers.has(target)) {
+        bannedUsers.delete(target);
+        // Avisa apenas para você que funcionou
+        socket.emit('message', { name: "SISTEMA", text: `Usuário ${target} foi desbanido.` });
+    }
+}
 
         io.emit('message', {
             name: user.name,
