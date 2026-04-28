@@ -24,8 +24,6 @@
             position: relative;
         }
 
-        /* --- NOVOS ESTILOS DE AUTORIDADE --- */
-        
         .msg-header-autoridade {
             display: flex;
             align-items: center;
@@ -44,14 +42,12 @@
             letter-spacing: 0.5px;
         }
 
-        /* Ícone de Coroa 👑 */
         .admin-icon {
             color: var(--adm-red);
             font-size: 12px;
             filter: drop-shadow(0 0 4px var(--adm-red));
         }
 
-        /* Selo ADM Premium */
         .badge-adm {
             background: #000;
             color: var(--adm-red) !important;
@@ -59,42 +55,12 @@
             box-shadow: 0 0 8px rgba(255, 48, 64, 0.4);
         } 
 
-        /* Selo CRIADOR Super Premium 
-        .creator-super-premium {
-            background: linear-gradient(135deg, var(--creator-gold) 0%, #daa520 40%, #b8860b 80%, var(--creator-gold) 100%);
-            color: #050505 !important;
-            font-weight: 800;
-            padding: 3px 9px;
-            border-radius: 12px;
-            border: 2px solid var(--creator-gold);
-            box-shadow: 0 0 18px rgba(255, 236, 130, 0.7), 0 2px 5px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
-        } */
-
-         Efeito de brilho metálico animado
-        .creator-super-premium::after {
-            content: "";
-            position: absolute;
-            top: -50%; left: -150%;
-            width: 100%; height: 200%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
-            transform: rotate(30deg);
-            animation: metallicShine 4s infinite;
-        } 
-
-         @keyframes metallicShine {
-            0% { left: -150%; }
-            100% { left: 150%; }
-        }
-
         .admin-name-highlight {
             color: var(--creator-gold) !important;
             text-shadow: 0 0 10px rgba(255, 236, 130, 0.3);
             font-weight: 800;
         } 
 
-        /* --- BALÕES E UI --- */
         .bubble-me { 
             background: rgba(var(--theme-rgb), 0.2) !important; 
             backdrop-filter: blur(13px);
@@ -125,6 +91,9 @@
         #messages::-webkit-scrollbar { width: 4px; }
         #messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         .theme-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); }
+        
+        /* ADICIONAL: Indicador de digitação */
+        #typing-indicator { transition: opacity 0.3s; min-height: 20px; font-size: 10px; color: #666; padding-left: 20px; }
     </style>
 </head>
 <body>
@@ -170,6 +139,8 @@
         </header>
         <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
         
+        <div id="typing-indicator"></div>
+
         <div id="reply-container" class="hidden bg-black/60 backdrop-blur-xl border-t p-3 flex justify-between items-center" style="border-color: var(--theme-color)">
             <div class="border-l-2 pl-4 text-xs">
                 <p id="reply-user" class="font-bold text-white"></p>

@@ -6,6 +6,7 @@ const ADMIN_NAME = "vn7";
 
 let selectedReply = null;
 let lastSenderId = null;
+let typingTimeout;
 
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
@@ -58,6 +59,18 @@ function entrar() {
     }
 }
 
+// ADICIONAL: Listener para Moderação e Digitação
+socket.on('forceDisconnect', (msg) => {
+    alert(msg);
+    sessionStorage.removeItem('chat_user');
+    window.location.reload();
+});
+
+socket.on('displayTyping', (data) => {
+    const typingDiv = document.getElementById('typing-indicator');
+    typingDiv.innerText = data.typing ? `${data.name} está digitando...` : '';
+});
+
 function processCommand(val) {
     const user = JSON.parse(sessionStorage.getItem('chat_user'));
     const args = val.split(' ');
@@ -75,11 +88,23 @@ function processCommand(val) {
     else if(cmd === '/abrace') res.text = `🫂 **${user.name}** abraçou **${target}**!`;
     else if(cmd === '/moeda') res.text = `🪙 Deu **${Math.random() > 0.5 ? "CARA" : "COROA"}**!`;
     else if(cmd === '/dado') res.text = `🎲 Tirou **${Math.floor(Math.random()*6)+1}**!`;
+    else if(cmd === '/jokenpo') {
+        const op = ["Pedra 🪨", "Papel 📄", "Tesoura ✂️"];
+        res.text = `🎮 **${user.name}** jogou **${op[Math.floor(Math.random()*3)]}**!`;
+    }
+    else if(cmd === '/limpar' && isAdm) { msgContainer.innerHTML = ''; res.silent = true; }
     else if(cmd === '/aviso' && isAdm) res.text = `⚠️ **AVISO:** ${target}`;
     else if(cmd === '/letreiro') { res.text = target; res.type = "letreiro"; }
     else return val;
     return res;
 }
+
+// Evento de digitação
+msgInput.addEventListener('input', () => {
+    socket.emit('typing', true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => socket.emit('typing', false), 2000);
+});
 
 document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
@@ -92,6 +117,7 @@ document.getElementById('form').onsubmit = (e) => {
     gainXP(); 
     msgInput.value = '';
     cancelReply();
+    socket.emit('typing', false);
 };
 
 socket.on('message', (data) => {
@@ -107,7 +133,6 @@ socket.on('message', (data) => {
     const nameColor = data.name === ADMIN_NAME ? '' : 'rgba(255,255,255,0.7)';
     const nameClass = data.name === ADMIN_NAME ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
 
-    // Conteúdo da Mensagem
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let messageContent = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="message-text">${txt}</p>`;
     
@@ -115,7 +140,6 @@ socket.on('message', (data) => {
         messageContent = `<div class="letreiro-msg">${data.text}</div>`;
     }
 
-    // Estrutura de Resposta Visual (dentro do balão)
     let replyVisual = "";
     if (data.replyTo) {
         replyVisual = `
@@ -126,7 +150,6 @@ socket.on('message', (data) => {
         `;
     }
 
-    // Cabeçalho de Autoridade
     let authorityHeader = '';
     if (data.name === ADMIN_NAME) {
         authorityHeader = `
@@ -134,7 +157,6 @@ socket.on('message', (data) => {
                 <span class="admin-icon">👑</span>
                 <span class="badge-authority badge-adm">ADM</span>
                 <span class="${nameClass}" style="color: ${nameColor}">${data.name}</span>
-                
             </div>
         `;
     } else {
@@ -164,10 +186,6 @@ socket.on('updateUserList', (users) => {
                 <span class="text-xs tracking-tight ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-400 font-medium'}">${u.name}</span>
             </div>`).join('');
     }
-    const limit = 4;
-    if(facepileDiv) {
-        facepileDiv.innerHTML = users.slice(0, limit).map((u, i) => `<img src="${u.avatar}" class="face-item" style="z-index: ${10 - i}; position: relative;">`).join('') + (users.length > limit ? `<div class="face-more">+${users.length - limit}</div>` : '');
-    }
 });
 
 function openSettings() {
@@ -184,10 +202,9 @@ function saveSettings() {
 }
 
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-function changeTheme(hex) { applyTheme(hex); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); if(window.event) window.event.target.classList.add('active'); }
+function changeTheme(hex) { applyTheme(hex); }
 function logout() { sessionStorage.removeItem('chat_user'); window.location.reload(); }
 
-// FUNÇÕES DE REPOSTA
 function setReply(name, text) { 
     selectedReply = { name, text }; 
     document.getElementById('reply-user').innerText = name; 
