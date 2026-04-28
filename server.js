@@ -9,11 +9,13 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const ADMIN_NAME = "vn7"; 
-let usersOnline = {}; 
-let bannedUsers = new Set(); // Lista de IPs ou Nomes banidos
+// CORREÇÃO: Lista de administradores em um Array
+const ADMINS = ["vn7", "pl"]; 
 
-// Filtro de palavras (Exemplos)
+let usersOnline = {}; 
+let bannedUsers = new Set(); 
+
+// Filtro de palavras
 const badWords = ["palavrao1", "palavrao2", "toxic"];
 const filterText = (text) => {
     let cleaned = text;
@@ -31,7 +33,9 @@ io.on('connection', (socket) => {
             return socket.disconnect();
         }
 
-        const isAuthor = data.name === ADMIN_NAME;
+        // CORREÇÃO: Verifica se o nome está na lista de admins
+        const isAuthor = ADMINS.includes(data.name);
+
         usersOnline[socket.id] = { 
             name: data.name, 
             avatar: data.avatar,
@@ -42,7 +46,6 @@ io.on('connection', (socket) => {
 
         io.emit('updateUserList', Object.values(usersOnline));
         
-        // Bot de Boas-vindas
         socket.broadcast.emit('message', { 
             name: "Lux Bot", 
             text: `✨ **${data.name}** entrou no canal!`, 
@@ -55,10 +58,8 @@ io.on('connection', (socket) => {
         const user = usersOnline[socket.id];
         if (!user) return;
 
-        // Filtro de palavrões aplicado aqui
         const cleanText = filterText(data.text);
 
-        // Lógica de DM (Direct Message)
         if (data.isPrivate && data.targetId) {
             io.to(data.targetId).emit('message', {
                 name: `(Privado) ${user.name}`,
@@ -71,29 +72,32 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Lógica de Ban/Kick (Apenas Admin)
-        if (user.isAdmin && data.text.startsWith('/kick ')) {
-            const targetName = data.text.replace('/kick ', '').trim();
-            const targetSocketId = Object.keys(usersOnline).find(id => usersOnline[id].name === targetName);
-            if (targetSocketId) io.to(targetSocketId).emit('forceDisconnect', 'Você foi expulso do chat.');
-            return;
-        }
+        // Comandos de Admin
+        if (user.isAdmin) {
+            if (data.text.startsWith('/kick ')) {
+                const targetName = data.text.replace('/kick ', '').trim();
+                const targetSocketId = Object.keys(usersOnline).find(id => usersOnline[id].name === targetName);
+                if (targetSocketId) io.to(targetSocketId).emit('forceDisconnect', 'Você foi expulso do chat.');
+                return;
+            }
 
-        if (user.isAdmin && data.text.startsWith('/ban ')) {
-            const targetName = data.text.replace('/ban ', '').trim();
-            bannedUsers.add(targetName);
-            const targetSocketId = Object.keys(usersOnline).find(id => usersOnline[id].name === targetName);
-            if (targetSocketId) io.to(targetSocketId).emit('forceDisconnect', 'Você foi banido permanentemente.');
-            return;
+            if (data.text.startsWith('/ban ')) {
+                const targetName = data.text.replace('/ban ', '').trim();
+                bannedUsers.add(targetName);
+                const targetSocketId = Object.keys(usersOnline).find(id => usersOnline[id].name === targetName);
+                if (targetSocketId) io.to(targetSocketId).emit('forceDisconnect', 'Você foi banido permanentemente.');
+                return;
+            }
+
+            if (data.text.startsWith('/unban ')) {
+                const target = data.text.replace('/unban ', '').trim();
+                if (bannedUsers.has(target)) {
+                    bannedUsers.delete(target);
+                    socket.emit('message', { name: "SISTEMA", text: `Usuário ${target} foi desbanido.` });
+                }
+                return;
+            }
         }
-        if (user.isAdmin && data.text.startsWith('/unban ')) {
-    const target = data.text.replace('/unban ', '').trim();
-    if (bannedUsers.has(target)) {
-        bannedUsers.delete(target);
-        // Avisa apenas para você que funcionou
-        socket.emit('message', { name: "SISTEMA", text: `Usuário ${target} foi desbanido.` });
-    }
-}
 
         io.emit('message', {
             name: user.name,
@@ -106,7 +110,6 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Indicador de Digitação
     socket.on('typing', (isTyping) => {
         const user = usersOnline[socket.id];
         if(user) socket.broadcast.emit('displayTyping', { name: user.name, typing: isTyping });
