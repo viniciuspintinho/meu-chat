@@ -223,6 +223,28 @@ top:-20px;
 animation:floatUp 1s ease-out forwards;
 pointer-events:none;
 }
+.gartic-select {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+    appearance: none; /* Remove a seta padrão em alguns navegadores */
+    -webkit-appearance: none;
+}
+
+/* Isso corrige o fundo das opções que abrem */
+.gartic-select option {
+    background-color: #1a1a1a; /* Fundo escuro para a lista */
+    color: white;
+    padding: 10px;
+}
+
+.gartic-select:focus {
+    border-color: var(--theme-color);
+}
 
 @keyframes floatUp{
 0%{opacity:1;transform:translateY(0);}
@@ -323,12 +345,13 @@ Canal Principal
 
 <div class="flex items-center gap-3 bg-black/40 p-2 rounded-2xl border border-white/5">
     <input type="color" id="colorPicker" value="#000000" class="w-8 h-8 border-none bg-transparent cursor-pointer rounded">
-    <select id="penSize" class="bg-transparent text-white text-xs outline-none cursor-pointer">
-        <option value="2">Fino</option>
-        <option value="5" selected>Médio</option>
-        <option value="10">Grosso</option>
-        <option value="20">Gigante</option>
-    </select>
+    
+    <select id="penSize" class="gartic-select">
+    <option value="2">Fino</option>
+    <option value="5" selected>Médio</option>
+    <option value="10">Grosso</option>
+    <option value="20">Gigante</option>
+</select>
     <button id="clearBtn" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold hover:bg-red-500/30 transition">
         Limpar
     </button>
