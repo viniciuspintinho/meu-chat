@@ -236,59 +236,6 @@ pointer-events:none;
 <div class="glow-bg glow-1"></div>
 <div class="glow-bg glow-2"></div>
 
-<!-- LOGIN -->
-<div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
-<div class="w-full max-w-sm text-center">
-<h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent mb-10">Lux.</h1>
-
-<input id="username" type="text" placeholder="Nome de usuário" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white text-center">
-
-<input id="avatar" type="text" placeholder="URL da foto (opcional)" class="w-full bg-[#121212] border border-[#333] p-4 rounded-2xl mb-4 outline-none text-white text-center">
-
-<button onclick="entrar()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-500 transition">
-Entrar
-</button>
-</div>
-</div>
-
-<!-- SIDEBAR -->
-<aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 flex-shrink-0">
-
-<div class="profile-section flex flex-col items-center gap-4 py-4">
-<div class="avatar-wrapper relative">
-<img id="my-avatar" src="" class="avatar-main">
-<div id="user-level" class="lv-badge-circle">1</div>
-</div>
-
-<h3 id="my-name" class="font-bold text-sm tracking-tight text-white"></h3>
-
-<div class="w-full px-4">
-<div class="flex justify-between text-[9px] font-bold text-gray-500 mb-1">
-<span>XP STATUS</span>
-<span><span id="user-xp">0</span>/100</span>
-</div>
-
-<div class="xp-bar-bg">
-<div id="xp-fill" class="xp-bar-fill"></div>
-<div id="xp-popup-container"></div>
-</div>
-</div>
-</div>
-
-<div id="user-list" class="flex-1 overflow-y-auto space-y-2 mt-4"></div>
-
-<div class="pt-4 border-t border-white/5 space-y-2">
-<button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">
-⚙️ Configurações
-</button>
-
-<button onclick="logout()" class="w-full text-left text-red-500 text-sm p-2 font-bold hover:bg-red-500/10 rounded-lg transition">
-Sair
-</button>
-</div>
-
-</aside>
-
 <!-- MAIN -->
 <main class="flex-1 flex flex-col bg-transparent overflow-hidden">
 
@@ -299,7 +246,8 @@ Canal Principal
 </h2>
 </header>
 
-<div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
+<!-- CORRIGIDO -->
+<div id="messages" class="flex-1 min-h-0 overflow-y-auto p-4 space-y-1"></div>
 
 <div id="typing-indicator"></div>
 
@@ -311,80 +259,30 @@ Canal Principal
 <button onclick="cancelReply()" class="text-gray-500">✕</button>
 </div>
 
-<!-- COLE EXATAMENTE ESTE BLOCO NO SEU HTML -->
-<!-- SUBSTITUA APENAS A DIV DO GARTIC PELO BLOCO ABAIXO -->
-
-<!-- GARTIC PRO -->
-<div id="gartic-box" class="hidden px-4 pb-3">
-<div class="max-w-5xl mx-auto bg-black/30 border border-white/10 rounded-3xl p-4 backdrop-blur-xl">
+<!-- GARTIC CORRIGIDO -->
+<div id="gartic-box" class="hidden px-4 pb-3 flex-shrink-0">
+<div class="max-w-5xl mx-auto bg-black/30 border border-white/10 rounded-3xl p-4 backdrop-blur-xl max-h-[420px] overflow-hidden">
 
 <div class="flex items-center justify-between mb-3">
 <div>
-<h3 class="font-bold text-white">🎨 Gartic Lux PRO</h3>
+<h3 class="font-bold text-white">🎨 Gartic Lux</h3>
 <p id="garticInfo" class="text-xs text-gray-400">Aguardando partida...</p>
 </div>
 
-<div class="flex gap-2 flex-wrap">
-
-<button id="startGarticBtn"
-class="px-4 py-2 rounded-xl bg-green-500/20 text-green-400 text-sm font-bold">
-Iniciar
-</button>
-
-<button id="clearBtn"
-class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold">
+<button id="clearBtn" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 text-sm font-bold">
 Limpar
 </button>
-
-</div>
 </div>
 
-<!-- FERRAMENTAS -->
-<div class="flex gap-2 mb-3 flex-wrap">
+<canvas id="garticCanvas" class="w-full rounded-2xl bg-white cursor-crosshair" height="350"></canvas>
 
-<input type="color" id="colorPicker"
-value="#111111"
-class="w-12 h-10 rounded-lg overflow-hidden border border-white/10 bg-transparent cursor-pointer">
-
-<input type="range"
-id="brushSize"
-min="1"
-max="20"
-value="4"
-class="w-36">
-
-<button id="eraserBtn"
-class="px-3 py-2 rounded-xl bg-white/10 text-white text-sm">
-Borracha
-</button>
-
-<button id="fillBtn"
-class="px-3 py-2 rounded-xl bg-blue-500/20 text-blue-300 text-sm">
-Preencher
-</button>
-
-</div>
-
-<!-- TELA -->
-<canvas id="garticCanvas"
-class="w-full rounded-2xl bg-white cursor-crosshair touch-none"
-height="350"></canvas>
-
-<!-- STATUS -->
-<div class="mt-3 text-xs text-gray-300 space-y-1">
-
-<div id="wordHint"></div>
-
-<div id="timerBox"></div>
-
+<div class="mt-3 text-xs text-gray-300">
 <div id="ranking"></div>
-
 </div>
 
 </div>
 </div>
 
-<!-- FOOTER -->
 <footer class="p-4 bg-transparent flex-shrink-0">
 <div class="max-w-5xl mx-auto flex items-center gap-3">
 
@@ -402,42 +300,6 @@ Enviar
 </footer>
 
 </main>
-
-<!-- SETTINGS -->
-<div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
-
-<div class="bg-[#121212] border border-white/10 p-8 rounded-[32px] w-full max-w-md">
-
-<h2 class="text-2xl font-bold mb-8 text-white text-center">Editar Perfil</h2>
-
-<div class="space-y-4">
-
-<input id="set-username" type="text" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
-
-<input id="set-avatar" type="text" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
-
-<div class="grid grid-cols-4 gap-3 p-4 bg-black/40 rounded-2xl">
-<div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
-<div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
-<div onclick="changeTheme('#42e97f')" class="theme-dot" style="background:#42e97f"></div>
-<div onclick="changeTheme('#00f9f9')" class="theme-dot" style="background:#00f9f9"></div>
-<div onclick="changeTheme('#9000ff')" class="theme-dot" style="background:#9000ff"></div>
-</div>
-
-</div>
-
-<div class="grid grid-cols-2 gap-4 mt-8">
-<button onclick="closeSettings()" class="bg-[#222] text-white py-4 rounded-2xl">
-Voltar
-</button>
-
-<button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold">
-Salvar
-</button>
-</div>
-
-</div>
-</div>
 
 <script src="script.js"></script>
 
