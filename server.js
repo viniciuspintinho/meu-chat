@@ -20,7 +20,7 @@ let bannedUsers = new Set();
 
 const badWords = ["palavrao1", "palavrao2", "toxic"];
 
-function filterText(text) {
+function filterText(text = "") {
     let cleaned = text;
 
     badWords.forEach(word => {
@@ -59,10 +59,6 @@ let gartic = {
     points: {}
 };
 
-function embaralharUsuarios() {
-    return Object.values(usersOnline);
-}
-
 function gerarHint(palavra) {
     return palavra
         .split("")
@@ -71,12 +67,18 @@ function gerarHint(palavra) {
 }
 
 function iniciarRodada() {
-    const lista = embaralharUsuarios();
+    const lista = Object.values(usersOnline);
 
-    if (lista.length === 0) return;
+    if (lista.length <= 0) {
+        gartic.ativo = false;
+        return;
+    }
 
-    const sorteado = lista[Math.floor(Math.random() * lista.length)];
-    const palavra = palavras[Math.floor(Math.random() * palavras.length)];
+    const sorteado =
+        lista[Math.floor(Math.random() * lista.length)];
+
+    const palavra =
+        palavras[Math.floor(Math.random() * palavras.length)];
 
     gartic.ativo = true;
     gartic.drawer = sorteado.name;
@@ -86,21 +88,20 @@ function iniciarRodada() {
 
     io.emit("clearCanvas");
 
-    io.emit("garticState", {
-        drawer: gartic.drawer,
-        hint: gartic.hint,
-        points: gartic.points
+    io.emit("garticStatus", {
+        desenhista: gartic.drawer
     });
 
-    io.to(gartic.drawerId).emit("message", {
-        name: "Lux Bot",
-        text: `🎨 Sua palavra é: **${gartic.palavra}**`,
-        id: "bot"
-    });
+    io.to(gartic.drawerId).emit(
+        "garticPalavra",
+        gartic.palavra
+    );
+
+    io.emit("garticRanking", gartic.points);
 
     io.emit("message", {
         name: "Lux Bot",
-        text: `🎮 Novo Gartic iniciado! ${gartic.drawer} está desenhando.`,
+        text: `🎮 Novo Gartic iniciado! **${gartic.drawer}** está desenhando.`,
         id: "bot"
     });
 }
@@ -116,7 +117,8 @@ io.on("connection", (socket) => {
         if (bannedUsers.has(data.name)) {
             socket.emit("message", {
                 name: "SISTEMA",
-                text: "Você está banido deste chat."
+                text: "Você está banido deste chat.",
+                id: "bot"
             });
 
             return socket.disconnect();
@@ -150,24 +152,85 @@ io.on("connection", (socket) => {
         const user = usersOnline[socket.id];
         if (!user) return;
 
-        const texto = filterText(data.text);
+        const texto = filterText(data.text || "");
 
-        /* VERIFICAR ACERTO GARTIC */
+        /* COMANDOS ADMIN */
+        if (user.isAdmin) {
+
+            if (texto.startsWith("/kick ")) {
+                const alvo = texto.replace("/kick ", "").trim();
+
+                const alvoId = Object.keys(usersOnline).find(id =>
+                    usersOnline[id].name === alvo
+                );
+
+                if (alvoId) {
+                    io.to(alvoId).emit(
+                        "forceDisconnect",
+                        "Você foi expulso do chat."
+                    );
+                }
+
+                return;
+            }
+
+            if (texto.startsWith("/ban ")) {
+                const alvo = texto.replace("/ban ", "").trim();
+
+                bannedUsers.add(alvo);
+
+                const alvoId = Object.keys(usersOnline).find(id =>
+                    usersOnline[id].name === alvo
+                );
+
+                if (alvoId) {
+                    io.to(alvoId).emit(
+                        "forceDisconnect",
+                        "Você foi banido."
+                    );
+                }
+
+                return;
+            }
+
+            if (texto.startsWith("/unban ")) {
+                const alvo = texto.replace("/unban ", "").trim();
+
+                bannedUsers.delete(alvo);
+
+                socket.emit("message", {
+                    name: "SISTEMA",
+                    text: `${alvo} foi desbanido.`,
+                    id: "bot"
+                });
+
+                return;
+            }
+        }
+
+        /* START GARTIC PELO CHAT */
+        if (texto.toLowerCase() === "/gartic") {
+            iniciarRodada();
+            return;
+        }
+
+        /* VERIFICAR ACERTO */
         if (
             gartic.ativo &&
             socket.id !== gartic.drawerId &&
             texto.toLowerCase() === gartic.palavra.toLowerCase()
         ) {
-
             gartic.points[user.name] += 10;
-
-            io.emit("winner", user.name);
 
             io.emit("message", {
                 name: "Lux Bot",
-                text: `🏆 ${user.name} acertou a palavra: **${gartic.palavra}**`,
+                text: `🏆 **${user.name}** acertou a palavra: **${gartic.palavra}**`,
                 id: "bot"
             });
+
+            io.emit("garticRanking", gartic.points);
+
+            gartic.ativo = false;
 
             setTimeout(() => {
                 iniciarRodada();
@@ -176,26 +239,53 @@ io.on("connection", (socket) => {
             return;
         }
 
+        /* CHAT NORMAL */
         io.emit("message", {
             name: user.name,
+            avatar: user.avatar,
             text: texto,
+            msgType: data.msgType || "normal",
+            replyTo: data.replyTo || null,
+            isAdmin: user.isAdmin,
             id: socket.id
         });
+    });
+
+    /* DIGITANDO */
+    socket.on("typing", (isTyping) => {
+        const user = usersOnline[socket.id];
+
+        if (user) {
+            socket.broadcast.emit("displayTyping", {
+                name: user.name,
+                typing: isTyping
+            });
+        }
     });
 
     /* DESENHO */
     socket.on("draw", (ponto) => {
 
+        if (!gartic.ativo) return;
         if (socket.id !== gartic.drawerId) return;
 
         socket.broadcast.emit("draw", ponto);
     });
 
-    /* START GARTIC */
+    /* LIMPAR QUADRO */
+    socket.on("clearMyCanvas", () => {
+
+        if (socket.id !== gartic.drawerId) return;
+
+        io.emit("clearCanvas");
+    });
+
+    /* START DIRETO */
     socket.on("startGartic", () => {
         iniciarRodada();
     });
 
+    /* DESCONECTOU */
     socket.on("disconnect", () => {
 
         if (usersOnline[socket.id]) {
@@ -204,11 +294,14 @@ io.on("connection", (socket) => {
 
             delete usersOnline[socket.id];
 
-            io.emit("updateUserList", Object.values(usersOnline));
+            io.emit(
+                "updateUserList",
+                Object.values(usersOnline)
+            );
 
             io.emit("message", {
                 name: "Lux Bot",
-                text: `❌ ${saiu} saiu.`,
+                text: `❌ **${saiu}** saiu.`,
                 id: "bot"
             });
 
@@ -223,5 +316,7 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-    console.log("🚀 Lux Chat + Gartic Online | Porta " + PORT);
+    console.log(
+        "🚀 Lux Chat + Gartic Online | Porta " + PORT
+    );
 });
