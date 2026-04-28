@@ -327,78 +327,73 @@ garticInput.addEventListener('keypress', (e) => {
 });
 
 // =========================
-// RECEBER MSG (ATUALIZADO PARA SEPARAR GARTIC E ACERTOS)
+// RECEBER MSG
 // =========================
 socket.on('message', (data) => {
     const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
+    const isMe = data.id === socket.id;
 
-    // 1. FILTRO DE ACERTO/VITÓRIA (MENSAGEM DE SUCESSO NO GARTIC)
-    // Agora verifica se a mensagem vem do SISTEMA e contém "acertou"
-    if (data.msgType === "gartic-success" || (data.name === "SISTEMA" && data.text.toLowerCase().includes("acertou"))) {
+    // 1. FILTRO DE ACERTO (VAI APENAS PARA O CHAT DO GARTIC)
+    const textoLimpo = data.text.toLowerCase();
+    if (data.msgType === "gartic-success" || (data.name === "SISTEMA" && textoLimpo.includes("acertou"))) {
         const div = document.createElement('div');
         div.className = "p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-400 animate-bounce text-center mb-1";
         div.innerHTML = `✨ ${data.text}`;
+        
         garticChatContainer.appendChild(div);
         garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
 
         if (meuUser && data.text.includes(meuUser.name)) {
             confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
         }
-        return; // Retorna para não exibir no chat principal
+        return; // IMPORTANTE: Para aqui, não deixa ir pro chat normal
     }
 
-    // 2. FILTRO GARTIC: Se for palpite normal, vai para o mini-chat lateral
+    // 2. FILTRO PALPITE GARTIC
     if (data.msgType === "gartic-guess") {
         const div = document.createElement('div');
-        div.className = "p-2 rounded-lg bg-white/5 border border-white/5 text-xs animate-pulse";
+        div.className = "p-2 rounded-lg bg-white/5 border border-white/5 text-xs animate-pulse mb-1";
         div.innerHTML = `<span class="font-bold text-blue-400">${data.name}:</span> ${data.text}`;
+        
         garticChatContainer.appendChild(div);
         garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
         return; 
     }
 
-    const isMe = data.id === socket.id;
+    // 3. LOGICA DO CHAT NORMAL
     const isSequencial = data.id === lastSenderId;
-
     lastSenderId = data.id;
 
-    const div = document.createElement('div');
-
-    div.className =
-        `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
-
-    if (
-        data.id === "bot" ||
-        data.name === "SISTEMA" ||
-        data.name === "Lux Bot"
-    ) {
+    // Filtro para mensagens de sistema (Entrou, saiu, etc) - Ficam no chat principal
+    if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
+        const div = document.createElement('div');
+        div.className = "flex justify-center w-full mt-2";
         div.innerHTML = `<div class="system-msg">${data.text}</div>`;
         msgContainer.appendChild(div);
         msgContainer.scrollTop = msgContainer.scrollHeight;
         return;
     }
 
+    // Alerta de menção
     if (meuUser && data.text.includes(`@${meuUser.name}`)) {
         playNotificationSound();
     }
 
     const isAdminMsg = ADMINS.includes(data.name);
-
-    let bubbleStyle = isMe
-        ? 'bubble-me rounded-2xl'
-        : 'bg-white/5 rounded-2xl';
-
+    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    const messageContent = generatePreview(data.text);
+    const div = document.createElement('div');
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+
+    // Tratamento de aspas para o onclick não quebrar
+    const safeText = data.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
     div.innerHTML = `
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
-        onclick="setReply('${data.name}','${data.text.replace(/'/g, "\\'")}')">
-
-            ${!isSequencial ? `<div class="font-bold mb-1 ${isAdminMsg ? 'admin-name-highlight' : ''}">${data.name}</div>` : ''}
-
-            ${messageContent}
+             onclick="setReply('${data.name}', '${safeText}')">
+            ${!isSequencial ? `<div class="font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">${data.name}</div>` : ''}
+            ${generatePreview(data.text)}
         </div>
     `;
 
@@ -461,7 +456,7 @@ function logout() {
 }
 
 // =========================
-// REPLY
+// REPLY (CORRIGIDO)
 // =========================
 function setReply(name, text) {
     selectedReply = { name, text };
