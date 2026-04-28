@@ -8,8 +8,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Inicialização do Banco de Dados
+// Inicialização dos Bancos de Dados
 const db = new Datastore({ filename: "database.db", autoload: true });
+const msgDb = new Datastore({ filename: "messages.db", autoload: true }); // Histórico de mensagens
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -58,7 +59,8 @@ let gartic = {
     drawer: "",
     drawerId: "",
     hint: "",
-    points: {}
+    points: {},
+    timerHint: null // Timer para a dica automática
 };
 
 let ultimaPalavra = ""; // Para evitar repetição imediata
@@ -66,7 +68,7 @@ let ultimaPalavra = ""; // Para evitar repetição imediata
 function gerarHint(palavra) {
     return palavra
         .split("")
-        .map(() => "_")
+        .map((char) => (char === " " || char === "-" ? char : "_"))
         .join(" ");
 }
 
@@ -77,6 +79,9 @@ function iniciarRodada() {
         gartic.ativo = false;
         return;
     }
+
+    // Limpa timer de dica anterior se houver
+    if (gartic.timerHint) clearTimeout(gartic.timerHint);
 
     const sorteado = lista[Math.floor(Math.random() * lista.length)];
     
@@ -112,6 +117,17 @@ function iniciarRodada() {
         text: `🎮 Novo Gartic iniciado! **${gartic.drawer}** está desenhando.`,
         id: "bot"
     });
+
+    // Inicia timer de 30 segundos para enviar a dica
+    gartic.timerHint = setTimeout(() => {
+        if (gartic.ativo) {
+            io.emit("message", {
+                name: "Lux Bot",
+                text: `💡 DICA: A palavra tem **${gartic.palavra.length}** letras e começa com "**${gartic.palavra[0].toUpperCase()}**".`,
+                id: "bot"
+            });
+        }
+    }, 30000);
 }
 
 /* =========================
@@ -158,6 +174,11 @@ io.on("connection", (socket) => {
             text: `✨ **${data.name}** entrou no canal!`,
             id: "bot"
         });
+
+        // Enviar histórico ao usuário que acabou de entrar (Persistência)
+        msgDb.find({}).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
+            docs.forEach(msg => socket.emit("message", msg));
+        });
     });
 
     /* CHAT */
@@ -180,6 +201,13 @@ io.on("connection", (socket) => {
 
         /* COMANDOS ADMIN */
         if (user.isAdmin) {
+
+            // Comando /shout para Admins
+            if (texto.startsWith("/shout ")) {
+                const grito = texto.replace("/shout ", "").trim();
+                io.emit("shout", { name: user.name, text: grito });
+                return;
+            }
 
             if (texto.startsWith("/kick ")) {
                 const alvo = texto.replace("/kick ", "").trim();
@@ -240,6 +268,9 @@ io.on("connection", (socket) => {
             io.emit("garticRanking", gartic.points);
             gartic.ativo = false;
 
+            // Limpa o timer da dica ao acertar
+            if (gartic.timerHint) clearTimeout(gartic.timerHint);
+
             setTimeout(() => {
                 iniciarRodada();
             }, 3000);
@@ -247,16 +278,20 @@ io.on("connection", (socket) => {
             return;
         }
 
-        /* CHAT NORMAL */
-        io.emit("message", {
+        /* CHAT NORMAL + SALVAR NO HISTÓRICO */
+        const mensagemFinal = {
             name: user.name,
             avatar: user.avatar,
             text: texto,
             msgType: data.msgType || "normal",
             replyTo: data.replyTo || null,
             isAdmin: user.isAdmin,
-            id: socket.id
-        });
+            id: socket.id,
+            timestamp: now
+        };
+
+        io.emit("message", mensagemFinal);
+        msgDb.insert(mensagemFinal); // Salva a mensagem no banco de dados persistente
     });
 
     /* DIGITANDO */
@@ -312,6 +347,7 @@ io.on("connection", (socket) => {
             });
 
             if (socket.id === gartic.drawerId) {
+                if (gartic.timerHint) clearTimeout(gartic.timerHint);
                 iniciarRodada();
             }
         }

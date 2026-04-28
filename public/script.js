@@ -158,6 +158,25 @@ socket.on('forceDisconnect', (msg) => {
 });
 
 // =========================
+// SHOUT COMMAND (NOVO)
+// =========================
+socket.on('shout', (data) => {
+    const overlay = document.getElementById('shout-overlay');
+    const author = document.getElementById('shout-author');
+    const text = document.getElementById('shout-text');
+    
+    author.innerText = `AVISO IMPORTANTE DE ${data.name}`;
+    text.innerText = data.text;
+    overlay.style.display = 'flex';
+    
+    playNotificationSound();
+    
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 6000);
+});
+
+// =========================
 // TYPING
 // =========================
 socket.on('displayTyping', (data) => {
@@ -289,7 +308,7 @@ document.getElementById('form').onsubmit = (e) => {
 };
 
 // =========================
-// RECEBER MSG
+// RECEBER MSG (ATUALIZADO COM HIERARQUIA)
 // =========================
 socket.on('message', (data) => {
 
@@ -303,6 +322,7 @@ socket.on('message', (data) => {
     div.className =
         `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
+    // Hierarquia Tipográfica: Lux Bot usa system-msg com JetBrains Mono
     if (
         data.id === "bot" ||
         data.name === "SISTEMA" ||
@@ -334,7 +354,7 @@ socket.on('message', (data) => {
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
         onclick="setReply('${data.name}','${data.text.replace(/'/g, "\\'")}')">
 
-            ${!isSequencial ? `<div class="font-bold mb-1">${data.name}</div>` : ''}
+            ${!isSequencial ? `<div class="font-bold mb-1 ${isAdminMsg ? 'admin-name-highlight' : ''}">${data.name}</div>` : ''}
 
             ${messageContent}
         </div>
@@ -345,19 +365,22 @@ socket.on('message', (data) => {
 });
 
 // =========================
-// USERS ONLINE
+// USERS ONLINE (ATUALIZADO COM ESTADO PULSANTE)
 // =========================
 socket.on('updateUserList', (users) => {
     const userList = document.getElementById('user-list');
 
-    userList.innerHTML = users.map(u => `
-        <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
-            <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover">
-            <span class="text-xs ${ADMINS.includes(u.name) ? 'text-yellow-400 font-bold' : 'text-gray-400'}">
-                ${u.name}
-            </span>
-        </div>
-    `).join('');
+    userList.innerHTML = users.map(u => {
+        const isAdm = ADMINS.includes(u.name);
+        return `
+            <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
+                <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${isAdm ? 'avatar-active' : ''}">
+                <span class="text-xs ${isAdm ? 'text-red-500 font-bold' : 'text-gray-400'}">
+                    ${u.name}
+                </span>
+            </div>
+        `;
+    }).join('');
 });
 
 // =========================
