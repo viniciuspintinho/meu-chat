@@ -327,26 +327,24 @@ garticInput.addEventListener('keypress', (e) => {
 });
 
 // =========================
-// RECEBER MSG
+// RECEBER MSG (ATUALIZADO)
 // =========================
 socket.on('message', (data) => {
     const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
-    const isMe = data.id === socket.id;
 
-    // 1. FILTRO DE ACERTO (VAI APENAS PARA O CHAT DO GARTIC)
-    const textoLimpo = data.text.toLowerCase();
-    if (data.msgType === "gartic-success" || (data.name === "SISTEMA" && textoLimpo.includes("acertou"))) {
+    // 1. FILTRO DE ACERTO - DEVE SER O PRIMEIRO
+    const lowerText = data.text.toLowerCase();
+    if (data.msgType === "gartic-success" || (data.name === "SISTEMA" && lowerText.includes("acertou"))) {
         const div = document.createElement('div');
         div.className = "p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-400 animate-bounce text-center mb-1";
         div.innerHTML = `✨ ${data.text}`;
-        
         garticChatContainer.appendChild(div);
         garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
 
         if (meuUser && data.text.includes(meuUser.name)) {
             confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
         }
-        return; // IMPORTANTE: Para aqui, não deixa ir pro chat normal
+        return; // Impede de ir para o chat normal
     }
 
     // 2. FILTRO PALPITE GARTIC
@@ -354,27 +352,27 @@ socket.on('message', (data) => {
         const div = document.createElement('div');
         div.className = "p-2 rounded-lg bg-white/5 border border-white/5 text-xs animate-pulse mb-1";
         div.innerHTML = `<span class="font-bold text-blue-400">${data.name}:</span> ${data.text}`;
-        
         garticChatContainer.appendChild(div);
         garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
         return; 
     }
 
-    // 3. LOGICA DO CHAT NORMAL
+    // 3. LOGICA CHAT NORMAL
+    const isMe = data.id === socket.id;
     const isSequencial = data.id === lastSenderId;
     lastSenderId = data.id;
 
-    // Filtro para mensagens de sistema (Entrou, saiu, etc) - Ficam no chat principal
+    const div = document.createElement('div');
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+
+    // Mensagens de sistema gerais (Entrou no canal, etc)
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
-        const div = document.createElement('div');
-        div.className = "flex justify-center w-full mt-2";
         div.innerHTML = `<div class="system-msg">${data.text}</div>`;
         msgContainer.appendChild(div);
         msgContainer.scrollTop = msgContainer.scrollHeight;
         return;
     }
 
-    // Alerta de menção
     if (meuUser && data.text.includes(`@${meuUser.name}`)) {
         playNotificationSound();
     }
@@ -383,10 +381,7 @@ socket.on('message', (data) => {
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
-
-    // Tratamento de aspas para o onclick não quebrar
+    // Limpeza de texto para evitar erro no onclick do setReply
     const safeText = data.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
     div.innerHTML = `
@@ -456,7 +451,7 @@ function logout() {
 }
 
 // =========================
-// REPLY (CORRIGIDO)
+// REPLY
 // =========================
 function setReply(name, text) {
     selectedReply = { name, text };
