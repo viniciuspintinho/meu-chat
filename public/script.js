@@ -533,42 +533,43 @@ socket.on("clearCanvas", () => {
 });
 
 // =========================
-// ESTADO DO JOGO
+// ESTADO DO JOGO (CORRIGIDO PARA garticStatus)
 // =========================
-socket.on("garticState", (data) => {
+socket.on("garticStatus", (data) => {
     garticBox.classList.remove("hidden");
+    resizeCanvas(); // Garante o tamanho correto ao aparecer
 
-    garticInfo.innerText =
-        `🎨 ${data.drawer} está desenhando | ${data.hint}`;
-
-    podeDesenhar = false;
-
-    rankingDiv.innerHTML = Object.entries(data.points)
-        .map(([nome, pts]) => `🏆 ${nome}: ${pts} pts`)
-        .join("<br>");
-});
-
-// =========================
-// PALAVRA SECRETA
-// =========================
-socket.on("message", (data) => {
-    if (
-        data.name === "Lux Bot" &&
-        data.text.includes("Sua palavra é:")
-    ) {
-        garticInfo.innerText =
-            data.text.replace(/\*\*/g, "");
-
-        podeDesenhar = true;
-        garticBox.classList.remove("hidden");
+    const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
+    
+    if (data.desenhista !== meuUser.name) {
+        podeDesenhar = false;
+        garticInfo.innerText = `🎨 ${data.desenhista} está desenhando...`;
     }
+
+    // O ranking agora vem do servidor pelo evento garticRanking
+});
+
+socket.on("garticRanking", (points) => {
+    rankingDiv.innerHTML = Object.entries(points)
+        .map(([nome, pts]) => `🏆 ${nome}: ${pts} pts`)
+        .join(" | ");
 });
 
 // =========================
-// BOTÃO LIMPAR
+// PALAVRA SECRETA (CORRIGIDO PARA garticPalavra)
+// =========================
+socket.on("garticPalavra", (palavra) => {
+    garticBox.classList.remove("hidden");
+    resizeCanvas();
+    garticInfo.innerText = `Sua palavra é: ${palavra}`;
+    podeDesenhar = true;
+});
+
+// =========================
+// BOTÃO LIMPAR (CORRIGIDO PARA clearMyCanvas)
 // =========================
 clearBtn.onclick = () => {
-    socket.emit("clearCanvas");
+    socket.emit("clearMyCanvas");
 };
 
 // =========================
@@ -583,12 +584,12 @@ canvas.addEventListener("mouseleave", endDraw);
 // TOUCH
 // =========================
 canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
+    if (podeDesenhar) e.preventDefault();
     startDraw(e);
 });
 
 canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
+    if (podeDesenhar) e.preventDefault();
     draw(e);
 });
 
