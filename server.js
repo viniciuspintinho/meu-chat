@@ -42,15 +42,15 @@ function filterText(text = "") {
 // Lista expandida com mais de 50 itens divididos por categorias
 const palavras = [
     // ANIMAIS
-    "tubarao", "elefante", "girafa", "jacare", "tartaruga", "morcego", "pinguim", "formiga", "leao", "zebra", "macaco", "cobra", "aranha", "coruja", "camaleao", "polvo", "vaca", "porco", "cachorro", "gato",
+    "tubarao", "elefante", "girafa", "jacare", "tartaruga", "morcego", "pinguim", "formiga", "leao", "zebra", "macaco", "cobra", "aranha", "coruja", "camaleao", "polvo", "vaca", "porco", "cachorro", "gato", "coelho","urso", "raposa", "cervo", "golfinho", "baleia", "canguru", "panda", "lobo", "foca", "avestruz",
     // OBJETOS
-    "martelo", "guarda-chuva", "escada", "cadeira", "relogio", "oculos", "mochila", "tesoura", "caneta", "espelho", "lanterna", "violao", "skate", "controle", "bateria", "xicara", "telefone", "computador",
+    "martelo", "guarda-chuva", "escada", "cadeira", "relogio", "oculos", "mochila", "tesoura", "caneta", "espelho", "lanterna", "violao", "skate", "controle", "bateria", "xicara", "telefone", "computador", "chave", "carteira", "faca", "garfo", "colher", "abajur", "copo", "chaleira", "ventilador", "microfone", "impressora", "teclado",
     // COMIDA
-    "melancia", "hamburguer", "sorvete", "batata frita", "ovo frito", "abacaxi", "pizza", "queijo", "cenoura", "pipoca", "donut", "sushi", "banana",
+    "melancia", "hamburguer", "sorvete", "batata frita", "ovo frito", "abacaxi", "pizza", "queijo", "cenoura", "pipoca", "donut", "sushi", "banana","chocolate", "cafe", "pao", "leite", "salada", "bolo", "manga",
     // NATUREZA / ESPAÇO / LUGARES
-    "montanha", "vulcao", "furacao", "planeta", "estrela", "arco-iris", "cachoeira", "floresta", "nuvem", "sol", "lua", "foguete", "casa", "flor", "castelo", "farol", "ponte", "piramide",
+    "montanha", "vulcao", "furacao", "planeta", "estrela", "arco-iris", "cachoeira", "floresta", "nuvem", "sol", "lua", "foguete", "pinto", "flor", "castelo", "farol", "ponte", "piramide",
     // TRANSPORTE
-    "aviao", "bicicleta", "helicoptero", "submarino", "trator", "navio", "ambulancia", "moto", "caminhao"
+    "aviao", "bicicleta", "helicoptero", "submarino", "trator", "navio", "ambulancia", "moto", "caminhao", "trem", "onibus", "carro", "barco", "balão", "skate", "patinete"
 ];
 
 let gartic = {
