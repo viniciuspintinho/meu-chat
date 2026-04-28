@@ -327,10 +327,25 @@ garticInput.addEventListener('keypress', (e) => {
 });
 
 // =========================
-// RECEBER MSG (ATUALIZADO PARA SEPARAR GARTIC)
+// RECEBER MSG (ATUALIZADO PARA SEPARAR GARTIC E ACERTOS)
 // =========================
 socket.on('message', (data) => {
-    // FILTRO GARTIC: Se for palpite, vai para o mini-chat lateral
+    // FILTRO DE ACERTO/VITÓRIA (MENSAGEM DE SUCESSO NO GARTIC)
+    if (data.msgType === "gartic-success" || (data.name === "SISTEMA" && data.text.includes("acertou"))) {
+        const div = document.createElement('div');
+        div.className = "p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-400 animate-bounce text-center mb-1";
+        div.innerHTML = `✨ ${data.text}`;
+        garticChatContainer.appendChild(div);
+        garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
+
+        const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
+        if (data.text.includes(meuUser.name)) {
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+        }
+        return;
+    }
+
+    // FILTRO GARTIC: Se for palpite normal, vai para o mini-chat lateral
     if (data.msgType === "gartic-guess") {
         const div = document.createElement('div');
         div.className = "p-2 rounded-lg bg-white/5 border border-white/5 text-xs animate-pulse";
