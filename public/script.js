@@ -2,8 +2,9 @@ const socket = io();
 const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
 const facepileDiv = document.getElementById('facepile');
-const ADMIN_NAME = "vn7";
-const ADMIN_NAME = "pl";
+
+// CORREÇÃO: Usando um Array para permitir múltiplos administradores
+const ADMINS = ["vn7", "pl"];
 
 let selectedReply = null;
 let lastSenderId = null;
@@ -77,7 +78,10 @@ function processCommand(val) {
     const args = val.split(' ');
     const cmd = args[0].toLowerCase();
     const target = args.slice(1).join(' ');
-    const isAdm = user.name === ADMIN_NAME;
+    
+    // CORREÇÃO: Verifica se o nome está na lista de admins
+    const isAdm = ADMINS.includes(user.name);
+    
     let res = { text: "", type: "normal", silent: false };
 
     if(cmd === '/setxp' && isAdm) {
@@ -131,8 +135,10 @@ socket.on('message', (data) => {
 
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     
-    const nameColor = data.name === ADMIN_NAME ? '' : 'rgba(255,255,255,0.7)';
-    const nameClass = data.name === ADMIN_NAME ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
+    // CORREÇÃO: Verifica se o autor da mensagem é admin
+    const isAdminMsg = ADMINS.includes(data.name);
+    const nameColor = isAdminMsg ? '' : 'rgba(255,255,255,0.7)';
+    const nameClass = isAdminMsg ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
 
     let txt = data.text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     let messageContent = data.text.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? `<img src="${data.text}" class="max-w-xs rounded-lg shadow-xl">` : `<p class="message-text">${txt}</p>`;
@@ -152,7 +158,8 @@ socket.on('message', (data) => {
     }
 
     let authorityHeader = '';
-    if (data.name === ADMIN_NAME) {
+    // CORREÇÃO: Verifica se o autor é admin para mostrar a coroa
+    if (isAdminMsg) {
         authorityHeader = `
             <div class="msg-header-autoridade">
                 <span class="admin-icon">👑</span>
@@ -184,7 +191,7 @@ socket.on('updateUserList', (users) => {
         userListElement.innerHTML = users.map(u => `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
                 <img src="${u.avatar}" class="w-8 h-8 rounded-full border border-white/10 object-cover">
-                <span class="text-xs tracking-tight ${u.name === ADMIN_NAME ? 'text-yellow-400 font-bold' : 'text-gray-400 font-medium'}">${u.name}</span>
+                <span class="text-xs tracking-tight ${ADMINS.includes(u.name) ? 'text-yellow-400 font-bold' : 'text-gray-400 font-medium'}">${u.name}</span>
             </div>`).join('');
     }
 });
