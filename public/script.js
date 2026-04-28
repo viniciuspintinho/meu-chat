@@ -1,6 +1,8 @@
 const socket = io();
 const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
+const garticChatContainer = document.getElementById('gartic-chat-messages');
+const garticInput = document.getElementById('gartic-input');
 
 // Lista de admins
 const ADMINS = ["vn7", "pl"];
@@ -158,7 +160,7 @@ socket.on('forceDisconnect', (msg) => {
 });
 
 // =========================
-// SHOUT COMMAND (NOVO)
+// SHOUT COMMAND
 // =========================
 socket.on('shout', (data) => {
     const overlay = document.getElementById('shout-overlay');
@@ -270,7 +272,7 @@ function processCommand(val) {
 }
 
 // =========================
-// ENVIAR MSG
+// ENVIAR MSG (CHAT NORMAL)
 // =========================
 document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
@@ -308,9 +310,35 @@ document.getElementById('form').onsubmit = (e) => {
 };
 
 // =========================
-// RECEBER MSG (ATUALIZADO COM HIERARQUIA)
+// ENVIAR PALPITE (GARTIC)
+// =========================
+garticInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const val = garticInput.value.trim();
+        if (!val) return;
+        
+        socket.emit('chatMessage', {
+            text: val,
+            msgType: "gartic-guess" 
+        });
+        
+        garticInput.value = '';
+    }
+});
+
+// =========================
+// RECEBER MSG (ATUALIZADO PARA SEPARAR GARTIC)
 // =========================
 socket.on('message', (data) => {
+    // FILTRO GARTIC: Se for palpite, vai para o mini-chat lateral
+    if (data.msgType === "gartic-guess") {
+        const div = document.createElement('div');
+        div.className = "p-2 rounded-lg bg-white/5 border border-white/5 text-xs animate-pulse";
+        div.innerHTML = `<span class="font-bold text-blue-400">${data.name}:</span> ${data.text}`;
+        garticChatContainer.appendChild(div);
+        garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
+        return; 
+    }
 
     const isMe = data.id === socket.id;
     const isSequencial = data.id === lastSenderId;
@@ -322,7 +350,6 @@ socket.on('message', (data) => {
     div.className =
         `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
-    // Hierarquia Tipográfica: Lux Bot usa system-msg com JetBrains Mono
     if (
         data.id === "bot" ||
         data.name === "SISTEMA" ||
@@ -365,7 +392,7 @@ socket.on('message', (data) => {
 });
 
 // =========================
-// USERS ONLINE (ATUALIZADO COM ESTADO PULSANTE)
+// USERS ONLINE
 // =========================
 socket.on('updateUserList', (users) => {
     const userList = document.getElementById('user-list');
@@ -482,13 +509,13 @@ function toggleGarticView() {
 }
 
 function resizeCanvas() {
-    canvas.width = canvas.offsetWidth;
-    canvas.height = 350;
+    const parent = canvas.parentElement;
+    canvas.width = parent.offsetWidth;
+    canvas.height = parent.offsetHeight;
 
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 }
-resizeCanvas();
 
 window.addEventListener("resize", resizeCanvas);
 
