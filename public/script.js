@@ -415,6 +415,7 @@ function enviarFoto() {
 // =========================
 // GARTIC CLIENT
 // =========================
+
 const garticBox = document.getElementById("gartic-box");
 const canvas = document.getElementById("garticCanvas");
 const clearBtn = document.getElementById("clearBtn");
@@ -431,79 +432,104 @@ function resizeCanvas() {
     canvas.height = 350;
 }
 resizeCanvas();
-
 window.addEventListener("resize", resizeCanvas);
 
 ctx.lineWidth = 4;
 ctx.lineCap = "round";
 ctx.strokeStyle = "#111";
 
-function startDraw(e) {
-    if (!podeDesenhar) return;
-    desenhando = true;
-    draw(e);
+// PEGA POSIÇÃO
+function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
 }
 
+// COMEÇA DESENHO
+function startDraw(e) {
+    if (!podeDesenhar) return;
+
+    desenhando = true;
+
+    const pos = getPos(e);
+
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+}
+
+// PARA
 function endDraw() {
     desenhando = false;
     ctx.beginPath();
 }
 
+// DESENHA
 function draw(e) {
     if (!desenhando || !podeDesenhar) return;
 
-    const rect = canvas.getBoundingClientRect();
+    const pos = getPos(e);
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.lineTo(x, y);
+    ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
 
-    socket.emit("draw", { x, y });
+    socket.emit("draw", pos);
 }
 
-canvas.addEventListener("mousedown", startDraw);
-canvas.addEventListener("mouseup", endDraw);
-canvas.addEventListener("mouseleave", endDraw);
-canvas.addEventListener("mousemove", draw);
-
-canvas.addEventListener("touchstart", e => startDraw(e.touches[0]));
-canvas.addEventListener("touchmove", e => {
-    e.preventDefault();
-    draw(e.touches[0]);
-});
-canvas.addEventListener("touchend", endDraw);
-
-clearBtn.onclick = () => socket.emit("clearMyCanvas");
-
-socket.on("draw", data => {
+// RECEBE DESENHO
+socket.on("draw", (data) => {
     ctx.lineTo(data.x, data.y);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(data.x, data.y);
 });
 
+// LIMPA
 socket.on("clearCanvas", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 
-socket.on("garticStatus", data => {
+// STATUS
+socket.on("garticStatus", (data) => {
     garticBox.classList.remove("hidden");
     garticInfo.innerText = `🎨 ${data.desenhista} está desenhando`;
     podeDesenhar = false;
 });
 
-socket.on("garticPalavra", palavra => {
+// PALAVRA DO DESENHISTA
+socket.on("garticPalavra", (palavra) => {
     garticBox.classList.remove("hidden");
     garticInfo.innerText = `✏️ Sua palavra: ${palavra}`;
     podeDesenhar = true;
 });
 
-socket.on("garticRanking", ranking => {
+// RANKING
+socket.on("garticRanking", (ranking) => {
     rankingDiv.innerHTML = Object.entries(ranking)
         .map(([nome, pts]) => `🏆 ${nome}: ${pts} pts`)
         .join("<br>");
 });
+
+// BOTÃO LIMPAR
+clearBtn.onclick = () => socket.emit("clearMyCanvas");
+
+// MOUSE
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mouseup", endDraw);
+canvas.addEventListener("mouseleave", endDraw);
+canvas.addEventListener("mousemove", draw);
+
+// TOUCH
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    startDraw(e.touches[0]);
+});
+
+canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    draw(e.touches[0]);
+});
+
+canvas.addEventListener("touchend", endDraw);
