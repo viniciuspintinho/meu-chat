@@ -3,7 +3,7 @@ const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
 const facepileDiv = document.getElementById('facepile');
 
-// CORREÇÃO: Usando um Array para permitir múltiplos administradores
+// Lista de admins
 const ADMINS = ["vn7", "pl"];
 
 let selectedReply = null;
@@ -12,6 +12,20 @@ let typingTimeout;
 
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
+
+// --- FUNCIONALIDADE: Som de Notificação ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playNotificationSound() {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+}
 
 function applyTheme(hex) {
     if(!hex) return;
@@ -27,12 +41,22 @@ function updateXPUI() {
     }
 }
 
+// --- DESIGN: GainXP com Pop-up ---
 function gainXP(amount = null) {
     userXP += (amount !== null) ? amount : (Math.floor(Math.random() * 10) + 5);
     while (userXP >= 100) { userLevel++; userXP -= 100; }
     localStorage.setItem('chat_xp', userXP);
     localStorage.setItem('chat_level', userLevel);
     updateXPUI();
+
+    const container = document.getElementById('xp-popup-container');
+    if(container) {
+        const popup = document.createElement('span');
+        popup.className = 'xp-popup';
+        popup.innerText = '+XP';
+        container.appendChild(popup);
+        setTimeout(() => popup.remove(), 1000);
+    }
 }
 
 window.onload = () => {
@@ -61,7 +85,6 @@ function entrar() {
     }
 }
 
-// ADICIONAL: Listener para Moderação e Digitação
 socket.on('forceDisconnect', (msg) => {
     alert(msg);
     sessionStorage.removeItem('chat_user');
@@ -73,15 +96,13 @@ socket.on('displayTyping', (data) => {
     typingDiv.innerText = data.typing ? `${data.name} está digitando...` : '';
 });
 
+// --- FUNCIONALIDADE: Novos Comandos ---
 function processCommand(val) {
     const user = JSON.parse(sessionStorage.getItem('chat_user'));
     const args = val.split(' ');
     const cmd = args[0].toLowerCase();
     const target = args.slice(1).join(' ');
-    
-    // CORREÇÃO: Verifica se o nome está na lista de admins
     const isAdm = ADMINS.includes(user.name);
-    
     let res = { text: "", type: "normal", silent: false };
 
     if(cmd === '/setxp' && isAdm) {
@@ -97,6 +118,13 @@ function processCommand(val) {
         const op = ["Pedra 🪨", "Papel 📄", "Tesoura ✂️"];
         res.text = `🎮 **${user.name}** jogou **${op[Math.floor(Math.random()*3)]}**!`;
     }
+    else if(cmd === '/festa') {
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#0095f6', '#7c3aed', '#ffffff'] });
+        res.text = `🎉 **${user.name}** iniciou uma festa!`;
+    }
+    else if(cmd === '/shrug') {
+        res.text = "¯\\_(ツ)_/¯";
+    }
     else if(cmd === '/limpar' && isAdm) { msgContainer.innerHTML = ''; res.silent = true; }
     else if(cmd === '/aviso' && isAdm) res.text = `⚠️ **AVISO:** ${target}`;
     else if(cmd === '/letreiro') { res.text = target; res.type = "letreiro"; }
@@ -104,7 +132,6 @@ function processCommand(val) {
     return res;
 }
 
-// Evento de digitação
 msgInput.addEventListener('input', () => {
     socket.emit('typing', true);
     clearTimeout(typingTimeout);
@@ -131,12 +158,26 @@ socket.on('message', (data) => {
     lastSenderId = data.id;
 
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'}`;
+    // DESIGN: Adição de message-animate
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
-    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
-    
-    // CORREÇÃO: Verifica se o autor da mensagem é admin
+    // DESIGN: Mensagem de Sistema/Bot
+    if(data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
+        div.innerHTML = `<div class="system-msg">${data.text}</div>`;
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+        return;
+    }
+
+    // FUNCIONALIDADE: Som de menção
+    const myUser = JSON.parse(sessionStorage.getItem('chat_user'));
+    if(myUser && data.text.includes(`@${myUser.name}`)) playNotificationSound();
+
     const isAdminMsg = ADMINS.includes(data.name);
+    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
+    // DESIGN: Adição de admin-glow
+    if(isAdminMsg) bubbleStyle += ' admin-glow';
+    
     const nameColor = isAdminMsg ? '' : 'rgba(255,255,255,0.7)';
     const nameClass = isAdminMsg ? 'msg-author-name admin-name-highlight' : 'msg-author-name';
 
@@ -158,7 +199,6 @@ socket.on('message', (data) => {
     }
 
     let authorityHeader = '';
-    // CORREÇÃO: Verifica se o autor é admin para mostrar a coroa
     if (isAdminMsg) {
         authorityHeader = `
             <div class="msg-header-autoridade">

@@ -9,7 +9,7 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// CORREÇÃO: Lista de administradores em um Array
+// Lista de administradores
 const ADMINS = ["vn7", "pl"]; 
 
 let usersOnline = {}; 
@@ -33,7 +33,6 @@ io.on('connection', (socket) => {
             return socket.disconnect();
         }
 
-        // CORREÇÃO: Verifica se o nome está na lista de admins
         const isAuthor = ADMINS.includes(data.name);
 
         usersOnline[socket.id] = { 
