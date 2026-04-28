@@ -331,19 +331,25 @@ garticInput.addEventListener('keypress', (e) => {
 // =========================
 socket.on('message', (data) => {
     const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
+    const lowerText = data.text ? data.text.toLowerCase() : "";
 
-    // 1. FILTRO DE ACERTO - DEVE SER O PRIMEIRO
-    const lowerText = data.text.toLowerCase();
-    if (data.msgType === "gartic-success" || (data.name === "SISTEMA" && lowerText.includes("acertou"))) {
-        const div = document.createElement('div');
-        div.className = "p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-400 animate-bounce text-center mb-1";
-        div.innerHTML = `✨ ${data.text}`;
-        garticChatContainer.appendChild(div);
-        garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
-
-        if (meuUser && data.text.includes(meuUser.name)) {
-            confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+    // 1. FILTRO DE GARTIC (Acertos e Dicas)
+    if (data.msgType === "gartic-success" || data.msgType === "gartic-hint" || (data.name === "Lux Bot" && lowerText.includes("acertou"))) {
+        const divG = document.createElement('div');
+        
+        if (data.msgType === "gartic-success" || lowerText.includes("acertou")) {
+            divG.className = "p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-400 animate-bounce text-center mb-1";
+            divG.innerHTML = `✨ ${data.text}`;
+            if (meuUser && data.text.includes(meuUser.name)) {
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+            }
+        } else {
+            divG.className = "p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-[10px] text-yellow-500 text-center mb-1";
+            divG.innerHTML = data.text;
         }
+
+        garticChatContainer.appendChild(divG);
+        garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
         return; // Impede de ir para o chat normal
     }
 
@@ -362,13 +368,12 @@ socket.on('message', (data) => {
     const isSequencial = data.id === lastSenderId;
     lastSenderId = data.id;
 
-    const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
-
     // Mensagens de sistema gerais (Entrou no canal, etc)
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
-        div.innerHTML = `<div class="system-msg">${data.text}</div>`;
-        msgContainer.appendChild(div);
+        const divSystem = document.createElement('div');
+        divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+        divSystem.innerHTML = `<div class="system-msg">${data.text}</div>`;
+        msgContainer.appendChild(divSystem);
         msgContainer.scrollTop = msgContainer.scrollHeight;
         return;
     }
@@ -382,7 +387,10 @@ socket.on('message', (data) => {
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
     // Limpeza de texto para evitar erro no onclick do setReply
-    const safeText = data.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
+
+    const div = document.createElement('div');
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
     div.innerHTML = `
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
