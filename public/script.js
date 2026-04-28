@@ -560,6 +560,7 @@ socket.on("message", (data) => {
             data.text.replace(/\*\*/g, "");
 
         podeDesenhar = true;
+        garticBox.classList.remove("hidden");
     }
 });
 
@@ -581,9 +582,12 @@ canvas.addEventListener("mouseleave", endDraw);
 // =========================
 // TOUCH
 // =========================
-canvas.addEventListener("touchstart", startDraw);
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    startDraw(e);
+});
 
-canvas.addEventListener("touchmove", function (e) {
+canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
     draw(e);
 });
