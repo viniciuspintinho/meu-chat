@@ -2,13 +2,13 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
-const Datastore = require("nedb"); // NOVO: Banco de dados local
+const Datastore = require("nedb"); // Banco de dados local
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// NOVO: Inicialização do Banco de Dados
+// Inicialização do Banco de Dados
 const db = new Datastore({ filename: "database.db", autoload: true });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -22,7 +22,7 @@ let usersOnline = {};
 let bannedUsers = new Set();
 const badWords = ["palavrao1", "palavrao2", "toxic"];
 
-// NOVO: Controle de Anti-Flood
+// Controle de Anti-Flood
 const msgHistory = {};
 
 function filterText(text = "") {
@@ -35,12 +35,21 @@ function filterText(text = "") {
 }
 
 /* =========================
-   CONFIG GARTIC
+   CONFIG GARTIC (ATUALIZADO)
 ========================= */
 
+// Lista expandida com mais de 50 itens divididos por categorias
 const palavras = [
-    "cachorro", "gato", "banana", "carro", "computador", "pizza",
-    "telefone", "foguete", "aviao", "casa", "flor", "bicicleta"
+    // ANIMAIS
+    "tubarao", "elefante", "girafa", "jacare", "tartaruga", "morcego", "pinguim", "formiga", "leao", "zebra", "macaco", "cobra", "aranha", "coruja", "camaleao", "polvo", "vaca", "porco", "cachorro", "gato",
+    // OBJETOS
+    "martelo", "guarda-chuva", "escada", "cadeira", "relogio", "oculos", "mochila", "tesoura", "caneta", "espelho", "lanterna", "violao", "skate", "controle", "bateria", "xicara", "telefone", "computador",
+    // COMIDA
+    "melancia", "hamburguer", "sorvete", "batata frita", "ovo frito", "abacaxi", "pizza", "queijo", "cenoura", "pipoca", "donut", "sushi", "banana",
+    // NATUREZA / ESPAÇO / LUGARES
+    "montanha", "vulcao", "furacao", "planeta", "estrela", "arco-iris", "cachoeira", "floresta", "nuvem", "sol", "lua", "foguete", "casa", "flor", "castelo", "farol", "ponte", "piramide",
+    // TRANSPORTE
+    "aviao", "bicicleta", "helicoptero", "submarino", "trator", "navio", "ambulancia", "moto", "caminhao"
 ];
 
 let gartic = {
@@ -51,6 +60,8 @@ let gartic = {
     hint: "",
     points: {}
 };
+
+let ultimaPalavra = ""; // Para evitar repetição imediata
 
 function gerarHint(palavra) {
     return palavra
@@ -68,13 +79,20 @@ function iniciarRodada() {
     }
 
     const sorteado = lista[Math.floor(Math.random() * lista.length)];
-    const palavra = palavras[Math.floor(Math.random() * palavras.length)];
+    
+    // Lógica para evitar que a mesma palavra saia duas vezes seguidas
+    let palavraSorteada;
+    do {
+        palavraSorteada = palavras[Math.floor(Math.random() * palavras.length)];
+    } while (palavraSorteada === ultimaPalavra && palavras.length > 1);
+
+    ultimaPalavra = palavraSorteada;
 
     gartic.ativo = true;
     gartic.drawer = sorteado.name;
     gartic.drawerId = sorteado.id;
-    gartic.palavra = palavra;
-    gartic.hint = gerarHint(palavra);
+    gartic.palavra = palavraSorteada;
+    gartic.hint = gerarHint(palavraSorteada);
 
     io.emit("clearCanvas");
 
@@ -113,7 +131,7 @@ io.on("connection", (socket) => {
             return socket.disconnect();
         }
 
-        // NOVO: Recuperação de pontos do Banco de Dados
+        // Recuperação de pontos do Banco de Dados
         db.findOne({ name: data.name }, (err, doc) => {
             if (doc) {
                 gartic.points[data.name] = doc.points || 0;
@@ -148,7 +166,7 @@ io.on("connection", (socket) => {
         const user = usersOnline[socket.id];
         if (!user) return;
 
-        // NOVO: Lógica Anti-Flood (Máximo 5 mensagens em 3 segundos)
+        // Lógica Anti-Flood (Máximo 5 mensagens em 3 segundos)
         const now = Date.now();
         if (!msgHistory[socket.id]) msgHistory[socket.id] = [];
         msgHistory[socket.id] = msgHistory[socket.id].filter(t => now - t < 3000);
@@ -210,7 +228,7 @@ io.on("connection", (socket) => {
         ) {
             gartic.points[user.name] += 10;
 
-            // NOVO: Salva os pontos no Banco de Dados
+            // Salva os pontos no Banco de Dados
             db.update({ name: user.name }, { $inc: { points: 10 } }, {});
 
             io.emit("message", {

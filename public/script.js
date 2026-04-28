@@ -13,7 +13,7 @@ let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
 
 // =========================
-// PREVIEW DE LINKS AUTOMÁTICO (NOVO)
+// PREVIEW DE LINKS AUTOMÁTICO
 // =========================
 function generatePreview(text) {
     const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -289,7 +289,7 @@ document.getElementById('form').onsubmit = (e) => {
 };
 
 // =========================
-// RECEBER MSG (ATUALIZADO COM PREVIEW)
+// RECEBER MSG
 // =========================
 socket.on('message', (data) => {
 
@@ -328,7 +328,6 @@ socket.on('message', (data) => {
 
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    // Uso do novo sistema de Preview
     const messageContent = generatePreview(data.text);
 
     div.innerHTML = `
@@ -430,7 +429,7 @@ function enviarFoto() {
 }
 
 // =========================
-// GARTIC PRO CLIENT (ATUALIZADO COM CORES E TAMANHOS)
+// GARTIC PRO CLIENT
 // =========================
 
 const garticBox = document.getElementById("gartic-box");
@@ -438,8 +437,8 @@ const canvas = document.getElementById("garticCanvas");
 const clearBtn = document.getElementById("clearBtn");
 const rankingDiv = document.getElementById("ranking");
 const garticInfo = document.getElementById("garticInfo");
-const colorPicker = document.getElementById("colorPicker"); // Novo
-const penSize = document.getElementById("penSize");         // Novo
+const colorPicker = document.getElementById("colorPicker");
+const penSize = document.getElementById("penSize");
 
 const ctx = canvas.getContext("2d");
 
