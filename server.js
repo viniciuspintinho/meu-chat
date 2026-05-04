@@ -11,6 +11,7 @@ const io = new Server(server);
 // Inicialização dos Bancos de Dados
 const db = new Datastore({ filename: "database.db", autoload: true });
 const msgDb = new Datastore({ filename: "messages.db", autoload: true }); // Histórico de mensagens
+const cmdDb = new Datastore({ filename: "commands.db", autoload: true }); // NOVO: Banco de comandos customizados
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -240,6 +241,32 @@ io.on("connection", (socket) => {
                 });
                 return;
             }
+
+            // NOVO: Comando /addcmd para Admins (/addcmd nome_comando resposta)
+            if (texto.startsWith("/addcmd ")) {
+                const parts = texto.replace("/addcmd ", "").split(" ");
+                const cmdName = parts[0].toLowerCase();
+                const response = parts.slice(1).join(" ");
+                if (cmdName && response) {
+                    cmdDb.update({ name: cmdName }, { name: cmdName, response: response }, { upsert: true });
+                    socket.emit("message", { name: "SISTEMA", text: `✅ Comando /${cmdName} criado!`, id: "bot" });
+                }
+                return;
+            }
+        }
+
+        /* COMANDOS CUSTOMIZADOS (Dinâmicos) */
+        if (texto.startsWith("/")) {
+            const cmdInput = texto.split(" ")[0].toLowerCase().replace("/", "");
+            cmdDb.findOne({ name: cmdInput }, (err, cmd) => {
+                if (cmd) {
+                    io.emit("message", {
+                        name: "Lux Bot",
+                        text: cmd.response.replace("{user}", user.name),
+                        id: "bot"
+                    });
+                }
+            });
         }
 
         /* START GARTIC PELO CHAT MANTIDO POR COMPATIBILIDADE */

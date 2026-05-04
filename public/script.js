@@ -11,6 +11,12 @@ let selectedReply = null;
 let lastSenderId = null;
 let typingTimeout;
 
+// NOVO: Variáveis para Menções
+let usersForMention = [];
+let mentionIndex = 0;
+const mentionMenu = document.getElementById('mention-menu');
+const mentionList = document.getElementById('mention-list');
+
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
 
@@ -186,6 +192,26 @@ socket.on('displayTyping', (data) => {
         data.typing ? `${data.name} está digitando...` : '';
 });
 
+// NOVO: Lógica de Menções no KeyUp
+msgInput.addEventListener('keyup', (e) => {
+    const val = msgInput.value;
+    const lastWord = val.split(" ").pop();
+
+    if (lastWord.startsWith("@") && lastWord.length > 1) {
+        const query = lastWord.slice(1).toLowerCase();
+        const filtered = usersForMention.filter(u => u.name.toLowerCase().includes(query));
+        
+        if (filtered.length > 0) {
+            renderMentionMenu(filtered);
+            mentionMenu.classList.remove('hidden');
+        } else {
+            mentionMenu.classList.add('hidden');
+        }
+    } else {
+        mentionMenu.classList.add('hidden');
+    }
+});
+
 msgInput.addEventListener('input', () => {
     socket.emit('typing', true);
 
@@ -194,6 +220,28 @@ msgInput.addEventListener('input', () => {
     typingTimeout = setTimeout(() => {
         socket.emit('typing', false);
     }, 2000);
+});
+
+// NOVO: Funções do Menu de Menções
+function renderMentionMenu(list) {
+    mentionList.innerHTML = list.map((u, i) => `
+        <div class="mention-item p-2 text-xs cursor-pointer hover:bg-white/10 transition ${i === mentionIndex ? 'bg-white/10' : ''}" 
+             onclick="selectMention('${u.name}')">
+            @${u.name}
+        </div>
+    `).join('');
+}
+
+function selectMention(name) {
+    const words = msgInput.value.split(" ");
+    words.pop();
+    msgInput.value = words.join(" ") + (words.length > 0 ? " " : "") + "@" + name + " ";
+    mentionMenu.classList.add('hidden');
+    msgInput.focus();
+}
+
+document.addEventListener('click', (e) => {
+    if (mentionMenu && !mentionMenu.contains(e.target)) mentionMenu.classList.add('hidden');
 });
 
 // =========================
@@ -218,6 +266,11 @@ function processCommand(val) {
             gainXP(amount);
             res.silent = true;
         }
+    }
+
+    // NOVO: Comando /addcmd para admins
+    else if (cmd === '/addcmd' && isAdm) {
+        return val; // Deixa o servidor processar
     }
 
     else if (cmd === '/love')
@@ -408,6 +461,7 @@ socket.on('message', (data) => {
 // USERS ONLINE
 // =========================
 socket.on('updateUserList', (users) => {
+    usersForMention = users; // Atualiza a lista para o sistema de @
     const userList = document.getElementById('user-list');
 
     userList.innerHTML = users.map(u => {
