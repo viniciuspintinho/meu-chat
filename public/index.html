@@ -55,6 +55,7 @@ position:relative;
     inset: 0;
     z-index: -1;
     background: #050508;
+    pointer-events: none; /* Correção para não atrapalhar o clique */
 }
 
 /* Camada escura ajustada para partículas brilharem mais */
@@ -338,27 +339,39 @@ color: white;
 /* --- ATUALIZAÇÃO: CORREÇÃO HOVER CARD --- */
 #hover-card {
     position: fixed;
-    z-index: 1000;
+    z-index: 2000; /* Aumentado para garantir visibilidade */
     pointer-events: none;
     display: none;
-    animation: fadeIn 0.2s ease;
     width: 256px; /* Largura fixa */
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    transition: opacity 0.15s ease;
 }
 
 #hover-banner {
     height: 64px;
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    z-index: 1;
+    background: linear-gradient(to right, var(--theme-color), #7c3aed);
 }
 
 #hover-card-content {
     position: relative;
-    z-index: 2;
-    padding-top: 3.5rem; /* Ajuste para não cortar o avatar/nome */
+    padding: 0 16px 16px 16px;
+    margin-top: -35px; /* Sobe o avatar sobre o banner */
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+#hover-avatar {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    border: 4px solid #0a0a0a;
+    object-fit: cover;
+    background: #111;
 }
 /* ------------------------------------- */
 
@@ -391,19 +404,19 @@ color: white;
 <div class="nebula" style="background:var(--theme-color); top:-10%; left:15%;"></div>
 <div class="nebula" style="background:#7c3aed; bottom:5%; right:5%; animation-delay: -5s;"></div>
 
-<div id="hover-card" class="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-    <div id="hover-banner" class="bg-gradient-to-r from-blue-600 to-purple-600"></div>
-    <div id="hover-card-content" class="px-4 pb-4">
-        <img id="hover-avatar" src="" class="w-20 h-20 rounded-full border-4 border-[#0a0a0a] object-cover mb-2 relative z-10 mx-auto">
-        <h3 id="hover-name" class="font-bold text-white text-lg text-center"></h3>
-        <p id="hover-title" class="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3 text-center"></p>
+<div id="hover-card">
+    <div id="hover-banner"></div>
+    <div id="hover-card-content">
+        <img id="hover-avatar" src="" alt="">
+        <h3 id="hover-name" class="font-bold text-white text-lg mt-2"></h3>
+        <p id="hover-title" class="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-3"></p>
         <div class="w-full bg-white/5 rounded-xl p-3 border border-white/5">
             <div class="flex justify-between text-[10px] mb-1 font-black">
                 <span class="text-gray-400 uppercase">Nível Atual</span>
                 <span id="hover-level" class="text-white"></span>
             </div>
             <div class="w-full h-1.5 bg-black rounded-full overflow-hidden">
-                <div id="hover-xp-bar" class="h-full bg-blue-500 transition-all"></div>
+                <div id="hover-xp-bar" class="h-full bg-blue-500 transition-all duration-500"></div>
             </div>
         </div>
     </div>
@@ -625,67 +638,96 @@ Salvar
 <script src="script.js"></script>
 
 <script>
+/* --- CONFIGURAÇÃO OTIMIZADA DAS PARTÍCULAS (PARA PARAR DE TRAVAR) --- */
 tsParticles.load("tsparticles", {
-    fpsLimit: 60,
-    interactivity: {
-        events: {
-            onHover: { enable: true, mode: "grab" },
-            resize: true,
-        },
-        modes: {
-            grab: { 
-                distance: 200, 
-                links: { opacity: 0.8 } 
-            }
-        },
-    },
+    fpsLimit: 60, // Limita o FPS para não sobrecarregar
+    fullScreen: { enable: true },
     particles: {
+        number: { 
+            value: 60, // Quantidade ideal para não travar
+            density: { enable: true, area: 800 } 
+        },
         color: { value: ["#0095f6", "#00f9f9", "#9000ff"] },
+        shape: { type: ["circle", "triangle"] },
+        opacity: {
+            value: 0.6,
+            animation: { enable: true, speed: 1, minimumValue: 0.1 }
+        },
+        size: {
+            value: { min: 1, max: 4 },
+            animation: { enable: true, speed: 2, minimumValue: 1 }
+        },
         links: {
-            color: "#0095f6",
-            distance: 130,
             enable: true,
-            opacity: 0.5,
-            width: 1.5,
+            distance: 140,
+            color: "#0095f6",
+            opacity: 0.4,
+            width: 1
         },
         move: {
             enable: true,
-            speed: 2.5,
+            speed: 1.5, // Velocidade suave
             direction: "none",
-            random: true,
-            straight: false,
             outModes: "out"
-        },
-        number: {
-            density: { enable: true, area: 800 },
-            value: 100,
-        },
-        opacity: {
-            value: 0.8,
-            animation: {
-                enable: true,
-                speed: 1,
-                minimumValue: 0.3
-            }
-        },
-        shape: {
-            type: ["circle", "triangle"]
-        },
-        size: {
-            value: { min: 2, max: 5 },
-            animation: {
-                enable: true,
-                speed: 4,
-                minimumValue: 1
-            }
-        },
-        shadow: {
-            enable: true,
-            blur: 10,
-            color: "#0095f6"
         }
+    },
+    interactivity: {
+        events: {
+            onHover: { enable: true, mode: "grab" },
+            resize: true
+        },
+        modes: {
+            grab: { distance: 180, links: { opacity: 0.6 } }
+        }
+    },
+    detectRetina: false // Desligado para economizar processamento em telas 4K/Mobile
+});
+
+/* --- LÓGICA DO HOVER CARD (ANTI-CORTE E NÍVEL ATUAL) --- */
+document.addEventListener('mousemove', (e) => {
+    const card = document.getElementById('hover-card');
+    if (card.style.display === 'block') {
+        let x = e.clientX + 15;
+        let y = e.clientY + 15;
+
+        // Evita que o card saia pela direita da tela
+        if (x + 260 > window.innerWidth) {
+            x = e.clientX - 275;
+        }
+        // Evita que o card saia pela parte de baixo da tela
+        if (y + 220 > window.innerHeight) {
+            y = e.clientY - 230;
+        }
+
+        card.style.left = x + 'px';
+        card.style.top = y + 'px';
     }
 });
+
+// Essa função deve ser usada dentro do seu script.js para preencher os dados
+function showUserCard(user) {
+    const card = document.getElementById('hover-card');
+    document.getElementById('hover-name').innerText = user.name;
+    document.getElementById('hover-avatar').src = user.avatar || 'https://via.placeholder.com/150';
+    
+    // CORREÇÃO: Pegando o nível correto e atualizado
+    document.getElementById('hover-level').innerText = user.level || '1';
+    
+    document.getElementById('hover-title').innerText = user.level > 10 ? 'Veterano Lux' : 'Membro';
+    
+    // Barra de XP no Card
+    const xpPercent = (user.xp % 100); 
+    document.getElementById('hover-xp-bar').style.width = xpPercent + '%';
+
+    card.style.display = 'block';
+    card.style.opacity = '1';
+}
+
+function hideUserCard() {
+    const card = document.getElementById('hover-card');
+    card.style.display = 'none';
+    card.style.opacity = '0';
+}
 </script>
 
 </body>
