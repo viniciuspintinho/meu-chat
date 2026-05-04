@@ -21,32 +21,50 @@
 --adm-red:#ff3040;
 }
 
-/* --- ATUALIZAÇÃO: ANIMAÇÃO DE FUNDO --- */
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+/* --- ATUALIZAÇÃO: ANIMAÇÃO DE FUNDO SCI-FI (CUBOS E ESFERAS) --- */
+@keyframes nebulaMove {
+    0% { background-position: 0% 50%; transform: scale(1); }
+    50% { background-position: 100% 50%; transform: scale(1.05); }
+    100% { background-position: 0% 50%; transform: scale(1); }
 }
 
-@keyframes floatNebula {
-    0% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-30px, 40px) scale(1.1); }
-    100% { transform: translate(0, 0) scale(1); }
+@keyframes floatElements {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+    50% { transform: translateY(-30px) rotate(5deg); opacity: 0.6; }
+    100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
 }
 
-body{
-font-family:'Plus Jakarta Sans',sans-serif;
-/* Fundo mais escuro e animado */
-background: linear-gradient(-45deg, #050505, #0a0a15, #150515, #050505);
-background-size: 400% 400%;
-animation: gradientBG 15s ease infinite;
-color:#fff;
-margin:0;
-padding:0;
-height:100vh;
-display:flex;
-overflow:hidden;
-position:relative;
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    color: #fff;
+    /* Fundo base escuro com gradiente de nebulosa */
+    background: radial-gradient(circle at 20% 30%, rgba(var(--theme-rgb), 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.2) 0%, transparent 50%),
+                #050505;
+    background-size: 200% 200%;
+    animation: nebulaMove 20s ease-in-out infinite;
+}
+
+/* Camada dos Cubos e Esferas flutuando */
+body::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url('https://www.transparenttextures.com/patterns/stardust.png'), 
+                      url('https://img.freepik.com/free-vector/abstract-low-poly-geometric-background_1048-10331.jpg'); 
+    background-size: cover, 800px;
+    background-repeat: repeat;
+    mix-blend-mode: screen;
+    filter: hue-rotate(180deg) brightness(0.5) contrast(1.2);
+    animation: floatElements 15s ease-in-out infinite;
 }
 
 /* Camada escura para não camuflar mensagens */
@@ -54,7 +72,7 @@ body::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.75);
     z-index: 1;
 }
 
@@ -66,7 +84,6 @@ body::before {
     filter: blur(120px);
     opacity: 0.12;
     z-index: 0;
-    animation: floatNebula 25s infinite ease-in-out;
 }
 /* ------------------------------------- */
 
@@ -377,9 +394,6 @@ color: white;
 
 <body>
 
-<div class="nebula" style="background:var(--theme-color); top:-10%; left:15%;"></div>
-<div class="nebula" style="background:#7c3aed; bottom:5%; right:5%; animation-delay: -5s;"></div>
-
 <div id="hover-card" class="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
     <div id="hover-banner" class="bg-gradient-to-r from-blue-600 to-purple-600"></div>
     <div id="hover-card-content" class="px-4 pb-4">
@@ -404,9 +418,6 @@ color: white;
         <h1 id="shout-text" class="text-shout"></h1>
     </div>
 </div>
-
-<div class="glow-bg glow-1"></div>
-<div class="glow-bg glow-2"></div>
 
 <div id="login" class="fixed inset-0 bg-black z-[100] flex items-center justify-center p-6">
 <div class="w-full max-w-sm text-center">
