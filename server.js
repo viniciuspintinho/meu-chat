@@ -165,19 +165,39 @@ io.on("connection", (socket) => {
             id: socket.id,
             name: data.name,
             avatar: data.avatar,
-            isAdmin
+            isAdmin,
+            room: "Geral" // Sala padrão
         };
+
+        socket.join("Geral");
 
         io.emit("updateUserList", Object.values(usersOnline));
 
-        socket.broadcast.emit("message", {
+        socket.broadcast.to("Geral").emit("message", {
             name: "Lux Bot",
             text: `✨ **${data.name}** entrou no canal!`,
             id: "bot"
         });
 
         // Enviar histórico ao usuário que acabou de entrar (Persistência)
-        msgDb.find({}).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
+        msgDb.find({ room: "Geral" }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
+            docs.forEach(msg => socket.emit("message", msg));
+        });
+    });
+
+    // NOVO: Lógica de troca de salas
+    socket.on("joinRoom", (roomName) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+
+        socket.leave(user.room);
+        user.room = roomName;
+        socket.join(roomName);
+
+        socket.emit("roomInfo", roomName);
+        
+        // Carrega histórico da sala específica
+        msgDb.find({ room: roomName }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
             docs.forEach(msg => socket.emit("message", msg));
         });
     });
@@ -207,6 +227,13 @@ io.on("connection", (socket) => {
             if (texto.startsWith("/shout ")) {
                 const grito = texto.replace("/shout ", "").trim();
                 io.emit("shout", { name: user.name, text: grito });
+                return;
+            }
+
+            // NOVO: Comando /pin para Admins
+            if (texto.startsWith("/pin ")) {
+                const pinText = texto.replace("/pin ", "").trim();
+                io.to(user.room).emit("newPin", pinText);
                 return;
             }
 
@@ -260,7 +287,7 @@ io.on("connection", (socket) => {
             const cmdInput = texto.split(" ")[0].toLowerCase().replace("/", "");
             cmdDb.findOne({ name: cmdInput }, (err, cmd) => {
                 if (cmd) {
-                    io.emit("message", {
+                    io.to(user.room).emit("message", {
                         name: "Lux Bot",
                         text: cmd.response.replace("{user}", user.name),
                         id: "bot"
@@ -314,10 +341,11 @@ io.on("connection", (socket) => {
             replyTo: data.replyTo || null,
             isAdmin: user.isAdmin,
             id: socket.id,
-            timestamp: now
+            timestamp: now,
+            room: user.room // Salva a sala da mensagem
         };
 
-        io.emit("message", mensagemFinal);
+        io.to(user.room).emit("message", mensagemFinal);
         msgDb.insert(mensagemFinal); // Salva a mensagem no banco de dados persistente
     });
 
@@ -325,7 +353,7 @@ io.on("connection", (socket) => {
     socket.on("typing", (isTyping) => {
         const user = usersOnline[socket.id];
         if (user) {
-            socket.broadcast.emit("displayTyping", {
+            socket.broadcast.to(user.room).emit("displayTyping", {
                 name: user.name,
                 typing: isTyping
             });
@@ -364,10 +392,11 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         if (usersOnline[socket.id]) {
             const saiu = usersOnline[socket.id].name;
+            const userRoom = usersOnline[socket.id].room;
             delete usersOnline[socket.id];
             delete msgHistory[socket.id]; // Limpa histórico do flood
             io.emit("updateUserList", Object.values(usersOnline));
-            io.emit("message", {
+            io.to(userRoom).emit("message", {
                 name: "Lux Bot",
                 text: `❌ **${saiu}** saiu.`,
                 id: "bot"

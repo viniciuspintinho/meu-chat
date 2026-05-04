@@ -11,11 +11,19 @@ let selectedReply = null;
 let lastSenderId = null;
 let typingTimeout;
 
-// NOVO: Variáveis para Menções
+// NOVO E RECUPERADO: Variáveis para Menções e Emojis
 let usersForMention = [];
 let mentionIndex = 0;
 const mentionMenu = document.getElementById('mention-menu');
 const mentionList = document.getElementById('mention-list');
+
+const emojiMenu = document.getElementById('emoji-menu');
+const emojiList = document.getElementById('emoji-list');
+const EMOJIS = {
+    ":smile:": "😊", ":heart:": "❤️", ":fire:": "🔥", ":laugh:": "😂", 
+    ":cry:": "😢", ":cool:": "😎", ":think:": "🤔", ":clap:": "👏",
+    ":rocket:": "🚀", ":star:": "⭐", ":check:": "✅", ":warn:": "⚠️"
+};
 
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
@@ -35,8 +43,8 @@ function generatePreview(text) {
     }
     
     if (imgRegex.test(text)) {
-        return `<img src="${text}" class="max-w-full mt-2 rounded-lg shadow-xl border border-white/10">`;
-    }
+    return `<img src="${text}" class="max-w-[300px] max-h-[300px] object-cover mt-2 rounded-lg shadow-xl border border-white/10">`;
+}
     
     let txt = text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>')
                   .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
@@ -115,6 +123,27 @@ function gainXP(amount = null) {
 }
 
 // =========================
+// NOVO: SALAS (ROOMS)
+// =========================
+function changeRoom(roomName) {
+    socket.emit('joinRoom', roomName);
+    
+    // Atualiza visual dos botões
+    document.querySelectorAll('.room-btn').forEach(btn => btn.classList.remove('active'));
+    const allBtns = document.querySelectorAll('.room-btn');
+    allBtns.forEach(btn => {
+        if(btn.innerText.includes(roomName)) btn.classList.add('active');
+    });
+    
+    document.getElementById('room-title').innerText = roomName;
+    msgContainer.innerHTML = ''; // Limpa para carregar a nova sala
+}
+
+socket.on('roomInfo', (roomName) => {
+    document.getElementById('room-title').innerText = roomName;
+});
+
+// =========================
 // LOGIN AUTO
 // =========================
 window.onload = () => {
@@ -166,7 +195,7 @@ socket.on('forceDisconnect', (msg) => {
 });
 
 // =========================
-// SHOUT COMMAND
+// SHOUT & NOVO: PINS
 // =========================
 socket.on('shout', (data) => {
     const overlay = document.getElementById('shout-overlay');
@@ -184,19 +213,27 @@ socket.on('shout', (data) => {
     }, 6000);
 });
 
+socket.on('newPin', (text) => {
+    const banner = document.getElementById('pin-banner');
+    const pinText = document.getElementById('pin-text');
+    pinText.innerText = text;
+    banner.classList.remove('hidden');
+});
+
 // =========================
-// TYPING
+// TYPING & NOVO: MENTIONS/EMOJIS
 // =========================
 socket.on('displayTyping', (data) => {
     document.getElementById('typing-indicator').innerText =
         data.typing ? `${data.name} está digitando...` : '';
 });
 
-// NOVO: Lógica de Menções no KeyUp
 msgInput.addEventListener('keyup', (e) => {
     const val = msgInput.value;
-    const lastWord = val.split(" ").pop();
+    const words = val.split(" ");
+    const lastWord = words[words.length - 1];
 
+    // Lógica de Menções @
     if (lastWord.startsWith("@") && lastWord.length > 1) {
         const query = lastWord.slice(1).toLowerCase();
         const filtered = usersForMention.filter(u => u.name.toLowerCase().includes(query));
@@ -204,11 +241,27 @@ msgInput.addEventListener('keyup', (e) => {
         if (filtered.length > 0) {
             renderMentionMenu(filtered);
             mentionMenu.classList.remove('hidden');
+            emojiMenu.classList.add('hidden');
         } else {
             mentionMenu.classList.add('hidden');
         }
-    } else {
+    } 
+    // Lógica de Emojis :
+    else if (lastWord.startsWith(":") && lastWord.length > 1) {
+        const query = lastWord.toLowerCase();
+        const filteredKeys = Object.keys(EMOJIS).filter(k => k.includes(query));
+        
+        if (filteredKeys.length > 0) {
+            renderEmojiMenu(filteredKeys);
+            emojiMenu.classList.remove('hidden');
+            mentionMenu.classList.add('hidden');
+        } else {
+            emojiMenu.classList.add('hidden');
+        }
+    }
+    else {
         mentionMenu.classList.add('hidden');
+        emojiMenu.classList.add('hidden');
     }
 });
 
@@ -222,7 +275,24 @@ msgInput.addEventListener('input', () => {
     }, 2000);
 });
 
-// NOVO: Funções do Menu de Menções
+// Funções de Menu
+function renderEmojiMenu(list) {
+    emojiList.innerHTML = list.map(key => `
+        <div class="emoji-item p-2 text-xs cursor-pointer hover:bg-white/10 transition" 
+             onclick="selectEmoji('${key}')">
+            ${EMOJIS[key]} ${key}
+        </div>
+    `).join('');
+}
+
+function selectEmoji(key) {
+    const words = msgInput.value.split(" ");
+    words.pop();
+    msgInput.value = words.join(" ") + (words.length > 0 ? " " : "") + EMOJIS[key] + " ";
+    emojiMenu.classList.add('hidden');
+    msgInput.focus();
+}
+
 function renderMentionMenu(list) {
     mentionList.innerHTML = list.map((u, i) => `
         <div class="mention-item p-2 text-xs cursor-pointer hover:bg-white/10 transition ${i === mentionIndex ? 'bg-white/10' : ''}" 
@@ -242,7 +312,36 @@ function selectMention(name) {
 
 document.addEventListener('click', (e) => {
     if (mentionMenu && !mentionMenu.contains(e.target)) mentionMenu.classList.add('hidden');
+    if (emojiMenu && !emojiMenu.contains(e.target)) emojiMenu.classList.add('hidden');
 });
+
+// =========================
+// NOVO: HOVER CARD (PREVIEW PERFIL)
+// =========================
+const hoverCard = document.getElementById('hover-card');
+
+function getTitle(level) {
+    if (level < 5) return "Novato do Chat";
+    if (level < 15) return "Frequentador";
+    if (level < 30) return "Veterano Elite";
+    return "Mestre do Desenho";
+}
+
+function showHoverCard(userData, e) {
+    document.getElementById('hover-avatar').src = userData.avatar;
+    document.getElementById('hover-name').innerText = userData.name;
+    document.getElementById('hover-level').innerText = userData.level || 1;
+    document.getElementById('hover-title').innerText = getTitle(userData.level || 1);
+    document.getElementById('hover-xp-bar').style.width = (userData.xp || 0) + "%";
+
+    hoverCard.style.display = 'block';
+    hoverCard.style.left = (e.clientX + 15) + 'px';
+    hoverCard.style.top = (e.clientY + 15) + 'px';
+}
+
+function hideHoverCard() {
+    hoverCard.style.display = 'none';
+}
 
 // =========================
 // COMANDOS
@@ -267,12 +366,13 @@ function processCommand(val) {
             res.silent = true;
         }
     }
-
-    // NOVO: Comando /addcmd para admins
-    else if (cmd === '/addcmd' && isAdm) {
-        return val; // Deixa o servidor processar
+    else if (cmd === '/pin' && isAdm) {
+        socket.emit('pinMessage', target);
+        res.silent = true;
     }
-
+    else if (cmd === '/addcmd' && isAdm) {
+        return val; 
+    }
     else if (cmd === '/love')
         res.text = `❤️ Amor entre **${user.name}** e **${target}**: ${Math.floor(Math.random() * 101)}%`;
 
@@ -403,7 +503,7 @@ socket.on('message', (data) => {
 
         garticChatContainer.appendChild(divG);
         garticChatContainer.scrollTop = garticChatContainer.scrollHeight;
-        return; // Impede de ir para o chat normal
+        return; 
     }
 
     // 2. FILTRO PALPITE GARTIC
@@ -421,7 +521,6 @@ socket.on('message', (data) => {
     const isSequencial = data.id === lastSenderId;
     lastSenderId = data.id;
 
-    // Mensagens de sistema gerais (Entrou no canal, etc)
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
         const divSystem = document.createElement('div');
         divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
@@ -439,7 +538,6 @@ socket.on('message', (data) => {
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    // Limpeza de texto para evitar erro no onclick do setReply
     const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
 
     const div = document.createElement('div');
@@ -448,7 +546,9 @@ socket.on('message', (data) => {
     div.innerHTML = `
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
              onclick="setReply('${data.name}', '${safeText}')">
-            ${!isSequencial ? `<div class="font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">${data.name}</div>` : ''}
+            ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
+                onmouseenter="showHoverCard({name: '${data.name}', avatar: '${data.avatar || ""}', level: ${data.level || 1}, xp: ${data.xp || 0}}, event)" 
+                onmouseleave="hideHoverCard()">${data.name}</div>` : ''}
             ${generatePreview(data.text)}
         </div>
     `;
@@ -461,13 +561,15 @@ socket.on('message', (data) => {
 // USERS ONLINE
 // =========================
 socket.on('updateUserList', (users) => {
-    usersForMention = users; // Atualiza a lista para o sistema de @
+    usersForMention = users; 
     const userList = document.getElementById('user-list');
 
     userList.innerHTML = users.map(u => {
         const isAdm = ADMINS.includes(u.name);
         return `
-            <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition">
+            <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-pointer" 
+                 onmouseenter="showHoverCard({name: '${u.name}', avatar: '${u.avatar}', level: ${u.level || 1}, xp: ${u.xp || 0}}, event)" 
+                 onmouseleave="hideHoverCard()">
                 <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${isAdm ? 'avatar-active' : ''}">
                 <span class="text-xs ${isAdm ? 'text-red-500 font-bold' : 'text-gray-400'}">
                     ${u.name}
@@ -548,7 +650,6 @@ function enviarFoto() {
 // =========================
 // GARTIC PRO CLIENT
 // =========================
-
 const garticBox = document.getElementById("gartic-box");
 const canvas = document.getElementById("garticCanvas");
 const clearBtn = document.getElementById("clearBtn");
