@@ -8,6 +8,8 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.12.0/tsparticles.confetti.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
 
 <style>
 /* Adicionado JetBrains Mono para Hierarquia Tipográfica de Sistema */
@@ -36,10 +38,8 @@
 
 body{
 font-family:'Plus Jakarta Sans',sans-serif;
-/* Fundo mais escuro e animado */
-background: linear-gradient(-45deg, #050505, #0a0a15, #150515, #050505);
-background-size: 400% 400%;
-animation: gradientBG 15s ease infinite;
+/* Ajustado para fundo transparente para as partículas aparecerem */
+background: transparent;
 color:#fff;
 margin:0;
 padding:0;
@@ -49,6 +49,14 @@ overflow:hidden;
 position:relative;
 }
 
+/* Container fixo para partículas */
+#tsparticles {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: #050508;
+}
+
 /* Camada escura para não camuflar mensagens */
 body::before {
     content: "";
@@ -56,6 +64,7 @@ body::before {
     inset: 0;
     background: rgba(0, 0, 0, 0.65);
     z-index: 1;
+    pointer-events: none;
 }
 
 .nebula {
@@ -377,6 +386,8 @@ color: white;
 
 <body>
 
+<div id="tsparticles"></div>
+
 <div class="nebula" style="background:var(--theme-color); top:-10%; left:15%;"></div>
 <div class="nebula" style="background:#7c3aed; bottom:5%; right:5%; animation-delay: -5s;"></div>
 
@@ -612,6 +623,41 @@ Salvar
 </div>
 
 <script src="script.js"></script>
+
+<script>
+tsParticles.load("tsparticles", {
+    fpsLimit: 60,
+    interactivity: {
+        events: {
+            onHover: { enable: true, mode: "grab" },
+            resize: true,
+        },
+        modes: {
+            grab: { distance: 140, links: { opacity: 0.5 } }
+        },
+    },
+    particles: {
+        color: { value: "#0095f6" },
+        links: {
+            color: "#0095f6",
+            distance: 150,
+            enable: true,
+            opacity: 0.2,
+            width: 1,
+        },
+        move: {
+            enable: true,
+            speed: 1.5,
+        },
+        number: {
+            density: { enable: true, area: 800 },
+            value: 80,
+        },
+        opacity: { value: 0.3 },
+        size: { value: { min: 1, max: 3 } },
+    }
+});
+</script>
 
 </body>
 </html>
