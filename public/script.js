@@ -334,9 +334,27 @@ function showHoverCard(userData, e) {
     document.getElementById('hover-title').innerText = getTitle(userData.level || 1);
     document.getElementById('hover-xp-bar').style.width = (userData.xp || 0) + "%";
 
+    // CSS para garantir que o card não seja cortado
+    hoverCard.style.position = 'fixed';
+    hoverCard.style.zIndex = '9999';
     hoverCard.style.display = 'block';
-    hoverCard.style.left = (e.clientX + 15) + 'px';
-    hoverCard.style.top = (e.clientY + 15) + 'px';
+    
+    // Cálculo de posição para evitar sair da tela
+    let posX = e.clientX + 15;
+    let posY = e.clientY + 15;
+
+    // Se o card for sair pela direita
+    if (posX + 220 > window.innerWidth) {
+        posX = e.clientX - 230;
+    }
+
+    // Se o card for sair por baixo
+    if (posY + 150 > window.innerHeight) {
+        posY = e.clientY - 160;
+    }
+
+    hoverCard.style.left = posX + 'px';
+    hoverCard.style.top = posY + 'px';
 }
 
 function hideHoverCard() {
