@@ -21,9 +21,25 @@
 --adm-red:#ff3040;
 }
 
+/* --- ATUALIZAÇÃO: ANIMAÇÃO DE FUNDO --- */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes floatNebula {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-30px, 40px) scale(1.1); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
 body{
 font-family:'Plus Jakarta Sans',sans-serif;
-background:#050505;
+/* Fundo mais escuro e animado */
+background: linear-gradient(-45deg, #050505, #0a0a15, #150515, #050505);
+background-size: 400% 400%;
+animation: gradientBG 15s ease infinite;
 color:#fff;
 margin:0;
 padding:0;
@@ -32,6 +48,27 @@ display:flex;
 overflow:hidden;
 position:relative;
 }
+
+/* Camada escura para não camuflar mensagens */
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1;
+}
+
+.nebula {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    z-index: 0;
+    animation: floatNebula 25s infinite ease-in-out;
+}
+/* ------------------------------------- */
 
 /* ATUALIZAÇÃO: Fonte JetBrains para mensagens de sistema */
 .system-msg{
@@ -289,14 +326,32 @@ color: white;
     color: white;
 }
 
-/* NOVO: Estilo Hover Card */
+/* --- ATUALIZAÇÃO: CORREÇÃO HOVER CARD --- */
 #hover-card {
     position: fixed;
     z-index: 1000;
     pointer-events: none;
     display: none;
     animation: fadeIn 0.2s ease;
+    width: 256px; /* Largura fixa */
 }
+
+#hover-banner {
+    height: 64px;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 1;
+}
+
+#hover-card-content {
+    position: relative;
+    z-index: 2;
+    padding-top: 3.5rem; /* Ajuste para não cortar o avatar/nome */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+/* ------------------------------------- */
 
 /* NOVO: Estilo Sala Ativa */
 .room-btn.active {
@@ -311,7 +366,7 @@ color: white;
     max-width: 250px !important;
     max-height: 250px !important;
     border-radius: 8px;
-    object-fit: contain; /* Ou 'cover' se preferir que preencha o quadrado */
+    object-fit: contain; 
     display: block;
 }
 
@@ -322,12 +377,15 @@ color: white;
 
 <body>
 
-<div id="hover-card" class="w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-    <div id="hover-banner" class="h-16 bg-gradient-to-r from-blue-600 to-purple-600"></div>
-    <div class="px-4 pb-4 -mt-8 flex flex-col items-center">
-        <img id="hover-avatar" src="" class="w-20 h-20 rounded-full border-4 border-[#0a0a0a] object-cover mb-2">
-        <h3 id="hover-name" class="font-bold text-white text-lg"></h3>
-        <p id="hover-title" class="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3"></p>
+<div class="nebula" style="background:var(--theme-color); top:-10%; left:15%;"></div>
+<div class="nebula" style="background:#7c3aed; bottom:5%; right:5%; animation-delay: -5s;"></div>
+
+<div id="hover-card" class="bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+    <div id="hover-banner" class="bg-gradient-to-r from-blue-600 to-purple-600"></div>
+    <div id="hover-card-content" class="px-4 pb-4">
+        <img id="hover-avatar" src="" class="w-20 h-20 rounded-full border-4 border-[#0a0a0a] object-cover mb-2 relative z-10 mx-auto">
+        <h3 id="hover-name" class="font-bold text-white text-lg text-center"></h3>
+        <p id="hover-title" class="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3 text-center"></p>
         <div class="w-full bg-white/5 rounded-xl p-3 border border-white/5">
             <div class="flex justify-between text-[10px] mb-1 font-black">
                 <span class="text-gray-400 uppercase">Nível Atual</span>
@@ -393,9 +451,6 @@ Entrar
         <button onclick="changeRoom('Geral')" class="room-btn active w-full text-left text-sm p-2.5 rounded-xl hover:bg-white/5 transition flex items-center gap-2">
             <span class="text-lg">💬</span> Geral
         </button>
-        <button onclick="changeRoom('Gartic')" class="room-btn w-full text-left text-sm p-2.5 rounded-xl hover:bg-white/5 transition flex items-center gap-2">
-            <span class="text-lg">🎨</span> Gartic Zone
-        </button>
         <button onclick="changeRoom('Devs')" class="room-btn w-full text-left text-sm p-2.5 rounded-xl hover:bg-white/5 transition flex items-center gap-2">
             <span class="text-lg">👨‍💻</span> Desenvolvedores
         </button>
@@ -420,7 +475,7 @@ Sair
 
 </aside>
 
-<main class="flex-1 flex flex-col bg-transparent overflow-hidden relative">
+<main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10">
 
 <header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md flex-shrink-0 justify-between">
 <h2 class="font-bold text-white flex items-center gap-2">

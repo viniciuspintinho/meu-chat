@@ -308,7 +308,7 @@ io.on("connection", (socket) => {
             socket.id !== gartic.drawerId &&
             texto.toLowerCase() === gartic.palavra.toLowerCase()
         ) {
-            gartic.points[user.name] += 10;
+            gartic.points[user.name] = (gartic.points[user.name] || 0) + 10;
 
             // Salva os pontos no Banco de Dados
             db.update({ name: user.name }, { $inc: { points: 10 } }, {});

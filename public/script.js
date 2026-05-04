@@ -678,6 +678,7 @@ function toggleGarticView() {
 
 function resizeCanvas() {
     const parent = canvas.parentElement;
+    if(!parent) return;
     canvas.width = parent.offsetWidth;
     canvas.height = parent.offsetHeight;
 
