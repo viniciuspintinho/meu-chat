@@ -126,17 +126,24 @@ function gainXP(amount = null) {
 // NOVO: SALAS (ROOMS)
 // =========================
 function changeRoom(roomName) {
+    // 1. Pega os dados de quem está logado
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
+    
+    // 2. Verifica se o nome dele está na lista de ADMINS (que você já criou lá no topo do seu script)
+    const isAdm = ADMINS.includes(user.name);
+
+    // 3. SE a sala for 'Desenvolvedores' E ele NÃO for admin, ele para aqui
+    if (roomName === 'Desenvolvedores' && !isAdm) {
+        alert("Ops! Apenas admins entram aqui.");
+        return; // O código para aqui e não envia nada pro servidor
+    }
+
+    // 4. Se ele for admin ou for outra sala, ele segue normal
     socket.emit('joinRoom', roomName);
     
-    // Atualiza visual dos botões
-    document.querySelectorAll('.room-btn').forEach(btn => btn.classList.remove('active'));
-    const allBtns = document.querySelectorAll('.room-btn');
-    allBtns.forEach(btn => {
-        if(btn.innerText.includes(roomName)) btn.classList.add('active');
-    });
-    
+    // ... restante do seu código de mudar cor de botão ...
     document.getElementById('room-title').innerText = roomName;
-    msgContainer.innerHTML = ''; // Limpa para carregar a nova sala
+    msgContainer.innerHTML = '';
 }
 
 socket.on('roomInfo', (roomName) => {
