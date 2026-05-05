@@ -23,7 +23,7 @@ const mentionList = document.getElementById('mention-list');
 const emojiMenu = document.getElementById('emoji-menu');
 const emojiList = document.getElementById('emoji-list');
 const EMOJIS = {
-    ":smile:": "😊", ":heart:": "❤️", ":fire:": "🔥", ":laugh:": "😂",":pika:":"Ɑ͞ ͞ ͞ ͞ ͞ ͞ ͞ ﻝﮞ",
+    ":smile:": "😊", ":heart:": "❤️", ":fire:": "🔥", ":laugh:": "😂",":pika:":"Ɑ͞ ͞ ͞ ͞ ͞ ͞ ͞ ﻝﮞ",":chup:":"(っ'ཀ')っ Ɑ͞ ̶͞ ̶͞ ̶͞ لں͞",
     ":cry:": "😢", ":cool:": "😎", ":think:": "🤔", ":clap:": "👏",":linguada:": "👅{(ᶅ͒)}",
     ":rocket:": "🚀", ":star:": "⭐", ":check:": "✅", ":warn:": "⚠️", ":seqsu:": "𓀓𓂸"
 };
