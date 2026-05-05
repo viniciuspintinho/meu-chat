@@ -348,6 +348,48 @@ function copyMessage(text) {
     });
 }
 
+function playPortalEffect() {
+    const portal = document.getElementById('portal-overlay');
+    if (!portal) return;
+    portal.classList.add('active');
+    setTimeout(() => portal.classList.remove('active'), 1100);
+}
+
+function playAdminWave() {
+    const wave = document.getElementById('admin-wave');
+    if (!wave) return;
+    wave.classList.add('active');
+    setTimeout(() => wave.classList.remove('active'), 1000);
+}
+
+function playStarExplosion() {
+    const explosion = document.getElementById('star-explosion');
+    if (!explosion) return;
+    explosion.innerHTML = '';
+    for (let i = 0; i < 12; i++) {
+        const star = document.createElement('span');
+        const x = (Math.random() - 0.5) * 280;
+        const y = (Math.random() - 0.5) * 240;
+        star.style.setProperty('--tx', `${x}px`);
+        star.style.setProperty('--ty', `${y}px`);
+        star.style.left = '50%';
+        star.style.top = '50%';
+        explosion.appendChild(star);
+    }
+    explosion.classList.add('active');
+    setTimeout(() => {
+        explosion.classList.remove('active');
+        explosion.innerHTML = '';
+    }, 1200);
+}
+
+function playDisconnectFade() {
+    const fade = document.getElementById('disconnect-fade');
+    if (!fade) return;
+    fade.classList.add('active');
+    setTimeout(() => fade.classList.remove('active'), 1000);
+}
+
 // =========================
 // FORMATAR HORA
 // =========================
@@ -795,6 +837,23 @@ garticInput.addEventListener('keypress', (e) => {
 socket.on('message', (data) => {
     const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
     const lowerText = data.text ? data.text.toLowerCase() : "";
+
+    // On entry or admin join, portal + wave effects
+    if (lowerText.includes("entrou no canal")) {
+        playPortalEffect();
+        const matchedAdmin = data.text.match(/\*\*(.+?)\*\*/);
+        if (matchedAdmin && ADMINS.includes(matchedAdmin[1])) {
+            playAdminWave();
+        }
+    }
+
+    if (lowerText.includes("saiu.")) {
+        playDisconnectFade();
+    }
+
+    if (lowerText.includes("conquista") || lowerText.includes("ganhou") || lowerText.includes("desbloqueou")) {
+        playStarExplosion();
+    }
 
     // 1. FILTRO DE GARTIC (Acertos e Dicas)
     if (data.msgType === "gartic-success" || data.msgType === "gartic-hint" || (data.name === "Lux Bot" && lowerText.includes("acertou"))) {
