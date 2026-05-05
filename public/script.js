@@ -609,8 +609,14 @@ socket.on('message', (data) => {
     const isAdminMsg = ADMINS.includes(data.name);
 
     if (!isMe && data.id !== 'bot' && data.name !== 'SISTEMA') {
-        playNotificationSound();
-        sendNotification(`${data.name}: ${data.text}`);
+        const myName = JSON.parse(sessionStorage.getItem('chat_user') || '{}').name;
+        const hasUserMention = data.text.includes(`@${myName}`);
+        const isReplyToMe = data.replyTo && data.replyTo.name === myName;
+        
+        if (hasUserMention || isReplyToMe) {
+            playNotificationSound();
+            sendNotification(`${data.name}: ${data.text}`);
+        }
     }
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
@@ -621,7 +627,7 @@ socket.on('message', (data) => {
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
     div.innerHTML = `
-        <div class="max-w-[65%] ${bubbleStyle} p-3 relative group cursor-pointer"
+        <div class="max-w-[50%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
                 onmouseenter="showHoverCard('${data.name}', event)" 
