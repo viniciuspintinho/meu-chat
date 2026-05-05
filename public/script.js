@@ -390,6 +390,15 @@ function playDisconnectFade() {
     setTimeout(() => fade.classList.remove('active'), 1000);
 }
 
+function getAvatarFrameClass(frame, isAdmin = false) {
+    const effectiveFrame = frame === 'none' && isAdmin ? 'blue-ring' : frame;
+    return effectiveFrame === 'blue-ring'
+        ? 'avatar-frame-blue-ring'
+        : effectiveFrame === 'glow-panel'
+            ? 'avatar-frame-glow-panel'
+            : '';
+}
+
 function selectProfileFrame(frame, silent = false) {
     const wrapper = document.querySelector('.avatar-wrapper');
     if (!wrapper) return;
@@ -512,7 +521,10 @@ window.onload = () => {
         document.getElementById('login').classList.add('hidden');
     }
 
-    const profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
+    let profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
+    if (sessionUser && ADMINS.includes(sessionUser.name) && profileFrame === 'none') {
+        profileFrame = 'blue-ring';
+    }
     selectProfileFrame(profileFrame, true);
 };
 
@@ -944,11 +956,7 @@ socket.on('message', (data) => {
     // Armazenar para busca
     allMessages.push({...data, _renderId: Math.random()});
 
-    const frameClass = data.profileFrame === 'blue-ring'
-        ? 'avatar-frame-blue-ring'
-        : data.profileFrame === 'glow-panel'
-            ? 'avatar-frame-glow-panel'
-            : '';
+    const frameClass = getAvatarFrameClass(data.profileFrame, data.isAdmin);
 
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
@@ -997,11 +1005,7 @@ socket.on('updateUserList', (users) => {
 
     userList.innerHTML = users.map(u => {
         const isAdm = ADMINS.includes(u.name);
-        const frameClass = u.profileFrame === 'blue-ring'
-            ? 'avatar-frame-blue-ring'
-            : u.profileFrame === 'glow-panel'
-                ? 'avatar-frame-glow-panel'
-                : '';
+        const frameClass = getAvatarFrameClass(u.profileFrame, isAdm);
 
         return `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-pointer" 
@@ -1044,7 +1048,10 @@ function openSettings() {
     document.getElementById('admin-settings-section').classList.toggle('hidden', !isAdm);
     document.getElementById('admin-settings-locked').classList.toggle('hidden', isAdm);
 
-    const profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
+    let profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
+    if (isAdm && profileFrame === 'none') {
+        profileFrame = 'blue-ring';
+    }
     selectProfileFrame(profileFrame, true);
 }
 

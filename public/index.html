@@ -329,12 +329,38 @@ font-weight: bold;
 box-shadow: 0 0 0 2px rgba(0,255,255,.35), 0 0 30px rgba(0,255,255,.2), inset 0 0 18px rgba(0,255,255,.25);
 }
 
+.avatar-wrapper.profile-frame-blue-ring::before {
+content: '';
+position: absolute;
+top: -10px;
+left: -10px;
+right: -10px;
+bottom: -10px;
+border-radius: 28px;
+border: 1px solid rgba(0,255,255,.35);
+box-shadow: 0 0 30px rgba(0,255,255,.25), 0 0 0 2px rgba(0,255,255,.12);
+z-index: -1;
+}
+
 .avatar-wrapper.profile-frame-glow-panel {
 box-shadow: 0 0 0 3px rgba(255,255,255,.2), 0 0 30px rgba(124,58,237,.4), inset 0 0 24px rgba(255,255,255,.08);
 }
 
+.avatar-wrapper.profile-frame-glow-panel::before {
+content: '';
+position: absolute;
+top: -10px;
+left: -10px;
+right: -10px;
+bottom: -10px;
+border-radius: 28px;
+border: 1px solid rgba(255,255,255,.18);
+box-shadow: 0 0 40px rgba(124,58,237,.2), 0 0 0 2px rgba(255,255,255,.1);
+z-index: -1;
+}
+
 .avatar-frame-blue-ring {
-box-shadow: 0 0 0 2px rgba(0,255,255,.35), 0 0 16px rgba(0,255,255,.2), inset 0 0 10px rgba(0,255,255,.2);
+box-shadow: 0 0 0 2px rgba(0,255,255,.35), 0 0 18px rgba(0,255,255,.2), inset 0 0 8px rgba(0,255,255,.15);
 }
 
 .avatar-frame-glow-panel {

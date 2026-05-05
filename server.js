@@ -174,12 +174,13 @@ io.on("connection", (socket) => {
             gartic.points[data.name] = userStats.points || 0;
 
             const isAdmin = ADMINS.includes(data.name);
+            const defaultFrame = isAdmin ? (data.profileFrame || 'blue-ring') : 'none';
 
             usersOnline[socket.id] = {
                 id: socket.id,
                 name: data.name,
                 avatar: data.avatar,
-                profileFrame: isAdmin ? (data.profileFrame || 'none') : 'none',
+                profileFrame: defaultFrame,
                 isAdmin,
                 room: "Geral", // Sala padrão
                 // Status Reais Individuais
@@ -380,7 +381,7 @@ io.on("connection", (socket) => {
         const mensagemFinal = {
             name: user.name,
             avatar: user.avatar,
-            profileFrame: user.profileFrame || 'none',
+            profileFrame: user.profileFrame || (user.isAdmin ? 'blue-ring' : 'none'),
             text: texto,
             msgType: data.msgType || "normal",
             replyTo: data.replyTo || null,
