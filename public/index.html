@@ -373,6 +373,34 @@ color: white;
     object-fit: cover;
     background: #111;
 }
+
+/* --- NOVO: ESTILO MEDALHAS NO CARD --- */
+.medal-slot {
+    width: 22px;
+    height: 22px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* --- NOVO: MODO CINEMA GARTIC --- */
+.gartic-cinema-mode {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 500 !important;
+    background: rgba(0,0,0,0.95) !important;
+    backdrop-filter: blur(20px);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.gartic-cinema-mode .max-w-6xl { max-width: 95% !important; width: 100%; }
+
 /* ------------------------------------- */
 
 /* NOVO: Estilo Sala Ativa */
@@ -409,7 +437,14 @@ color: white;
     <div id="hover-card-content">
         <img id="hover-avatar" src="" alt="">
         <h3 id="hover-name" class="font-bold text-white text-lg mt-2"></h3>
-        <p id="hover-title" class="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-3"></p>
+        <p id="hover-title" class="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-2"></p>
+        
+        <div id="hover-medals" class="flex gap-1.5 mb-3">
+            <div class="medal-slot" title="Tagarela">💬</div>
+            <div class="medal-slot" title="Pintor">🎨</div>
+            <div class="medal-slot" title="Antigo">⏳</div>
+        </div>
+
         <div class="w-full bg-white/5 rounded-xl p-3 border border-white/5">
             <div class="flex justify-between text-[10px] mb-1 font-black">
                 <span class="text-gray-400 uppercase">Nível Atual</span>
@@ -488,6 +523,10 @@ Entrar
 🎨 Abrir Painel Gartic
 </button>
 
+<button onclick="openAchievements()" class="w-full text-left text-yellow-500 text-sm p-2 hover:bg-yellow-500/10 rounded-lg transition font-bold">
+🏆 Conquistas
+</button>
+
 <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">
 ⚙️ Configurações
 </button>
@@ -539,7 +578,7 @@ Sair
 </div>
 
 <div id="gartic-box" class="hidden px-4 pb-3">
-    <div class="max-w-6xl mx-auto bg-black/40 border border-white/10 rounded-[32px] p-6 backdrop-blur-2xl shadow-2xl">
+    <div class="max-w-6xl mx-auto bg-black/40 border border-white/10 rounded-[32px] p-6 backdrop-blur-2xl shadow-2xl relative">
         
         <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div class="flex items-center gap-3">
@@ -551,6 +590,10 @@ Sair
             </div>
 
             <div class="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
+                <button onclick="toggleCinemaMode()" class="px-3 py-2 rounded-xl bg-white/10 text-white text-[10px] font-black hover:bg-white/20 transition mr-2">
+                    🎬 MODO CINEMA
+                </button>
+                
                 <input type="color" id="colorPicker" value="#000000" class="w-8 h-8 border-none bg-transparent cursor-pointer rounded-lg">
                 <select id="penSize" class="gartic-select">
                     <option value="2">Fino</option>
@@ -565,7 +608,7 @@ Sair
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-3 relative bg-white rounded-3xl overflow-hidden shadow-inner h-[400px]">
+            <div class="lg:col-span-3 relative bg-white rounded-3xl overflow-hidden shadow-inner h-[400px] border-4 border-transparent focus-within:border-blue-500 transition-all shadow-[0_0_20px_rgba(0,149,246,0.2)]">
                 <canvas id="garticCanvas" class="w-full h-full cursor-crosshair"></canvas>
             </div>
 
@@ -599,6 +642,34 @@ Enviar
 </footer>
 
 </main>
+
+<div id="achievements-modal" class="hidden fixed inset-0 bg-black/95 z-[300] flex items-center justify-center p-6 backdrop-blur-md">
+    <div class="bg-[#0a0a0a] border border-white/10 p-8 rounded-[40px] w-full max-w-2xl shadow-2xl">
+        <h2 class="text-3xl font-black mb-8 text-white text-center italic tracking-tighter">TROFÉUS LUX</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="achievement-card p-6 rounded-3xl bg-white/5 border border-white/5 text-center opacity-40" id="ach-tagarela">
+                <div class="text-4xl mb-3">💬</div>
+                <h4 class="font-bold text-white text-sm mb-1 uppercase">Tagarela</h4>
+                <p class="text-[10px] text-gray-500 uppercase font-black">1000 Mensagens</p>
+            </div>
+            <div class="achievement-card p-6 rounded-3xl bg-white/5 border border-white/5 text-center opacity-40" id="ach-pintor">
+                <div class="text-4xl mb-3">🎨</div>
+                <h4 class="font-bold text-white text-sm mb-1 uppercase">Mestre Pintor</h4>
+                <p class="text-[10px] text-gray-500 uppercase font-black">10 Vitórias Gartic</p>
+            </div>
+            <div class="achievement-card p-6 rounded-3xl bg-white/5 border border-white/5 text-center opacity-40" id="ach-antigo">
+                <div class="text-4xl mb-3">⏳</div>
+                <h4 class="font-bold text-white text-sm mb-1 uppercase">Relíquia</h4>
+                <p class="text-[10px] text-gray-500 uppercase font-black">1 Mês de Chat</p>
+            </div>
+        </div>
+
+        <button onclick="document.getElementById('achievements-modal').classList.add('hidden')" class="w-full mt-10 bg-white/5 hover:bg-white/10 text-white py-4 rounded-2xl font-bold transition">
+            FECHAR PAINEL
+        </button>
+    </div>
+</div>
 
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
 
@@ -727,6 +798,16 @@ function hideUserCard() {
     const card = document.getElementById('hover-card');
     card.style.display = 'none';
     card.style.opacity = '0';
+}
+
+/* --- FUNÇÕES NOVAS PARA MODO CINEMA E CONQUISTAS --- */
+function toggleCinemaMode() {
+    const box = document.getElementById('gartic-box');
+    box.classList.toggle('gartic-cinema-mode');
+}
+
+function openAchievements() {
+    document.getElementById('achievements-modal').classList.remove('hidden');
 }
 </script>
 
