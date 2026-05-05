@@ -12,6 +12,7 @@ const io = new Server(server);
 const db = new Datastore({ filename: "database.db", autoload: true });
 const msgDb = new Datastore({ filename: "messages.db", autoload: true }); // Histórico de mensagens
 const cmdDb = new Datastore({ filename: "commands.db", autoload: true }); // Banco de comandos customizados
+const logDb = new Datastore({ filename: "logs.db", autoload: true }); // Logs de moderação
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -27,13 +28,15 @@ const badWords = ["palavrao1", "palavrao2", "toxic"];
 // Controle de Anti-Flood
 const msgHistory = {};
 
-function filterText(text = "") {
-    let cleaned = text;
-    badWords.forEach(word => {
-        const reg = new RegExp(word, "gi");
-        cleaned = cleaned.replace(reg, "****");
-    });
-    return cleaned;
+function logModeration(action, admin, target, details = '') {
+    const logEntry = {
+        timestamp: Date.now(),
+        action,
+        admin,
+        target,
+        details
+    };
+    logDb.insert(logEntry);
 }
 
 /* =========================
@@ -275,28 +278,35 @@ io.on("connection", (socket) => {
 
                 if (alvoId) {
                     io.to(alvoId).emit("forceDisconnect", "Você foi expulso do chat.");
+                    logModeration('kick', user.name, alvo, 'Expulso do chat');
                 }
                 return;
             }
 
             if (texto.startsWith("/ban ")) {
-                const alvo = texto.replace("/ban ", "").trim();
+                const parts = texto.replace("/ban ", "").split(" ");
+                const alvo = parts[0];
+                const duration = parts[1] ? parseInt(parts[1]) : null; // Duração em minutos
                 bannedUsers.add(alvo);
                 const alvoId = Object.keys(usersOnline).find(id => usersOnline[id].name === alvo);
 
                 if (alvoId) {
-                    io.to(alvoId).emit("forceDisconnect", "Você foi banido.");
+                    io.to(alvoId).emit("forceDisconnect", duration ? `Você foi banido por ${duration} minutos.` : "Você foi banido.");
+                    if (duration) {
+                        setTimeout(() => {
+                            bannedUsers.delete(alvo);
+                            logModeration('unban_auto', 'Sistema', alvo, `Ban temporário expirado (${duration} min)`);
+                        }, duration * 60 * 1000);
+                    }
+                    logModeration('ban', user.name, alvo, duration ? `Ban por ${duration} minutos` : 'Ban permanente');
                 }
                 return;
             }
 
-            if (texto.startsWith("/unban ")) {
-                const alvo = texto.replace("/unban ", "").trim();
-                bannedUsers.delete(alvo);
-                socket.emit("message", {
-                    name: "SISTEMA",
-                    text: `${alvo} foi desbanido.`,
-                    id: "bot"
+            if (texto === "/logs") {
+                logDb.find({}).sort({ timestamp: -1 }).limit(10).exec((err, logs) => {
+                    const logText = logs.map(log => `${new Date(log.timestamp).toLocaleString()}: ${log.admin} ${log.action} ${log.target} - ${log.details}`).join('\n');
+                    socket.emit("message", { name: "SISTEMA", text: `Logs recentes:\n${logText}`, id: "bot" });
                 });
                 return;
             }
@@ -379,11 +389,19 @@ io.on("connection", (socket) => {
             room: user.room,
             level: user.level,
             msgCount: user.msgCount,
-            garticWins: user.garticWins
+            garticWins: user.garticWins,
+            temp: data.temp || false
         };
 
         io.to(user.room).emit("message", mensagemFinal);
         msgDb.insert(mensagemFinal); // Salva no banco persistente
+
+        // Se for temporária, deletar após 30 segundos
+        if (mensagemFinal.temp) {
+            setTimeout(() => {
+                io.to(user.room).emit("deleteMessage", mensagemFinal.id);
+            }, 30000);
+        }
     });
 
     /* DIGITANDO */
@@ -410,19 +428,11 @@ io.on("connection", (socket) => {
         io.emit("clearCanvas");
     });
 
-    /* START PELO BOTÃO */
-    socket.on("startGartic", () => {
-        if (gartic.ativo) {
-            socket.emit("garticStatus", {
-                desenhista: gartic.drawer
-            });
-            socket.emit("garticRanking", gartic.points);
-            if (socket.id === gartic.drawerId) {
-                socket.emit("garticPalavra", gartic.palavra);
-            }
-        } else {
-            iniciarRodada();
-        }
+    /* REAÇÕES */
+    socket.on("reactMessage", (data) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+        io.to(user.room).emit("messageReaction", { messageId: data.messageId, emoji: data.emoji, user: user.name });
     });
 
     /* DESCONECTOU */

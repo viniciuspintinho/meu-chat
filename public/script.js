@@ -52,9 +52,26 @@ function generatePreview(text) {
 }
 
 // =========================
-// SOM
+// NOTIFICAÇÕES PUSH
 // =========================
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+            console.log('Service Worker registrado:', registration);
+        })
+        .catch((error) => {
+            console.log('Erro ao registrar SW:', error);
+        });
+}
+
+function sendNotification(message) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'notification',
+            body: message
+        });
+    }
+}
 
 function playNotificationSound() {
     const osc = audioCtx.createOscillator();
@@ -151,23 +168,21 @@ socket.on('roomInfo', (roomName) => {
 });
 
 // =========================
-// LOGIN AUTO
+// MODO NOTURNO/DIA AUTOMÁTICO
 // =========================
+function applyAutoTheme() {
+    const hour = new Date().getHours();
+    const isNight = hour >= 18 || hour < 6; // Noturno das 18h às 6h
+    const theme = isNight ? '#050508' : '#ffffff'; // Fundo escuro ou claro
+    document.documentElement.style.setProperty('--theme-color', isNight ? '#0095f6' : '#42e97f');
+    document.body.style.background = theme;
+    localStorage.setItem('auto_theme', isNight ? 'night' : 'day');
+}
+
+// Aplicar tema automático ao carregar
 window.onload = () => {
-    const sessionUser = sessionStorage.getItem('chat_user');
-
-    applyTheme(localStorage.getItem('chat_theme_color') || '#0095f6');
-    updateXPUI();
-
-    if (sessionUser) {
-        const user = JSON.parse(sessionUser);
-
-        socket.emit('join', user);
-
-        document.getElementById('my-avatar').src = user.avatar;
-        document.getElementById('my-name').innerText = user.name;
-        document.getElementById('login').classList.add('hidden');
-    }
+    applyAutoTheme();
+    // ... resto do código existente
 };
 
 // =========================
@@ -448,10 +463,9 @@ function processCommand(val) {
     else if (cmd === '/aviso' && isAdm)
         res.text = `⚠️ **AVISO:** ${target}`;
 
-    else if (cmd === '/letreiro') {
+    else if (cmd === '/temp')
         res.text = target;
-        res.type = "letreiro";
-    }
+        res.temp = true; // Flag para mensagem temporária
 
     else return val;
 
@@ -566,6 +580,7 @@ socket.on('message', (data) => {
 
     if (meuUser && data.text.includes(`@${meuUser.name}`)) {
         playNotificationSound();
+        sendNotification(`Você foi mencionado por ${data.name}: ${data.text}`);
     }
 
     const isAdminMsg = ADMINS.includes(data.name);
@@ -584,6 +599,11 @@ socket.on('message', (data) => {
                 onmouseenter="showHoverCard('${data.name}', event)" 
                 onmouseleave="hideHoverCard()">${data.name}</div>` : ''}
             ${generatePreview(data.text)}
+            <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
+                <button onclick="reactToMessage('${data.id}', '👍')" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>
+                <button onclick="reactToMessage('${data.id}', '😂')" class="text-xs bg-white/10 px-2 py-1 rounded">😂</button>
+                <button onclick="reactToMessage('${data.id}', '❤️')" class="text-xs bg-white/10 px-2 py-1 rounded">❤️</button>
+            </div>
         </div>
     `;
 
@@ -662,9 +682,8 @@ function changeTheme(hex) {
     applyTheme(hex);
 }
 
-function logout() {
-    sessionStorage.removeItem('chat_user');
-    window.location.reload();
+function viewLogs() {
+    socket.emit('chatMessage', { text: '/logs' });
 }
 
 // =========================
@@ -681,9 +700,8 @@ function setReply(name, text) {
     msgInput.focus();
 }
 
-function cancelReply() {
-    selectedReply = null;
-    document.getElementById('reply-container').classList.add('hidden');
+function reactToMessage(messageId, emoji) {
+    socket.emit('reactMessage', { messageId, emoji });
 }
 
 // =========================
@@ -823,9 +841,14 @@ socket.on("garticRanking", (points) => {
         .join(" | ");
 });
 
-socket.on("garticPalavra", (palavra) => {
-    garticInfo.innerText = `Sua palavra é: ${palavra}`;
-    podeDesenhar = true;
+socket.on('deleteMessage', (messageId) => {
+    // Remover a mensagem do DOM
+    const messages = document.querySelectorAll('#messages > div');
+    messages.forEach(div => {
+        if (div.innerHTML.includes(messageId)) {
+            div.remove();
+        }
+    });
 });
 
 clearBtn.onclick = () => {
@@ -848,3 +871,38 @@ canvas.addEventListener("touchmove", (e) => {
 });
 
 canvas.addEventListener("touchend", endDraw);
+
+// Verificar admin para logs
+socket.on('join', () => {
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+    if (ADMINS.includes(user.name)) {
+        document.getElementById('logs-btn').style.display = 'block';
+    }
+});
+
+function viewLogs() {
+    socket.emit('chatMessage', { text: '/logs' });
+}
+
+socket.on('messageReaction', (data) => {
+    // Adicionar reação à mensagem
+    const messages = document.querySelectorAll('#messages > div');
+    messages.forEach(div => {
+        if (div.innerHTML.includes(data.messageId)) {
+            const reactionDiv = div.querySelector('.reactions') || document.createElement('div');
+            reactionDiv.className = 'reactions flex gap-1 mt-1';
+            reactionDiv.innerHTML += `<span class="text-xs">${data.emoji} ${data.user}</span>`;
+            div.appendChild(reactionDiv);
+        }
+    });
+});
+
+socket.on('deleteMessage', (messageId) => {
+    // Remover a mensagem do DOM
+    const messages = document.querySelectorAll('#messages > div');
+    messages.forEach(div => {
+        if (div.innerHTML.includes(messageId)) {
+            div.remove();
+        }
+    });
+});
