@@ -68,12 +68,24 @@ if ('serviceWorker' in navigator) {
 }
 
 function sendNotification(message) {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'notification',
-            body: message
-        });
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+
+    if (Notification.permission === 'default') {
+        Notification.requestPermission();
     }
+
+    if (Notification.permission !== 'granted') return;
+
+    navigator.serviceWorker.ready.then((registration) => {
+        if (registration.active) {
+            registration.active.postMessage({
+                type: 'notification',
+                body: message
+            });
+        } else {
+            new Notification('Lux Chat', { body: message });
+        }
+    });
 }
 
 function playNotificationSound() {
@@ -198,6 +210,10 @@ window.onload = () => {
 
     applyTheme(localStorage.getItem('chat_theme_color') || '#0095f6');
     updateXPUI();
+
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
 
     if (sessionUser) {
         const user = JSON.parse(sessionUser);
@@ -603,7 +619,7 @@ socket.on('message', (data) => {
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
     div.innerHTML = `
-        <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
+        <div class="max-w-[65%] ${bubbleStyle} p-3 relative group cursor-pointer"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
                 onmouseenter="showHoverCard('${data.name}', event)" 
