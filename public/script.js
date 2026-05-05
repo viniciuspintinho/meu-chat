@@ -31,7 +31,12 @@ const EMOJIS = {
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
 let userBio = localStorage.getItem('chat_bio') || '';
+let userTheme = localStorage.getItem('chat_theme') || '#0095f6';
 let allMessages = []; // Para busca
+let pinnedMessages = []; // Para pins
+let messageReactions = {}; // Para reações
+let userStatuses = {}; // Para status online/away
+let lastSeen = {}; // Para último visto
 
 // =========================
 // PREVIEW DE LINKS AUTOMÁTICO
@@ -118,13 +123,94 @@ function playNotificationSound() {
 }
 
 // =========================
-// TEMA
+// TEMA SALVO POR USUÁRIO
 // =========================
 function applyTheme(hex) {
-    if (!hex) return;
-
+    userTheme = hex;
+    localStorage.setItem('chat_theme', hex);
     document.documentElement.style.setProperty('--theme-color', hex);
     localStorage.setItem('chat_theme_color', hex);
+}
+
+// =========================
+// STATUS ONLINE/AWAY
+// =========================
+function updateUserStatus(status) {
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+    if (user.name) {
+        userStatuses[user.name] = status;
+        socket.emit('statusUpdate', { name: user.name, status });
+    }
+}
+
+function getUserStatus(name) {
+    return userStatuses[name] || 'offline';
+}
+
+function formatLastSeen(name) {
+    if (!lastSeen[name]) return 'Nunca visto';
+    return formatLastSeenTime(lastSeen[name]);
+}
+
+function formatLastSeenTime(timestamp) {
+    const diff = Date.now() - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Agora';
+    if (minutes < 60) return `${minutes}m atrás`;
+    if (hours < 24) return `${hours}h atrás`;
+    if (days < 7) return `${days}d atrás`;
+    return 'Há muito tempo';
+}
+
+// =========================
+// EDIÇÃO DE MENSAGENS
+// =========================
+function editMessage(messageId, newText) {
+    socket.emit('editMessage', { messageId, newText });
+}
+
+// =========================
+// PINS DE MENSAGENS
+// =========================
+function pinMessage(messageId) {
+    socket.emit('pinMessage', { messageId });
+}
+
+function unpinMessage(messageId) {
+    socket.emit('unpinMessage', { messageId });
+}
+
+// =========================
+// MENSAGENS TEMPORÁRIAS
+// =========================
+function sendTempMessage(text, duration = 30000) {
+    socket.emit('chatMessage', {
+        text,
+        replyTo: selectedReply,
+        temp: true,
+        tempDuration: duration
+    });
+}
+
+// =========================
+// CORES POR SALA
+// =========================
+function getRoomColor(roomName) {
+    const colors = {
+        'Geral': '#0095f6',
+        'Desenvolvedores': '#ff3040',
+        'Random': '#00f9f9',
+        'Gartic': '#42e97f'
+    };
+    return colors[roomName] || '#0095f6';
+}
+
+function applyRoomColor(roomName) {
+    const color = getRoomColor(roomName);
+    document.documentElement.style.setProperty('--room-color', color);
 }
 
 // =========================
@@ -188,6 +274,9 @@ function changeRoom(roomName) {
     // 4. Se ele for admin ou for outra sala, ele segue normal
     showPortalTransition();
     socket.emit('joinRoom', roomName);
+    
+    // Aplicar cor da sala
+    applyRoomColor(roomName);
     
     // ... restante do seu código de mudar cor de botão ...
     document.getElementById('room-title').innerText = roomName;
@@ -289,6 +378,7 @@ function renderMessageInContainer(data, searchQuery = '') {
     const isMe = data.id === socket.id;
     const isSequencial = data.id === lastSenderId;
     const isAdminMsg = ADMINS.includes(data.name);
+    const isTempMessage = data.duration !== undefined;
 
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
         const divSystem = document.createElement('div');
@@ -299,6 +389,7 @@ function renderMessageInContainer(data, searchQuery = '') {
     }
 
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
+    if (isTempMessage) bubbleStyle += ' temp-message';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
     const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
@@ -321,12 +412,14 @@ function renderMessageInContainer(data, searchQuery = '') {
             <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
             <div class="msg-actions">
                 <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋 Copy</button>
+                <button onclick="editMessage('${data.id}', prompt('Editar mensagem:', '${safeText}')); event.stopPropagation();" class="text-xs">✏️ Edit</button>
+                <button onclick="pinMessage('${data.id}'); event.stopPropagation();" class="text-xs">📌 Pin</button>
                 <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️ Reply</button>
             </div>
             <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
-                <button onclick="reactToMessage('${data.id}', '👍'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>
-                <button onclick="reactToMessage('${data.id}', '😂'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">😂</button>
-                <button onclick="reactToMessage('${data.id}', '❤️'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">❤️</button>
+                <button onclick="reactToMessage('${data.id}', '👍'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">👍 ${messageReactions[data.id]?.['👍']?.length || 0}</button>
+                <button onclick="reactToMessage('${data.id}', '😂'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">😂 ${messageReactions[data.id]?.['😂']?.length || 0}</button>
+                <button onclick="reactToMessage('${data.id}', '❤️'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">❤️ ${messageReactions[data.id]?.['❤️']?.length || 0}</button>
             </div>
         </div>
     `;
@@ -528,6 +621,15 @@ function showHoverCard(name, e) {
     document.getElementById('hover-level').innerText = user.level || 1;
     document.getElementById('hover-title').innerText = getTitle(user.level || 1);
     document.getElementById('hover-xp-bar').style.width = (user.xp || 0) + "%";
+    
+    // Status online/away
+    const status = getUserStatus(name);
+    const statusEl = document.getElementById('hover-status');
+    statusEl.innerText = status === 'online' ? '● Online' : status === 'away' ? '○ Away' : '● Offline';
+    statusEl.className = `text-[10px] mb-2 ${status === 'online' ? 'text-green-400' : status === 'away' ? 'text-yellow-400' : 'text-gray-400'}`;
+    
+    // Último visto
+    document.getElementById('hover-last-seen').innerText = formatLastSeen(name);
 
     // Medals
     const daysSinceJoin = (Date.now() - user.joinDate) / (1000 * 60 * 60 * 24);
@@ -881,6 +983,72 @@ function cancelReply() {
 
 function reactToMessage(messageId, emoji) {
     socket.emit('reactMessage', { messageId, emoji });
+}
+
+// =========================
+// NOVOS LISTENERS PARA FUNCIONALIDADES
+// =========================
+socket.on('statusUpdate', (data) => {
+    userStatuses[data.name] = data.status;
+    lastSeen[data.name] = Date.now();
+});
+
+socket.on('messageReaction', (data) => {
+    if (!messageReactions[data.messageId]) {
+        messageReactions[data.messageId] = {};
+    }
+    if (!messageReactions[data.messageId][data.emoji]) {
+        messageReactions[data.messageId][data.emoji] = [];
+    }
+    messageReactions[data.messageId][data.emoji].push(data.user);
+});
+
+socket.on('messageEdited', (data) => {
+    // Atualizar mensagem editada na UI
+    const messageElement = document.querySelector(`[data-message-id="${data.messageId}"]`);
+    if (messageElement) {
+        messageElement.innerHTML = generatePreview(data.newText);
+    }
+});
+
+socket.on('messagePinned', (data) => {
+    pinnedMessages.push(data.message);
+    updatePinnedMessages();
+});
+
+socket.on('messageUnpinned', (data) => {
+    pinnedMessages = pinnedMessages.filter(msg => msg.id !== data.messageId);
+    updatePinnedMessages();
+});
+
+function updatePinnedMessages() {
+    const pinContainer = document.getElementById('pinned-messages');
+    if (!pinContainer) return;
+    
+    pinContainer.innerHTML = pinnedMessages.map(msg => `
+        <div class="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded mb-2">
+            <div class="flex justify-between items-center">
+                <span class="text-xs text-yellow-400">📌 ${msg.name}: ${msg.text}</span>
+                <button onclick="unpinMessage('${msg.id}')" class="text-xs text-gray-400">✕</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// =========================
+// NOVOS LISTENERS PARA FUNCIONALIDADES
+// =========================
+socket.on('tempMessage', (data) => {
+    renderMessageInContainer(data, document.getElementById('messages'));
+    // Remover mensagem após duração
+    setTimeout(() => {
+        const tempMsg = document.querySelector(`[data-message-id="${data.id}"]`);
+        if (tempMsg) tempMsg.remove();
+    }, data.duration);
+});
+
+function sendTempMessage(text, duration = 30000) {
+    socket.emit('tempMessage', { text, duration });
 }
 
 // =========================

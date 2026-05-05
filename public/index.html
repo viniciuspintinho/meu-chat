@@ -593,6 +593,19 @@ color: white;
     100% { transform: scale(1) rotate(180deg); opacity: 0; }
 }
 
+/* MENSAGENS TEMPORÁRIAS */
+.temp-message {
+    animation: fadeOut 30s ease-out forwards;
+    background: linear-gradient(135deg, rgba(255,165,0,0.1), rgba(255,69,0,0.1));
+    border: 1px solid rgba(255,165,0,0.3);
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; transform: scale(1); }
+    90% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.95); }
+}
+
 </style>
 </head>
 
@@ -609,6 +622,8 @@ color: white;
         <img id="hover-avatar" src="" alt="">
         <h3 id="hover-name" class="font-bold text-white text-lg mt-2"></h3>
         <p id="hover-title" class="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-2"></p>
+        <p id="hover-status" class="text-[10px] text-green-400 mb-2">● Online</p>
+        <p id="hover-last-seen" class="text-[9px] text-gray-400 mb-2"></p>
         
         <div id="hover-medals" class="flex gap-1.5 mb-3">
             <div class="medal-slot" id="medal-tagarela" title="Tagarela">💬</div>
@@ -733,6 +748,8 @@ Sair
     <button onclick="document.getElementById('pin-banner').classList.add('hidden')" class="text-gray-500 hover:text-white text-xs">✕</button>
 </div>
 
+<div id="pinned-messages" class="px-6 py-2 border-b border-yellow-500/20 bg-yellow-500/5"></div>
+
 <div class="flex items-center px-6 py-2 border-b border-white/10">
   <input id="search-input" type="text" placeholder="🔍 Buscar mensagens..." class="flex-1 bg-transparent outline-none text-white text-sm placeholder-gray-500">
   <button onclick="clearSearch()" class="text-gray-400 hover:text-white ml-2">✕</button>
@@ -812,6 +829,7 @@ Sair
 <div class="max-w-5xl mx-auto flex items-center gap-3">
 
 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
+<button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
 
 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
 <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">

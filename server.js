@@ -443,6 +443,51 @@ io.on("connection", (socket) => {
         io.to(user.room).emit("messageReaction", { messageId: data.messageId, emoji: data.emoji, user: user.name });
     });
 
+    /* EDITAR MENSAGEM */
+    socket.on("editMessage", (data) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+        io.to(user.room).emit("messageEdited", { messageId: data.messageId, newText: data.newText });
+    });
+
+    /* PIN MENSAGEM */
+    socket.on("pinMessage", (data) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+        // Buscar mensagem no histórico
+        msgDb.findOne({ id: data.messageId }, (err, msg) => {
+            if (msg) {
+                io.to(user.room).emit("messagePinned", msg);
+            }
+        });
+    });
+
+    /* UNPIN MENSAGEM */
+    socket.on("unpinMessage", (data) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+        io.to(user.room).emit("messageUnpinned", { messageId: data.messageId });
+    });
+
+    /* STATUS UPDATE */
+    socket.on("statusUpdate", (data) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+        io.to(user.room).emit("statusUpdate", { name: user.name, status: data.status });
+    });
+
+    /* MENSAGEM TEMPORÁRIA */
+    socket.on("tempMessage", (data) => {
+        const user = usersOnline[socket.id];
+        if (!user) return;
+        io.to(user.room).emit("tempMessage", { 
+            name: user.name, 
+            text: data.text, 
+            timestamp: Date.now(),
+            duration: data.duration || 30000 // 30 segundos padrão
+        });
+    });
+
     /* DESCONECTOU */
     socket.on("disconnect", () => {
         if (usersOnline[socket.id]) {
