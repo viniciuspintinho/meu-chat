@@ -4,6 +4,9 @@ const msgInput = document.getElementById('input');
 const garticChatContainer = document.getElementById('gartic-chat-messages');
 const garticInput = document.getElementById('gartic-input');
 
+// AudioContext para notificações
+const audioCtx = new AudioContext();
+
 // Lista de admins
 const ADMINS = ["vn7", "pl"];
 
@@ -182,7 +185,20 @@ function applyAutoTheme() {
 // Aplicar tema automático ao carregar
 window.onload = () => {
     applyAutoTheme();
-    // ... resto do código existente
+    const sessionUser = sessionStorage.getItem('chat_user');
+
+    applyTheme(localStorage.getItem('chat_theme_color') || '#0095f6');
+    updateXPUI();
+
+    if (sessionUser) {
+        const user = JSON.parse(sessionUser);
+
+        socket.emit('join', user);
+
+        document.getElementById('my-avatar').src = user.avatar;
+        document.getElementById('my-name').innerText = user.name;
+        document.getElementById('login').classList.add('hidden');
+    }
 };
 
 // =========================
@@ -202,9 +218,7 @@ function entrar() {
     sessionStorage.setItem('chat_user', JSON.stringify(userData));
     socket.emit('join', userData);
 
-    document.getElementById('my-avatar').src = avatar;
-    document.getElementById('my-name').innerText = name;
-    document.getElementById('login').classList.add('hidden');
+    // Não esconder aqui, esperar confirmação
 }
 
 // =========================
@@ -443,12 +457,6 @@ function processCommand(val) {
     }
 
     else if (cmd === '/festa') {
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
         res.text = `🎉 **${user.name}** iniciou uma festa!`;
     }
 
@@ -462,10 +470,6 @@ function processCommand(val) {
 
     else if (cmd === '/aviso' && isAdm)
         res.text = `⚠️ **AVISO:** ${target}`;
-
-    else if (cmd === '/temp')
-        res.text = target;
-        res.temp = true; // Flag para mensagem temporária
 
     else return val;
 
@@ -541,9 +545,6 @@ socket.on('message', (data) => {
         if (data.msgType === "gartic-success" || lowerText.includes("acertou")) {
             divG.className = "p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-400 animate-bounce text-center mb-1";
             divG.innerHTML = `✨ ${data.text}`;
-            if (meuUser && data.text.includes(meuUser.name)) {
-                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-            }
         } else {
             divG.className = "p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-[10px] text-yellow-500 text-center mb-1";
             divG.innerHTML = data.text;
@@ -631,6 +632,14 @@ socket.on('updateUserList', (users) => {
             </div>
         `;
     }).join('');
+
+    // Esconder login se ainda estiver visível (primeiro login)
+    if (!document.getElementById('login').classList.contains('hidden')) {
+        const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+        document.getElementById('my-avatar').src = user.avatar;
+        document.getElementById('my-name').innerText = user.name;
+        document.getElementById('login').classList.add('hidden');
+    }
 });
 
 // =========================
@@ -689,15 +698,9 @@ function viewLogs() {
 // =========================
 // REPLY
 // =========================
-function setReply(name, text) {
-    selectedReply = { name, text };
-
-    document.getElementById('reply-user').innerText = name;
-    document.getElementById('reply-text').innerText = text;
-
-    document.getElementById('reply-container').classList.remove('hidden');
-
-    msgInput.focus();
+function cancelReply() {
+    selectedReply = null;
+    document.getElementById('reply-container').classList.add('hidden');
 }
 
 function reactToMessage(messageId, emoji) {
@@ -873,36 +876,7 @@ canvas.addEventListener("touchmove", (e) => {
 canvas.addEventListener("touchend", endDraw);
 
 // Verificar admin para logs
-socket.on('join', () => {
-    const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
-    if (ADMINS.includes(user.name)) {
-        document.getElementById('logs-btn').style.display = 'block';
-    }
-});
-
-function viewLogs() {
-    socket.emit('chatMessage', { text: '/logs' });
+const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+if (ADMINS.includes(user.name)) {
+    document.getElementById('logs-btn').style.display = 'block';
 }
-
-socket.on('messageReaction', (data) => {
-    // Adicionar reação à mensagem
-    const messages = document.querySelectorAll('#messages > div');
-    messages.forEach(div => {
-        if (div.innerHTML.includes(data.messageId)) {
-            const reactionDiv = div.querySelector('.reactions') || document.createElement('div');
-            reactionDiv.className = 'reactions flex gap-1 mt-1';
-            reactionDiv.innerHTML += `<span class="text-xs">${data.emoji} ${data.user}</span>`;
-            div.appendChild(reactionDiv);
-        }
-    });
-});
-
-socket.on('deleteMessage', (messageId) => {
-    // Remover a mensagem do DOM
-    const messages = document.querySelectorAll('#messages > div');
-    messages.forEach(div => {
-        if (div.innerHTML.includes(messageId)) {
-            div.remove();
-        }
-    });
-});
