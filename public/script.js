@@ -390,6 +390,27 @@ function playDisconnectFade() {
     setTimeout(() => fade.classList.remove('active'), 1000);
 }
 
+function selectProfileFrame(frame, silent = false) {
+    const wrapper = document.querySelector('.avatar-wrapper');
+    if (!wrapper) return;
+    wrapper.classList.remove('profile-frame-blue-ring', 'profile-frame-glow-panel');
+    document.querySelectorAll('.frame-option').forEach(btn => btn.classList.remove('active'));
+
+    if (frame === 'blue-ring') {
+        wrapper.classList.add('profile-frame-blue-ring');
+        document.getElementById('frame-blue-ring')?.classList.add('active');
+    } else if (frame === 'glow-panel') {
+        wrapper.classList.add('profile-frame-glow-panel');
+        document.getElementById('frame-glow-panel')?.classList.add('active');
+    } else {
+        document.getElementById('frame-none')?.classList.add('active');
+    }
+
+    if (!silent) {
+        localStorage.setItem('chat_profile_frame', frame);
+    }
+}
+
 // =========================
 // FORMATAR HORA
 // =========================
@@ -490,6 +511,9 @@ window.onload = () => {
         document.getElementById('my-name').innerText = user.name;
         document.getElementById('login').classList.add('hidden');
     }
+
+    const profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
+    selectProfileFrame(profileFrame, true);
 };
 
 // =========================
@@ -991,24 +1015,38 @@ socket.on('updateUserList', (users) => {
 // =========================
 function openSettings() {
     const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
+    const isAdm = ADMINS.includes(user.name);
 
     document.getElementById('set-username').value = user.name || "";
     document.getElementById('set-avatar').value = user.avatar || "";
     document.getElementById('set-bio').value = userBio || "";
 
     document.getElementById('settings-modal').classList.remove('hidden');
+    document.getElementById('admin-settings-section').classList.toggle('hidden', !isAdm);
+    document.getElementById('admin-settings-locked').classList.toggle('hidden', isAdm);
+
+    const profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
+    selectProfileFrame(profileFrame, true);
 }
 
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
     const bio = document.getElementById('set-bio').value.trim();
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
+    const isAdm = ADMINS.includes(user.name);
 
     if (!name) return;
 
     userBio = bio;
     localStorage.setItem('chat_bio', userBio);
     sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
+
+    if (isAdm) {
+        const frame = document.querySelector('.frame-option.active')?.id?.replace('frame-', '') || 'none';
+        localStorage.setItem('chat_profile_frame', frame);
+    }
+
     window.location.reload();
 }
 

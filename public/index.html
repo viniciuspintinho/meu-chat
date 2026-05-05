@@ -325,6 +325,32 @@ font-size: 12px;
 font-weight: bold;
 }
 
+.avatar-wrapper.profile-frame-blue-ring {
+box-shadow: 0 0 0 2px rgba(0,255,255,.35), 0 0 30px rgba(0,255,255,.2), inset 0 0 18px rgba(0,255,255,.25);
+}
+
+.avatar-wrapper.profile-frame-glow-panel {
+box-shadow: 0 0 0 3px rgba(255,255,255,.2), 0 0 30px rgba(124,58,237,.4), inset 0 0 24px rgba(255,255,255,.08);
+}
+
+.frame-option {
+background: rgba(255,255,255,.05);
+border: 1px solid rgba(255,255,255,.1);
+color: #fff;
+padding: 10px 8px;
+border-radius: 16px;
+font-size: 11px;
+outline: none;
+transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+
+.frame-option:hover,
+.frame-option.active {
+border-color: var(--theme-color);
+box-shadow: 0 0 0 3px rgba(0,149,246,.12);
+transform: translateY(-1px);
+}
+
 .msg-timestamp {
 font-size: 9px;
 color: rgba(255,255,255,.4);
@@ -925,6 +951,20 @@ Enviar
 <div onclick="changeTheme('#42e97f')" class="theme-dot" style="background:#42e97f"></div>
 <div onclick="changeTheme('#00f9f9')" class="theme-dot" style="background:#00f9f9"></div>
 <div onclick="changeTheme('#9000ff')" class="theme-dot" style="background:#9000ff"></div>
+</div>
+
+<div id="admin-settings-locked" class="text-xs text-white/60 mt-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+    Área reservada apenas para administradores. Entre com uma conta de adm para liberar o perfil especial.
+</div>
+
+<div id="admin-settings-section" class="hidden mt-6 p-4 rounded-3xl bg-[#121212] border border-white/10">
+    <h3 class="text-white text-lg font-semibold mb-3">Configurações do Administrador</h3>
+    <p class="text-sm text-white/70 mb-4">Escolha um estilo de perfil exclusivo.</p>
+    <div class="grid grid-cols-3 gap-3">
+        <button id="frame-none" type="button" class="frame-option" onclick="selectProfileFrame('none')">Padrão</button>
+        <button id="frame-blue-ring" type="button" class="frame-option" onclick="selectProfileFrame('blue-ring')">Anel Azul</button>
+        <button id="frame-glow-panel" type="button" class="frame-option" onclick="selectProfileFrame('glow-panel')">Painel Glow</button>
+    </div>
 </div>
 
 </div>
