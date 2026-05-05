@@ -708,25 +708,6 @@ function closeSettings() {
     document.getElementById('settings-modal').classList.add('hidden');
 }
 
-function openAchievements() {
-    const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
-    const user = usersForMention.find(u => u.name === meuUser.name);
-    if (!user) return;
-
-    const daysSinceJoin = (Date.now() - user.joinDate) / (1000 * 60 * 60 * 24);
-
-    document.getElementById('ach-tagarela-count').innerText = `${user.msgCount} / 1000 Mensagens`;
-    document.getElementById('ach-pintor-count').innerText = `${user.garticWins} / 10 Vitórias Gartic`;
-    document.getElementById('ach-antigo-status').innerText = daysSinceJoin >= 30 ? 'Conquistado!' : `Faltam ${Math.ceil(30 - daysSinceJoin)} dias...`;
-
-    // Update opacity
-    document.getElementById('ach-tagarela').style.opacity = user.msgCount >= 1000 ? '1' : '0.4';
-    document.getElementById('ach-pintor').style.opacity = user.garticWins >= 10 ? '1' : '0.4';
-    document.getElementById('ach-antigo').style.opacity = daysSinceJoin >= 30 ? '1' : '0.4';
-
-    document.getElementById('achievements-modal').classList.remove('hidden');
-}
-
 function changeTheme(hex) {
     applyTheme(hex);
 }

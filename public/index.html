@@ -532,10 +532,6 @@ Entrar
 🎨 Abrir Painel Gartic
 </button>
 
-<button onclick="openAchievements()" class="w-full text-left text-yellow-500 text-sm p-2 hover:bg-yellow-500/10 rounded-lg transition font-bold">
-🏆 Conquistas
-</button>
-
 <button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">
 ⚙️ Configurações
 </button>
@@ -653,34 +649,6 @@ Enviar
 
 </div>
 </footer>
-
-<div id="achievements-modal" class="hidden fixed inset-0 bg-black/95 z-[300] flex items-center justify-center p-6 backdrop-blur-md">
-    <div class="bg-[#0a0a0a] border border-white/10 p-8 rounded-[40px] w-full max-w-2xl shadow-2xl">
-        <h2 class="text-3xl font-black mb-8 text-white text-center italic tracking-tighter">TROFÉUS LUX</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="achievement-card p-6 rounded-3xl bg-white/5 border border-white/5 text-center opacity-40 transition-all duration-500" id="ach-tagarela">
-                <div class="text-4xl mb-3">💬</div>
-                <h4 class="font-bold text-white text-sm mb-1 uppercase">Tagarela</h4>
-                <p id="ach-tagarela-count" class="text-[10px] text-gray-500 uppercase font-black">0 / 1000 Mensagens</p>
-            </div>
-            <div class="achievement-card p-6 rounded-3xl bg-white/5 border border-white/5 text-center opacity-40 transition-all duration-500" id="ach-pintor">
-                <div class="text-4xl mb-3">🎨</div>
-                <h4 class="font-bold text-white text-sm mb-1 uppercase">Mestre Pintor</h4>
-                <p id="ach-pintor-count" class="text-[10px] text-gray-500 uppercase font-black">0 / 10 Vitórias Gartic</p>
-            </div>
-            <div class="achievement-card p-6 rounded-3xl bg-white/5 border border-white/5 text-center opacity-40 transition-all duration-500" id="ach-antigo">
-                <div class="text-4xl mb-3">⏳</div>
-                <h4 class="font-bold text-white text-sm mb-1 uppercase">Relíquia</h4>
-                <p id="ach-antigo-status" class="text-[10px] text-gray-500 uppercase font-black">Aguardando 30 dias...</p>
-            </div>
-        </div>
-
-        <button onclick="document.getElementById('achievements-modal').classList.add('hidden')" class="w-full mt-10 bg-white/5 hover:bg-white/10 text-white py-4 rounded-2xl font-bold transition">
-            FECHAR PAINEL
-        </button>
-    </div>
-</div>
 
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
 
