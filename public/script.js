@@ -24,8 +24,8 @@ const emojiMenu = document.getElementById('emoji-menu');
 const emojiList = document.getElementById('emoji-list');
 const EMOJIS = {
     ":smile:": "😊", ":heart:": "❤️", ":fire:": "🔥", ":laugh:": "😂", 
-    ":cry:": "😢", ":cool:": "😎", ":think:": "🤔", ":clap:": "👏",
-    ":rocket:": "🚀", ":star:": "⭐", ":check:": "✅", ":warn:": "⚠️"
+    ":cry:": "😢", ":cool:": "😎", ":think:": "🤔", ":clap:": "👏",":linguada:": "👅{(ᶅ͒)}",
+    ":rocket:": "🚀", ":star:": "⭐", ":check:": "✅", ":warn:": "⚠️", ":pika:": "𓀓𓂸"
 };
 
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
