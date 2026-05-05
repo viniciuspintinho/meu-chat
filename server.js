@@ -179,6 +179,7 @@ io.on("connection", (socket) => {
                 id: socket.id,
                 name: data.name,
                 avatar: data.avatar,
+                profileFrame: isAdmin ? (data.profileFrame || 'none') : 'none',
                 isAdmin,
                 room: "Geral", // Sala padrão
                 // Status Reais Individuais
@@ -379,6 +380,7 @@ io.on("connection", (socket) => {
         const mensagemFinal = {
             name: user.name,
             avatar: user.avatar,
+            profileFrame: user.profileFrame || 'none',
             text: texto,
             msgType: data.msgType || "normal",
             replyTo: data.replyTo || null,

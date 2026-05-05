@@ -528,7 +528,11 @@ function entrar() {
 
     if (!name) return;
 
-    const userData = { name, avatar };
+    const userData = {
+        name,
+        avatar,
+        profileFrame: localStorage.getItem('chat_profile_frame') || 'none'
+    };
 
     sessionStorage.setItem('chat_user', JSON.stringify(userData));
     socket.emit('join', userData);
@@ -940,6 +944,12 @@ socket.on('message', (data) => {
     // Armazenar para busca
     allMessages.push({...data, _renderId: Math.random()});
 
+    const frameClass = data.profileFrame === 'blue-ring'
+        ? 'avatar-frame-blue-ring'
+        : data.profileFrame === 'glow-panel'
+            ? 'avatar-frame-glow-panel'
+            : '';
+
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
@@ -947,9 +957,12 @@ socket.on('message', (data) => {
         <div class="max-w-[50%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
              title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}')">
-            ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
-                onmouseenter="showHoverCard('${data.name}', event)" 
-                onmouseleave="hideHoverCard()">${data.name}${isAdminMsg ? ' ⭐' : ''}</div>` : ''}
+            ${!isSequencial ? `<div class="flex items-center gap-2 mb-2">
+                    <img src="${data.avatar}" class="w-8 h-8 rounded-full object-cover ${frameClass}">
+                    <div class="user-label font-bold text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">
+                        ${data.name}${isAdminMsg ? ' ⭐' : ''}
+                    </div>
+                </div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
             ${generatePreview(data.text)}
             <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
@@ -984,11 +997,17 @@ socket.on('updateUserList', (users) => {
 
     userList.innerHTML = users.map(u => {
         const isAdm = ADMINS.includes(u.name);
+        const frameClass = u.profileFrame === 'blue-ring'
+            ? 'avatar-frame-blue-ring'
+            : u.profileFrame === 'glow-panel'
+                ? 'avatar-frame-glow-panel'
+                : '';
+
         return `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-pointer" 
                  onmouseenter="showHoverCard('${u.name}', event)" 
                  onmouseleave="hideHoverCard()">
-                <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${isAdm ? 'avatar-active' : ''}">
+                <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${frameClass} ${isAdm ? 'avatar-active' : ''}">
                 <span class="text-xs ${isAdm ? 'text-red-500 font-bold' : 'text-gray-400'}">
                     ${u.name}
                 </span>
@@ -1040,13 +1059,13 @@ function saveSettings() {
 
     userBio = bio;
     localStorage.setItem('chat_bio', userBio);
-    sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
 
+    const frame = isAdm ? document.querySelector('.frame-option.active')?.id?.replace('frame-', '') || 'none' : (JSON.parse(sessionStorage.getItem('chat_user') || '{}').profileFrame || 'none');
     if (isAdm) {
-        const frame = document.querySelector('.frame-option.active')?.id?.replace('frame-', '') || 'none';
         localStorage.setItem('chat_profile_frame', frame);
     }
 
+    sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar, profileFrame: frame }));
     window.location.reload();
 }
 
