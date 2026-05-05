@@ -15,6 +15,42 @@
 /* Adicionado JetBrains Mono para Hierarquia Tipográfica de Sistema */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
+/* 1. Melhore o Glassmorphism da sua Sidebar */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.02) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 2. Adicione o Gradiente Animado para Admins */
+@keyframes adminGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.admin-glow {
+    background: linear-gradient(-45deg, rgba(255,236,130,0.1), rgba(255,48,64,0.15), rgba(124,58,237,0.1), rgba(0,149,246,0.1)) !important;
+    background-size: 400% 400% !important;
+    animation: adminGradient 10s ease infinite !important;
+    border: 1px solid rgba(255,236,130,0.3) !important;
+}
+
+/* 3. Sombra Dinâmica para suas mensagens (Bubble-me) */
+.bubble-me {
+    background: rgba(var(--theme-rgb), 0.2) !important;
+    backdrop-filter: blur(13px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 10px 30px -10px rgba(var(--theme-rgb), 0.6) !important;
+}
+
+/* 4. Deixe a Scrollbar combinando com o tema */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { 
+    background: var(--theme-color); 
+    border-radius: 10px; 
+}
 :root{
 --theme-color:#0095f6;
 --theme-rgb:0,149,246;
