@@ -85,6 +85,8 @@ function sendNotification(message) {
         } else {
             new Notification('Lux Chat', { body: message });
         }
+    }).catch(() => {
+        new Notification('Lux Chat', { body: message });
     });
 }
 
@@ -604,12 +606,12 @@ socket.on('message', (data) => {
         return;
     }
 
-    if (meuUser && data.text.includes(`@${meuUser.name}`)) {
-        playNotificationSound();
-        sendNotification(`Você foi mencionado por ${data.name}: ${data.text}`);
-    }
-
     const isAdminMsg = ADMINS.includes(data.name);
+
+    if (!isMe && data.id !== 'bot' && data.name !== 'SISTEMA') {
+        playNotificationSound();
+        sendNotification(`${data.name}: ${data.text}`);
+    }
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
@@ -624,6 +626,7 @@ socket.on('message', (data) => {
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
                 onmouseenter="showHoverCard('${data.name}', event)" 
                 onmouseleave="hideHoverCard()">${data.name}</div>` : ''}
+            ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
             ${generatePreview(data.text)}
             <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
                 <button onclick="reactToMessage('${data.id}', '👍')" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>

@@ -309,6 +309,10 @@ io.on("connection", (socket) => {
 
             if (texto === "/logs") {
                 logDb.find({}).sort({ timestamp: -1 }).limit(10).exec((err, logs) => {
+                    if (!logs || logs.length === 0) {
+                        socket.emit("message", { name: "SISTEMA", text: "Nenhum log encontrado.", id: "bot" });
+                        return;
+                    }
                     const logText = logs.map(log => `${new Date(log.timestamp).toLocaleString()}: ${log.admin} ${log.action} ${log.target} - ${log.details}`).join('\n');
                     socket.emit("message", { name: "SISTEMA", text: `Logs recentes:\n${logText}`, id: "bot" });
                 });
