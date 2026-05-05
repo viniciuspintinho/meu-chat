@@ -186,6 +186,7 @@ function changeRoom(roomName) {
     }
 
     // 4. Se ele for admin ou for outra sala, ele segue normal
+    showPortalTransition();
     socket.emit('joinRoom', roomName);
     
     // ... restante do seu código de mudar cor de botão ...
@@ -196,6 +197,13 @@ function changeRoom(roomName) {
 socket.on('roomInfo', (roomName) => {
     document.getElementById('room-title').innerText = roomName;
 });
+
+function showPortalTransition() {
+    const portal = document.getElementById('portal-overlay');
+    if (!portal) return;
+    portal.classList.add('active');
+    setTimeout(() => portal.classList.remove('active'), 900);
+}
 
 // =========================
 // MODO NOTURNO/DIA AUTOMÁTICO
