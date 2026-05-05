@@ -39,6 +39,10 @@ function logModeration(action, admin, target, details = '') {
     logDb.insert(logEntry);
 }
 
+function filterText(text) {
+    return String(text || '').replace(/<[^>]*>/g, '').trim();
+}
+
 /* =========================
     CONFIG GARTIC (ATUALIZADO)
 ========================= */
