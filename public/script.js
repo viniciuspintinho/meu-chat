@@ -4,8 +4,8 @@ const msgInput = document.getElementById('input');
 const garticChatContainer = document.getElementById('gartic-chat-messages');
 const garticInput = document.getElementById('gartic-input');
 
-// AudioContext para notificações
-const audioCtx = new AudioContext();
+// AudioContext para notificações (criado sob demanda para evitar bloqueio em alguns navegadores)
+let audioCtx;
 
 // Lista de admins
 const ADMINS = ["vn7", "pl"];
@@ -77,6 +77,15 @@ function sendNotification(message) {
 }
 
 function playNotificationSound() {
+    if (!audioCtx) {
+        try {
+            audioCtx = new AudioContext();
+        } catch (error) {
+            console.warn('AudioContext não disponível:', error);
+            return;
+        }
+    }
+
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
@@ -640,6 +649,12 @@ socket.on('updateUserList', (users) => {
         document.getElementById('my-name').innerText = user.name;
         document.getElementById('login').classList.add('hidden');
     }
+
+    // Mostrar botão de logs para admins após login
+    const currentUser = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+    if (ADMINS.includes(currentUser.name)) {
+        document.getElementById('logs-btn').style.display = 'block';
+    }
 });
 
 // =========================
@@ -695,9 +710,22 @@ function viewLogs() {
     socket.emit('chatMessage', { text: '/logs' });
 }
 
+function logout() {
+    sessionStorage.removeItem('chat_user');
+    window.location.reload();
+}
+
 // =========================
 // REPLY
 // =========================
+function setReply(name, text) {
+    selectedReply = { name, text };
+    document.getElementById('reply-user').innerText = name;
+    document.getElementById('reply-text').innerText = text;
+    document.getElementById('reply-container').classList.remove('hidden');
+    msgInput.focus();
+}
+
 function cancelReply() {
     selectedReply = null;
     document.getElementById('reply-container').classList.add('hidden');
