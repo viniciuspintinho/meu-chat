@@ -334,12 +334,21 @@ function getTitle(level) {
     return "Mestre do Desenho";
 }
 
-function showHoverCard(userData, e) {
-    document.getElementById('hover-avatar').src = userData.avatar;
-    document.getElementById('hover-name').innerText = userData.name;
-    document.getElementById('hover-level').innerText = userData.level || 1;
-    document.getElementById('hover-title').innerText = getTitle(userData.level || 1);
-    document.getElementById('hover-xp-bar').style.width = (userData.xp || 0) + "%";
+function showHoverCard(name, e) {
+    const user = usersForMention.find(u => u.name === name);
+    if (!user) return;
+
+    document.getElementById('hover-avatar').src = user.avatar;
+    document.getElementById('hover-name').innerText = user.name;
+    document.getElementById('hover-level').innerText = user.level || 1;
+    document.getElementById('hover-title').innerText = getTitle(user.level || 1);
+    document.getElementById('hover-xp-bar').style.width = (user.xp || 0) + "%";
+
+    // Medals
+    const daysSinceJoin = (Date.now() - user.joinDate) / (1000 * 60 * 60 * 24);
+    document.getElementById('medal-tagarela').style.opacity = user.msgCount >= 1000 ? '1' : '0.2';
+    document.getElementById('medal-pintor').style.opacity = user.garticWins >= 10 ? '1' : '0.2';
+    document.getElementById('medal-antigo').style.opacity = daysSinceJoin >= 30 ? '1' : '0.2';
 
     // CSS para garantir que o card não seja cortado
     hoverCard.style.position = 'fixed';
@@ -572,7 +581,7 @@ socket.on('message', (data) => {
         <div class="max-w-[80%] ${bubbleStyle} p-3 relative group cursor-pointer"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
-                onmouseenter="showHoverCard({name: '${data.name}', avatar: '${data.avatar || ""}', level: ${data.level || 1}, xp: ${data.xp || 0}}, event)" 
+                onmouseenter="showHoverCard('${data.name}', event)" 
                 onmouseleave="hideHoverCard()">${data.name}</div>` : ''}
             ${generatePreview(data.text)}
         </div>
@@ -593,7 +602,7 @@ socket.on('updateUserList', (users) => {
         const isAdm = ADMINS.includes(u.name);
         return `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-pointer" 
-                 onmouseenter="showHoverCard({name: '${u.name}', avatar: '${u.avatar}', level: ${u.level || 1}, xp: ${u.xp || 0}}, event)" 
+                 onmouseenter="showHoverCard('${u.name}', event)" 
                  onmouseleave="hideHoverCard()">
                 <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${isAdm ? 'avatar-active' : ''}">
                 <span class="text-xs ${isAdm ? 'text-red-500 font-bold' : 'text-gray-400'}">
@@ -628,6 +637,25 @@ function saveSettings() {
 
 function closeSettings() {
     document.getElementById('settings-modal').classList.add('hidden');
+}
+
+function openAchievements() {
+    const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
+    const user = usersForMention.find(u => u.name === meuUser.name);
+    if (!user) return;
+
+    const daysSinceJoin = (Date.now() - user.joinDate) / (1000 * 60 * 60 * 24);
+
+    document.getElementById('ach-tagarela-count').innerText = `${user.msgCount} / 1000 Mensagens`;
+    document.getElementById('ach-pintor-count').innerText = `${user.garticWins} / 10 Vitórias Gartic`;
+    document.getElementById('ach-antigo-status').innerText = daysSinceJoin >= 30 ? 'Conquistado!' : `Faltam ${Math.ceil(30 - daysSinceJoin)} dias...`;
+
+    // Update opacity
+    document.getElementById('ach-tagarela').style.opacity = user.msgCount >= 1000 ? '1' : '0.4';
+    document.getElementById('ach-pintor').style.opacity = user.garticWins >= 10 ? '1' : '0.4';
+    document.getElementById('ach-antigo').style.opacity = daysSinceJoin >= 30 ? '1' : '0.4';
+
+    document.getElementById('achievements-modal').classList.remove('hidden');
 }
 
 function changeTheme(hex) {
