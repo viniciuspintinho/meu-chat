@@ -11,12 +11,12 @@ const io = new Server(server);
 // Inicialização dos Bancos de Dados
 const db = new Datastore({ filename: "database.db", autoload: true });
 const msgDb = new Datastore({ filename: "messages.db", autoload: true }); // Histórico de mensagens
-const cmdDb = new Datastore({ filename: "commands.db", autoload: true }); // NOVO: Banco de comandos customizados
+const cmdDb = new Datastore({ filename: "commands.db", autoload: true }); // Banco de comandos customizados
 
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
-   CONFIG CHAT ORIGINAL
+    CONFIG CHAT ORIGINAL
 ========================= */
 
 const ADMINS = ["vn7", "pl"];
@@ -37,7 +37,7 @@ function filterText(text = "") {
 }
 
 /* =========================
-   CONFIG GARTIC (ATUALIZADO)
+    CONFIG GARTIC (ATUALIZADO)
 ========================= */
 
 // Lista expandida com mais de 50 itens divididos por categorias
@@ -132,7 +132,7 @@ function iniciarRodada() {
 }
 
 /* =========================
-   SOCKET
+    SOCKET
 ========================= */
 
 io.on("connection", (socket) => {
@@ -148,44 +148,58 @@ io.on("connection", (socket) => {
             return socket.disconnect();
         }
 
-        // Recuperação de pontos do Banco de Dados
+        // Recuperação de pontos e status reais do Banco de Dados
         db.findOne({ name: data.name }, (err, doc) => {
-            if (doc) {
-                gartic.points[data.name] = doc.points || 0;
-            } else {
-                db.insert({ name: data.name, points: 0 });
-                gartic.points[data.name] = 0;
+            let userStats = doc || { 
+                name: data.name, 
+                points: 0, 
+                msgCount: 0, 
+                garticWins: 0, 
+                level: 1,
+                xp: 0 
+            };
+
+            if (!doc) {
+                db.insert(userStats);
             }
+            
+            gartic.points[data.name] = userStats.points || 0;
+
+            const isAdmin = ADMINS.includes(data.name);
+
+            usersOnline[socket.id] = {
+                id: socket.id,
+                name: data.name,
+                avatar: data.avatar,
+                isAdmin,
+                room: "Geral", // Sala padrão
+                // Status Reais Individuais
+                msgCount: userStats.msgCount || 0,
+                garticWins: userStats.garticWins || 0,
+                level: userStats.level || 1,
+                xp: userStats.xp || 0
+            };
+
+            socket.join("Geral");
+
+            io.emit("updateUserList", Object.values(usersOnline));
+
+            socket.broadcast.to("Geral").emit("message", {
+                name: "Lux Bot",
+                text: `✨ **${data.name}** entrou no canal!`,
+                id: "bot"
+            });
+
+            // Enviar histórico ao usuário que acabou de entrar (Persistência)
+            msgDb.find({ room: "Geral" }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
+                docs.forEach(msg => socket.emit("message", msg));
+            });
+            
             io.emit("garticRanking", gartic.points);
-        });
-
-        const isAdmin = ADMINS.includes(data.name);
-
-        usersOnline[socket.id] = {
-            id: socket.id,
-            name: data.name,
-            avatar: data.avatar,
-            isAdmin,
-            room: "Geral" // Sala padrão
-        };
-
-        socket.join("Geral");
-
-        io.emit("updateUserList", Object.values(usersOnline));
-
-        socket.broadcast.to("Geral").emit("message", {
-            name: "Lux Bot",
-            text: `✨ **${data.name}** entrou no canal!`,
-            id: "bot"
-        });
-
-        // Enviar histórico ao usuário que acabou de entrar (Persistência)
-        msgDb.find({ room: "Geral" }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
-            docs.forEach(msg => socket.emit("message", msg));
         });
     });
 
-    // NOVO: Lógica de troca de salas (COM TRAVA DE SEGURANÇA)
+    // Lógica de troca de salas (COM TRAVA DE SEGURANÇA)
     socket.on("joinRoom", (roomName) => {
         const user = usersOnline[socket.id];
         if (!user) return;
@@ -229,6 +243,13 @@ io.on("connection", (socket) => {
 
         const texto = filterText(data.text || "");
 
+        // ATUALIZAÇÃO DE STATUS REAL: Mensagem Enviada
+        if (!data.msgType || data.msgType === "normal") {
+            db.update({ name: user.name }, { $inc: { msgCount: 1 } }, {});
+            user.msgCount++;
+            io.emit("updateUserList", Object.values(usersOnline));
+        }
+
         /* COMANDOS ADMIN */
         if (user.isAdmin) {
 
@@ -239,7 +260,7 @@ io.on("connection", (socket) => {
                 return;
             }
 
-            // NOVO: Comando /pin para Admins
+            // Comando /pin para Admins
             if (texto.startsWith("/pin ")) {
                 const pinText = texto.replace("/pin ", "").trim();
                 io.to(user.room).emit("newPin", pinText);
@@ -278,7 +299,7 @@ io.on("connection", (socket) => {
                 return;
             }
 
-            // NOVO: Comando /addcmd para Admins (/addcmd nome_comando resposta)
+            // Comando /addcmd para Admins (/addcmd nome_comando resposta)
             if (texto.startsWith("/addcmd ")) {
                 const parts = texto.replace("/addcmd ", "").split(" ");
                 const cmdName = parts[0].toLowerCase();
@@ -305,13 +326,13 @@ io.on("connection", (socket) => {
             });
         }
 
-        /* START GARTIC PELO CHAT MANTIDO POR COMPATIBILIDADE */
+        /* START GARTIC PELO CHAT */
         if (texto.toLowerCase() === "/gartic") {
             iniciarRodada();
             return;
         }
 
-        /* VERIFICAR ACERTO */
+        /* VERIFICAR ACERTO GARTIC */
         if (
             gartic.ativo &&
             socket.id !== gartic.drawerId &&
@@ -319,8 +340,9 @@ io.on("connection", (socket) => {
         ) {
             gartic.points[user.name] = (gartic.points[user.name] || 0) + 10;
 
-            // Salva os pontos no Banco de Dados
-            db.update({ name: user.name }, { $inc: { points: 10 } }, {});
+            // ATUALIZAÇÃO DE STATUS REAL: Vitória no Gartic e Pontos
+            db.update({ name: user.name }, { $inc: { points: 10, garticWins: 1 } }, {});
+            user.garticWins++;
 
             io.emit("message", {
                 name: "Lux Bot",
@@ -329,6 +351,7 @@ io.on("connection", (socket) => {
             });
 
             io.emit("garticRanking", gartic.points);
+            io.emit("updateUserList", Object.values(usersOnline));
             gartic.ativo = false;
 
             // Limpa o timer da dica ao acertar
@@ -351,11 +374,14 @@ io.on("connection", (socket) => {
             isAdmin: user.isAdmin,
             id: socket.id,
             timestamp: now,
-            room: user.room // Salva a sala da mensagem
+            room: user.room,
+            level: user.level,
+            msgCount: user.msgCount,
+            garticWins: user.garticWins
         };
 
         io.to(user.room).emit("message", mensagemFinal);
-        msgDb.insert(mensagemFinal); // Salva a mensagem no banco de dados persistente
+        msgDb.insert(mensagemFinal); // Salva no banco persistente
     });
 
     /* DIGITANDO */
@@ -369,7 +395,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    /* DESENHO ATUALIZADO (Suporta cores e tamanhos) */
+    /* DESENHO ATUALIZADO */
     socket.on("draw", (ponto) => {
         if (!gartic.ativo) return;
         if (socket.id !== gartic.drawerId) return;
@@ -382,7 +408,7 @@ io.on("connection", (socket) => {
         io.emit("clearCanvas");
     });
 
-    /* START PELO BOTÃO (Sincroniza apenas quem clicou) */
+    /* START PELO BOTÃO */
     socket.on("startGartic", () => {
         if (gartic.ativo) {
             socket.emit("garticStatus", {
@@ -403,7 +429,7 @@ io.on("connection", (socket) => {
             const saiu = usersOnline[socket.id].name;
             const userRoom = usersOnline[socket.id].room;
             delete usersOnline[socket.id];
-            delete msgHistory[socket.id]; // Limpa histórico do flood
+            delete msgHistory[socket.id]; 
             io.emit("updateUserList", Object.values(usersOnline));
             io.to(userRoom).emit("message", {
                 name: "Lux Bot",
