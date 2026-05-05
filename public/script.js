@@ -892,6 +892,12 @@ socket.on('message', (data) => {
 socket.on('updateUserList', (users) => {
     usersForMention = users; 
     const userList = document.getElementById('user-list');
+    
+    // Definir status online para o usuário atual
+    const currentUser = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+    if (currentUser.name) {
+        userStatuses[currentUser.name] = 'online';
+    }
 
     userList.innerHTML = users.map(u => {
         const isAdm = ADMINS.includes(u.name);
@@ -916,8 +922,7 @@ socket.on('updateUserList', (users) => {
     }
 
     // Mostrar botão de logs para admins após login
-    const currentUser = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
-    if (ADMINS.includes(currentUser.name)) {
+    if (currentUser.name && ADMINS.includes(currentUser.name)) {
         document.getElementById('logs-btn').style.display = 'block';
     }
 });

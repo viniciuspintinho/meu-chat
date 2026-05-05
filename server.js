@@ -208,19 +208,10 @@ io.on("connection", (socket) => {
         });
     });
 
-    // Lógica de troca de salas (COM TRAVA DE SEGURANÇA)
+    // Lógica de troca de salas
     socket.on("joinRoom", (roomName) => {
         const user = usersOnline[socket.id];
         if (!user) return;
-
-        // TRAVA DE SEGURANÇA: Bloqueia não-admins no canal Desenvolvedores
-        if (roomName === 'Desenvolvedores' && !user.isAdmin) {
-            return socket.emit("message", { 
-                name: "SISTEMA", 
-                text: "🚫 Acesso restrito apenas para Administradores.", 
-                id: "bot" 
-            });
-        }
 
         socket.leave(user.room);
         user.room = roomName;
