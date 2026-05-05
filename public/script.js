@@ -30,6 +30,8 @@ const EMOJIS = {
 
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
 let userLevel = parseInt(localStorage.getItem('chat_level')) || 1;
+let userBio = localStorage.getItem('chat_bio') || '';
+let allMessages = []; // Para busca
 
 // =========================
 // PREVIEW DE LINKS AUTOMÁTICO
@@ -132,12 +134,14 @@ function updateXPUI() {
     const lvl = document.getElementById('user-level');
     const xp = document.getElementById('user-xp');
     const fill = document.getElementById('xp-fill');
+    const bioEl = document.getElementById('my-bio');
 
     if (!lvl) return;
 
     lvl.innerText = userLevel;
     xp.innerText = userXP;
     fill.style.width = Math.min(userXP, 100) + "%";
+    if (bioEl) bioEl.innerText = userBio || "Nenhuma bio ainda";
 }
 
 function gainXP(amount = null) {
@@ -203,6 +207,123 @@ function applyAutoTheme() {
     document.documentElement.style.setProperty('--theme-color', isNight ? '#0095f6' : '#42e97f');
     document.body.style.background = theme;
     localStorage.setItem('auto_theme', isNight ? 'night' : 'day');
+}
+
+// =========================
+// BUSCA DE MENSAGENS
+// =========================
+function searchMessages(query) {
+    if (!query.trim()) {
+        msgContainer.innerHTML = '';
+        allMessages.forEach(msg => renderMessageInContainer(msg));
+        return;
+    }
+
+    const filtered = allMessages.filter(msg => 
+        msg.text.toLowerCase().includes(query.toLowerCase()) ||
+        msg.name.toLowerCase().includes(query.toLowerCase())
+    );
+
+    msgContainer.innerHTML = '';
+    filtered.forEach(msg => renderMessageInContainer(msg, query));
+}
+
+function clearSearch() {
+    document.getElementById('search-input').value = '';
+    msgContainer.innerHTML = '';
+    allMessages.forEach(msg => renderMessageInContainer(msg));
+}
+
+document.getElementById('search-input')?.addEventListener('input', (e) => {
+    searchMessages(e.target.value);
+});
+
+// =========================
+// COPIAR MENSAGEM
+// =========================
+function copyMessage(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-green-500/80 text-white px-4 py-2 rounded-lg text-sm';
+        toast.innerText = '✓ Copiado!';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    });
+}
+
+// =========================
+// FORMATAR HORA
+// =========================
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+function formatLastSeen(timestamp) {
+    const diff = Date.now() - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Agora';
+    if (minutes < 60) return `${minutes}m atrás`;
+    if (hours < 24) return `${hours}h atrás`;
+    if (days < 7) return `${days}d atrás`;
+    return 'Há muito tempo';
+}
+
+// =========================
+// RENDERIZAR MENSAGEM (Helper)
+// =========================
+function renderMessageInContainer(data, searchQuery = '') {
+    const isMe = data.id === socket.id;
+    const isSequencial = data.id === lastSenderId;
+    const isAdminMsg = ADMINS.includes(data.name);
+
+    if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
+        const divSystem = document.createElement('div');
+        divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+        divSystem.innerHTML = `<div class="system-msg">${data.text}</div>`;
+        msgContainer.appendChild(divSystem);
+        return;
+    }
+
+    let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
+    if (isAdminMsg) bubbleStyle += ' admin-glow';
+
+    const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
+    const highlightedText = searchQuery 
+        ? data.text.replace(new RegExp(`(${searchQuery})`, 'gi'), '<mark style="background:rgba(255,200,0,.4)">$1</mark>')
+        : data.text;
+
+    const div = document.createElement('div');
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+
+    div.innerHTML = `
+        <div class="max-w-[50%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
+             title="${formatTime(data.timestamp)}"
+             onclick="setReply('${data.name}', '${safeText}')">
+            ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
+                onmouseenter="showHoverCard('${data.name}', event)" 
+                onmouseleave="hideHoverCard()">${data.name}${isAdminMsg ? ' ⭐' : ''}</div>` : ''}
+            ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
+            <div>${highlightedText.substring(0, 300)}</div>
+            <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
+            <div class="msg-actions">
+                <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋 Copy</button>
+                <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️ Reply</button>
+            </div>
+            <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
+                <button onclick="reactToMessage('${data.id}', '👍'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>
+                <button onclick="reactToMessage('${data.id}', '😂'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">😂</button>
+                <button onclick="reactToMessage('${data.id}', '❤️'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">❤️</button>
+            </div>
+        </div>
+    `;
+
+    msgContainer.appendChild(div);
 }
 
 // Aplicar tema automático ao carregar
@@ -623,20 +744,29 @@ socket.on('message', (data) => {
 
     const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
 
+    // Armazenar para busca
+    allMessages.push({...data, _renderId: Math.random()});
+
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
     div.innerHTML = `
         <div class="max-w-[50%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
+             title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
                 onmouseenter="showHoverCard('${data.name}', event)" 
-                onmouseleave="hideHoverCard()">${data.name}</div>` : ''}
+                onmouseleave="hideHoverCard()">${data.name}${isAdminMsg ? ' ⭐' : ''}</div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
             ${generatePreview(data.text)}
+            <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
+            <div class="msg-actions">
+                <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋</button>
+                <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️</button>
+            </div>
             <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
-                <button onclick="reactToMessage('${data.id}', '👍')" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>
-                <button onclick="reactToMessage('${data.id}', '😂')" class="text-xs bg-white/10 px-2 py-1 rounded">😂</button>
+                <button onclick="reactToMessage('${data.id}', '👍'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>
+                <button onclick="reactToMessage('${data.id}', '😂'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">😂</button>
                 <button onclick="reactToMessage('${data.id}', '❤️')" class="text-xs bg-white/10 px-2 py-1 rounded">❤️</button>
             </div>
         </div>
@@ -690,6 +820,7 @@ function openSettings() {
 
     document.getElementById('set-username').value = user.name || "";
     document.getElementById('set-avatar').value = user.avatar || "";
+    document.getElementById('set-bio').value = userBio || "";
 
     document.getElementById('settings-modal').classList.remove('hidden');
 }
@@ -697,9 +828,12 @@ function openSettings() {
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
     const avatar = document.getElementById('set-avatar').value.trim();
+    const bio = document.getElementById('set-bio').value.trim();
 
     if (!name) return;
 
+    userBio = bio;
+    localStorage.setItem('chat_bio', userBio);
     sessionStorage.setItem('chat_user', JSON.stringify({ name, avatar }));
     window.location.reload();
 }

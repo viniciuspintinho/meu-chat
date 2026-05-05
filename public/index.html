@@ -181,14 +181,14 @@ font-weight:800;
 }
 
 .bubble-me{
-background:rgba(var(--theme-rgb),.2)!important;
+background: linear-gradient(135deg, rgba(var(--theme-rgb),.25), rgba(var(--theme-rgb),.1)) !important;
 backdrop-filter:blur(13px);
 border:1px solid rgba(255,255,255,.1)!important;
 box-shadow:0 15px 50px -10px rgba(0,0,0,.6);
 }
 
 .bg-white\/5{
-background:rgba(255,255,255,.05)!important;
+background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02)) !important;
 backdrop-filter:blur(12px);
 border:1px solid rgba(255,255,255,.05)!important;
 box-shadow:0 15px 50px -10px rgba(0,0,0,.6);
@@ -231,6 +231,64 @@ height:85px;
 border-radius:50%;
 object-fit:cover;
 border:3px solid var(--theme-color);
+position: relative;
+}
+
+.avatar-badge {
+position: absolute;
+bottom: -2px;
+right: -2px;
+width: 24px;
+height: 24px;
+background: var(--adm-red);
+border: 2px solid #050505;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 12px;
+font-weight: bold;
+}
+
+.msg-timestamp {
+font-size: 9px;
+color: rgba(255,255,255,.4);
+margin-top: 4px;
+}
+
+.msg-actions {
+display: flex;
+gap: 6px;
+margin-top: 6px;
+opacity: 0;
+transition: opacity 0.2s;
+}
+
+.msg-actions button {
+font-size: 9px;
+padding: 2px 6px;
+background: rgba(255,255,255,.1);
+border: none;
+border-radius: 4px;
+color: white;
+cursor: pointer;
+transition: background 0.2s;
+}
+
+.msg-actions button:hover {
+background: rgba(255,255,255,.2);
+}
+
+.room-color-geral { --room-color: #0095f6; }
+.room-color-Desenvolvedores { --room-color: #ff3040; }
+.room-color-random { --room-color: #00f9f9; }
+
+#search-input {
+font-size: 12px;
+}
+
+.search-highlight {
+background: rgba(255, 200, 0, 0.3) !important;
 }
 
 .lv-badge-circle{
@@ -498,7 +556,10 @@ Entrar
 <div id="user-level" class="lv-badge-circle">1</div>
 </div>
 
-<h3 id="my-name" class="font-bold text-sm tracking-tight text-white"></h3>
+<div class="text-center">
+  <h3 id="my-name" class="font-bold text-sm tracking-tight text-white"></h3>
+  <p id="my-bio" class="text-[10px] text-gray-400 italic mt-1 max-w-[200px]"></p>
+</div>
 
 <div class="w-full px-4">
 <div class="flex justify-between text-[9px] font-bold text-gray-500 mb-1">
@@ -562,6 +623,11 @@ Sair
         <p id="pin-text" class="text-xs text-white/80 truncate italic"></p>
     </div>
     <button onclick="document.getElementById('pin-banner').classList.add('hidden')" class="text-gray-500 hover:text-white text-xs">✕</button>
+</div>
+
+<div class="flex items-center px-6 py-2 border-b border-white/10">
+  <input id="search-input" type="text" placeholder="🔍 Buscar mensagens..." class="flex-1 bg-transparent outline-none text-white text-sm placeholder-gray-500">
+  <button onclick="clearSearch()" class="text-gray-400 hover:text-white ml-2">✕</button>
 </div>
 
 <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
@@ -661,6 +727,8 @@ Enviar
 <input id="set-username" type="text" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
 
 <input id="set-avatar" type="text" class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none">
+
+<textarea id="set-bio" placeholder="Adicione uma bio..." class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none text-sm resize-none" rows="2"></textarea>
 
 <div class="grid grid-cols-4 gap-3 p-4 bg-black/40 rounded-2xl">
 <div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
