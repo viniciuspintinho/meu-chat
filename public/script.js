@@ -859,34 +859,39 @@ document.getElementById('form').onsubmit = (e) => {
     e.preventDefault();
 
     const val = msgInput.value.trim();
-    if (!val) return;
+    const hasFiles = selectedFiles.length > 0;
+    if (!val && !hasFiles) return;
 
-    const cmdResult = processCommand(val);
-
-    if (cmdResult.silent) {
-        msgInput.value = '';
-        return;
+    if (hasFiles) {
+        sendImages();
     }
 
-    const payload =
-        typeof cmdResult === 'object'
-            ? {
-                text: cmdResult.text,
-                msgType: cmdResult.type,
-                replyTo: selectedReply
-            }
-            : {
-                text: val,
-                replyTo: selectedReply
-            };
+    if (val) {
+        const cmdResult = processCommand(val);
 
-    socket.emit('chatMessage', payload);
+        if (cmdResult.silent) {
+            msgInput.value = '';
+            return;
+        }
 
-    gainXP();
+        const payload =
+            typeof cmdResult === 'object'
+                ? {
+                    text: cmdResult.text,
+                    msgType: cmdResult.type,
+                    replyTo: selectedReply
+                }
+                : {
+                    text: val,
+                    replyTo: selectedReply
+                };
+
+        socket.emit('chatMessage', payload);
+        gainXP();
+    }
 
     msgInput.value = '';
     cancelReply();
-
     socket.emit('typing', false);
 };
 
@@ -1407,27 +1412,6 @@ async function copyImageToClipboard(src) {
         alert('Erro ao copiar imagem.');
     }
 }
-
-// Adicionar botão de enviar imagens ao form
-document.getElementById('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = document.getElementById('input');
-    const text = input.value.trim();
-    
-    if (text || selectedFiles.length > 0) {
-        if (selectedFiles.length > 0) {
-            sendImages();
-        }
-        if (text) {
-            socket.emit('chatMessage', {
-                text,
-                replyTo: selectedReply
-            });
-        }
-        input.value = '';
-        cancelReply();
-    }
-});
 
 // CSS para drag over
 const dragStyle = document.createElement('style');

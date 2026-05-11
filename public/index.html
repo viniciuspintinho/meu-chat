@@ -439,29 +439,55 @@ position:relative;
 z-index:10;
 }
 
+.avatar-wrapper {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at top left, rgba(0,149,246,.28), transparent 40%), radial-gradient(circle at bottom right, rgba(124,58,237,.18), transparent 35%);
+    box-shadow: 0 25px 60px rgba(0,0,0,.25);
+}
+
 .avatar-main{
-width:85px;
-height:85px;
-border-radius:50%;
-object-fit:cover;
-border:3px solid var(--theme-color);
-position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid rgba(255,255,255,.18);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    position: relative;
+    background: rgba(255,255,255,.04);
+}
+
+.avatar-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    padding: 3px;
+    background: linear-gradient(135deg, rgba(0,149,246,.7), rgba(124,58,237,.7));
+    -webkit-mask: radial-gradient(circle at center, transparent 78%, black 80%);
+    mask: radial-gradient(circle at center, transparent 78%, black 80%);
+    pointer-events: none;
 }
 
 .avatar-badge {
-position: absolute;
-bottom: -2px;
-right: -2px;
-width: 24px;
-height: 24px;
-background: var(--adm-red);
-border: 2px solid #050505;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 12px;
-font-weight: bold;
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 24px;
+    height: 24px;
+    background: var(--adm-red);
+    border: 2px solid #050505;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 .avatar-wrapper.profile-frame-blue-ring {
