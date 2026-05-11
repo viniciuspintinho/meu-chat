@@ -40,7 +40,8 @@ function logModeration(action, admin, target, details = '') {
 }
 
 function filterText(text) {
-    return String(text || '').replace(/<[^>]*>/g, '').trim();
+    if (!text) return '';
+    return String(text).replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').trim();
 }
 
 /* =========================
@@ -156,7 +157,7 @@ io.on("connection", (socket) => {
         }
 
         // Recuperação de pontos e status reais do Banco de Dados
-        db.findOne({ name: data.name }, (err, doc) => {
+        db.findOne({ name: data.name }, async (err, doc) => {
             let userStats = doc || { 
                 name: data.name, 
                 points: 0, 
@@ -168,7 +169,7 @@ io.on("connection", (socket) => {
             };
 
             if (!doc) {
-                db.insert(userStats);
+                await new Promise((resolve) => db.insert(userStats, resolve));
             }
             
             gartic.points[data.name] = userStats.points || 0;
