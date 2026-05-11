@@ -9,10 +9,10 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Inicialização dos Bancos de Dados
-const db = new Datastore({ filename: "database.db", autoload: true });
-const msgDb = new Datastore({ filename: "messages.db", autoload: true }); // Histórico de mensagens
-const cmdDb = new Datastore({ filename: "commands.db", autoload: true }); // Banco de comandos customizados
-const logDb = new Datastore({ filename: "logs.db", autoload: true }); // Logs de moderação
+// const db = new Datastore({ filename: "database.db", autoload: true });
+// const msgDb = new Datastore({ filename: "messages.db", autoload: true }); // Histórico de mensagens
+// const cmdDb = new Datastore({ filename: "commands.db", autoload: true }); // Banco de comandos customizados
+// const logDb = new Datastore({ filename: "logs.db", autoload: true }); // Logs de moderação
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -36,7 +36,7 @@ function logModeration(action, admin, target, details = '') {
         target,
         details
     };
-    logDb.insert(logEntry);
+    // logDb.insert(logEntry);
 }
 
 function filterText(text) {
@@ -156,59 +156,51 @@ io.on("connection", (socket) => {
             return socket.disconnect();
         }
 
-        // Recuperação de pontos e status reais do Banco de Dados
-        db.findOne({ name: data.name }, async (err, doc) => {
-            let userStats = doc || { 
-                name: data.name, 
-                points: 0, 
-                msgCount: 0, 
-                garticWins: 0, 
-                level: 1,
-                xp: 0,
-                joinDate: Date.now()
-            };
+        // Recuperação de pontos e status (in-memory para teste)
+        let userStats = { 
+            name: data.name, 
+            points: 0, 
+            msgCount: 0, 
+            garticWins: 0, 
+            level: 1,
+            xp: 0,
+            joinDate: Date.now()
+        };
+        
+        gartic.points[data.name] = userStats.points || 0;
 
-            if (!doc) {
-                await new Promise((resolve) => db.insert(userStats, resolve));
-            }
-            
-            gartic.points[data.name] = userStats.points || 0;
+        const isAdmin = ADMINS.includes(data.name);
+        const defaultFrame = isAdmin ? (data.profileFrame || 'blue-ring') : 'none';
 
-            const isAdmin = ADMINS.includes(data.name);
-            const defaultFrame = isAdmin ? (data.profileFrame || 'blue-ring') : 'none';
+        usersOnline[socket.id] = {
+            id: socket.id,
+            name: data.name,
+            avatar: data.avatar,
+            profileFrame: defaultFrame,
+            isAdmin,
+            room: "Geral", // Sala padrão
+            // Status Reais Individuais
+            msgCount: userStats.msgCount || 0,
+            garticWins: userStats.garticWins || 0,
+            level: userStats.level || 1,
+            xp: userStats.xp || 0,
+            joinDate: userStats.joinDate
+        };
 
-            usersOnline[socket.id] = {
-                id: socket.id,
-                name: data.name,
-                avatar: data.avatar,
-                profileFrame: defaultFrame,
-                isAdmin,
-                room: "Geral", // Sala padrão
-                // Status Reais Individuais
-                msgCount: userStats.msgCount || 0,
-                garticWins: userStats.garticWins || 0,
-                level: userStats.level || 1,
-                xp: userStats.xp || 0,
-                joinDate: userStats.joinDate
-            };
+        socket.join("Geral");
 
-            socket.join("Geral");
+        io.emit("updateUserList", Object.values(usersOnline));
 
-            io.emit("updateUserList", Object.values(usersOnline));
-
-            socket.broadcast.to("Geral").emit("message", {
-                name: "Lux Bot",
-                text: `✨ **${data.name}** entrou no canal!`,
-                id: "bot"
-            });
-
-            // Enviar histórico ao usuário que acabou de entrar (Persistência)
-            msgDb.find({ room: "Geral" }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
-                docs.forEach(msg => socket.emit("message", msg));
-            });
-            
-            io.emit("garticRanking", gartic.points);
+        socket.broadcast.to("Geral").emit("message", {
+            name: "Lux Bot",
+            text: `✨ **${data.name}** entrou no canal!`,
+            id: "bot"
         });
+
+        // Sem histórico para teste
+        // msgDb.find... 
+        
+        io.emit("garticRanking", gartic.points);
     });
 
     // Lógica de troca de salas
@@ -223,9 +215,9 @@ io.on("connection", (socket) => {
         socket.emit("roomInfo", roomName);
         
         // Carrega histórico da sala específica
-        msgDb.find({ room: roomName }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
-            docs.forEach(msg => socket.emit("message", msg));
-        });
+        // msgDb.find({ room: roomName }).sort({ timestamp: 1 }).limit(50).exec((err, docs) => {
+        //     docs.forEach(msg => socket.emit("message", msg));
+        // });
     });
 
     /* CHAT */
@@ -248,7 +240,7 @@ io.on("connection", (socket) => {
 
         // ATUALIZAÇÃO DE STATUS REAL: Mensagem Enviada
         if (!data.msgType || data.msgType === "normal") {
-            db.update({ name: user.name }, { $inc: { msgCount: 1 } }, {});
+            // db.update({ name: user.name }, { $inc: { msgCount: 1 } }, {});
             user.msgCount++;
             io.emit("updateUserList", Object.values(usersOnline));
         }
@@ -302,14 +294,15 @@ io.on("connection", (socket) => {
             }
 
             if (texto === "/logs") {
-                logDb.find({}).sort({ timestamp: -1 }).limit(10).exec((err, logs) => {
-                    if (!logs || logs.length === 0) {
-                        socket.emit("message", { name: "SISTEMA", text: "Nenhum log encontrado.", id: "bot" });
-                        return;
-                    }
-                    const logText = logs.map(log => `${new Date(log.timestamp).toLocaleString()}: ${log.admin} ${log.action} ${log.target} - ${log.details}`).join('\n');
-                    socket.emit("message", { name: "SISTEMA", text: `Logs recentes:\n${logText}`, id: "bot" });
-                });
+                // logDb.find({}).sort({ timestamp: -1 }).limit(10).exec((err, logs) => {
+                //     if (!logs || logs.length === 0) {
+                //         socket.emit("message", { name: "SISTEMA", text: "Nenhum log encontrado.", id: "bot" });
+                //         return;
+                //     }
+                //     const logText = logs.map(log => `${new Date(log.timestamp).toLocaleString()}: ${log.admin} ${log.action} ${log.target} - ${log.details}`).join('\n');
+                //     socket.emit("message", { name: "SISTEMA", text: `Logs recentes:\n${logText}`, id: "bot" });
+                // });
+                socket.emit("message", { name: "SISTEMA", text: "Logs desabilitados para teste.", id: "bot" });
                 return;
             }
 
@@ -319,8 +312,8 @@ io.on("connection", (socket) => {
                 const cmdName = parts[0].toLowerCase();
                 const response = parts.slice(1).join(" ");
                 if (cmdName && response) {
-                    cmdDb.update({ name: cmdName }, { name: cmdName, response: response }, { upsert: true });
-                    socket.emit("message", { name: "SISTEMA", text: `✅ Comando /${cmdName} criado!`, id: "bot" });
+                    // cmdDb.update({ name: cmdName }, { name: cmdName, response: response }, { upsert: true });
+                    socket.emit("message", { name: "SISTEMA", text: `✅ Comando /${cmdName} criado! (Simulado)`, id: "bot" });
                 }
                 return;
             }
@@ -329,15 +322,15 @@ io.on("connection", (socket) => {
         /* COMANDOS CUSTOMIZADOS (Dinâmicos) */
         if (texto.startsWith("/")) {
             const cmdInput = texto.split(" ")[0].toLowerCase().replace("/", "");
-            cmdDb.findOne({ name: cmdInput }, (err, cmd) => {
-                if (cmd) {
-                    io.to(user.room).emit("message", {
-                        name: "Lux Bot",
-                        text: cmd.response.replace("{user}", user.name),
-                        id: "bot"
-                    });
-                }
-            });
+            // cmdDb.findOne({ name: cmdInput }, (err, cmd) => {
+            //     if (cmd) {
+            //         io.to(user.room).emit("message", {
+            //             name: "Lux Bot",
+            //             text: cmd.response.replace("{user}", user.name),
+            //             id: "bot"
+            //         });
+            //     }
+            // });
         }
 
         /* START GARTIC PELO CHAT */
@@ -355,7 +348,7 @@ io.on("connection", (socket) => {
             gartic.points[user.name] = (gartic.points[user.name] || 0) + 10;
 
             // ATUALIZAÇÃO DE STATUS REAL: Vitória no Gartic e Pontos
-            db.update({ name: user.name }, { $inc: { points: 10, garticWins: 1 } }, {});
+            // db.update({ name: user.name }, { $inc: { points: 10, garticWins: 1 } }, {});
             user.garticWins++;
 
             io.emit("message", {
@@ -401,7 +394,7 @@ io.on("connection", (socket) => {
         };
 
         io.to(user.room).emit("message", mensagemFinal);
-        msgDb.insert(mensagemFinal); // Salva no banco persistente
+        // msgDb.insert(mensagemFinal); // Salva no banco persistente
 
         // Se for temporária, deletar após 30 segundos
         if (mensagemFinal.temp) {
@@ -454,11 +447,11 @@ io.on("connection", (socket) => {
         const user = usersOnline[socket.id];
         if (!user) return;
         // Buscar mensagem no histórico
-        msgDb.findOne({ messageId: data.messageId }, (err, msg) => {
-            if (msg) {
-                io.to(user.room).emit("messagePinned", msg);
-            }
-        });
+        // msgDb.findOne({ messageId: data.messageId }, (err, msg) => {
+        //     if (msg) {
+        //         io.to(user.room).emit("messagePinned", msg);
+        //     }
+        // });
     });
 
     /* UNPIN MENSAGEM */
