@@ -393,7 +393,10 @@ io.on("connection", (socket) => {
             level: user.level,
             msgCount: user.msgCount,
             garticWins: user.garticWins,
-            temp: data.temp || false
+            temp: data.temp || false,
+            imageData: data.imageData || null,
+            fileName: data.fileName || null,
+            fileSize: data.fileSize || null
         };
 
         io.to(user.room).emit("message", mensagemFinal);

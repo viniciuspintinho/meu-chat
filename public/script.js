@@ -41,7 +41,7 @@ let lastSeen = {}; // Para último visto
 // =========================
 // PREVIEW DE LINKS AUTOMÁTICO
 // =========================
-function generatePreview(text) {
+function generatePreview(text, imageData = null, fileName = null) {
     const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     const imgRegex = /\.(jpeg|jpg|gif|png|webp)$/i;
 
@@ -65,6 +65,25 @@ function generatePreview(text) {
                         <span class="pasted-image-subtitle">Se você colou uma imagem, confirme se ela foi enviada corretamente.</span>
                     </div>
                 </div>`;
+    }
+
+    // NOVO: Preview para imagens anexadas
+    if (imageData && fileName) {
+        return `<div class="media-card">
+            <div class="image-badge">Imagem</div>
+            <div class="media-header">
+                <div class="media-icon">🖼️</div>
+                <div class="media-info">
+                    <div class="media-name">${fileName}</div>
+                    <div class="media-size">${formatFileSize(imageData.length * 0.75)}</div>
+                </div>
+            </div>
+            <img src="${imageData}" class="media-preview" alt="${fileName}" onclick="viewFullImage('${imageData}')">
+            <div class="media-actions">
+                <button onclick="downloadImage('${imageData}', '${fileName}')">Baixar</button>
+                <button onclick="copyImageToClipboard('${imageData}')">Copiar</button>
+            </div>
+        </div>`;
     }
 
     if (imgRegex.test(text)) {
@@ -990,7 +1009,7 @@ socket.on('message', (data) => {
                     </div>
                 </div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
-            ${generatePreview(data.text)}
+            ${generatePreview(data.text, data.imageData, data.fileName)}
             <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
             <div class="msg-actions">
                 <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋</button>
@@ -1190,17 +1209,235 @@ function updatePinnedMessages() {
 }
 
 // =========================
-// NOVOS LISTENERS PARA FUNCIONALIDADES
+// NOVO: FUNCIONALIDADES DE UPLOAD DE IMAGEM
 // =========================
-socket.on('tempMessage', (data) => {
-    renderMessageInContainer(data, document.getElementById('messages'));
-    // Remover mensagem após duração
-    setTimeout(() => {
-        const tempMsg = document.querySelector(`[data-message-id="${data.id}"]`);
-        if (tempMsg) tempMsg.remove();
-    }, data.duration);
+
+// Variáveis para upload
+let selectedFiles = [];
+let dragCounter = 0;
+
+// Função para lidar com seleção de arquivo
+function handleFileSelect(files) {
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            selectedFiles.push(file);
+            showImagePreview(file);
+        }
+    }
+}
+
+// Função para mostrar preview da imagem
+function showImagePreview(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'media-card';
+        previewContainer.innerHTML = `
+            <div class="image-badge">Imagem</div>
+            <div class="media-header">
+                <div class="media-icon">🖼️</div>
+                <div class="media-info">
+                    <div class="media-name">${file.name}</div>
+                    <div class="media-size">${formatFileSize(file.size)}</div>
+                </div>
+            </div>
+            <img src="${e.target.result}" class="media-preview" alt="${file.name}">
+            <div class="media-actions">
+                <button onclick="viewFullImage('${e.target.result}')">Visualizar</button>
+                <button onclick="removeImage(this)">Remover</button>
+            </div>
+        `;
+        
+        // Adicionar ao container de previews
+        const previewArea = document.getElementById('image-previews') || createPreviewArea();
+        previewArea.appendChild(previewContainer);
+    };
+    reader.readAsDataURL(file);
+}
+
+// Função para criar área de preview
+function createPreviewArea() {
+    const previewArea = document.createElement('div');
+    previewArea.id = 'image-previews';
+    previewArea.className = 'fixed bottom-20 left-4 right-4 bg-black/80 p-4 rounded-xl max-h-60 overflow-y-auto z-50';
+    document.body.appendChild(previewArea);
+    return previewArea;
+}
+
+// Função para visualizar imagem em tamanho real
+function viewFullImage(src) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/90 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <img src="${src}" class="max-w-full max-h-full object-contain">
+        <button onclick="this.parentElement.remove()" class="absolute top-4 right-4 text-white text-2xl">✕</button>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Função para remover imagem do preview
+function removeImage(button) {
+    const card = button.closest('.media-card');
+    const index = Array.from(card.parentElement.children).indexOf(card);
+    selectedFiles.splice(index, 1);
+    card.remove();
+    
+    if (selectedFiles.length === 0) {
+        document.getElementById('image-previews')?.remove();
+    }
+}
+
+// Função para formatar tamanho do arquivo
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Função para enviar imagens
+function sendImages() {
+    if (selectedFiles.length === 0) return;
+    
+    selectedFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            socket.emit('chatMessage', {
+                text: `Imagem anexada: ${file.name}`,
+                imageData: e.target.result,
+                fileName: file.name,
+                fileSize: file.size,
+                replyTo: selectedReply
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    selectedFiles = [];
+    document.getElementById('image-previews')?.remove();
+}
+
+// Event listeners para drag and drop
+document.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    document.body.classList.add('drag-over');
 });
 
+document.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter === 0) {
+        document.body.classList.remove('drag-over');
+    }
+});
+
+document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    document.body.classList.remove('drag-over');
+    
+    const files = e.dataTransfer.files;
+    handleFileSelect(files);
+});
+
+// Event listener para colar imagens
+document.addEventListener('paste', (e) => {
+    const items = e.clipboardData.items;
+    for (let item of items) {
+        if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            handleFileSelect([file]);
+        }
+    }
+});
+
+// Event listener para input de arquivo
+document.getElementById('imageInput').addEventListener('change', (e) => {
+    handleFileSelect(e.target.files);
+});
+
+// Modificar generatePreview para detectar imagens anexadas
+const originalGeneratePreview = generatePreview;
+function generatePreview(text) {
+    // Verificar se é uma mensagem com imagem anexada
+    if (text.startsWith('Imagem anexada:')) {
+        const fileName = text.replace('Imagem anexada: ', '');
+        return `<div class="media-card">
+            <div class="image-badge">Imagem</div>
+            <div class="media-header">
+                <div class="media-icon">🖼️</div>
+                <div class="media-info">
+                    <div class="media-name">${fileName}</div>
+                </div>
+            </div>
+            <div class="media-actions">
+                <button onclick="downloadImage(this.previousElementSibling.previousElementSibling.querySelector('img').src, '${fileName}')">Baixar</button>
+            </div>
+        </div>`;
+    }
+    
+    return originalGeneratePreview(text);
+}
+
+// Função para baixar imagem
+function downloadImage(src, fileName) {
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = fileName;
+    link.click();
+}
+
+// Função para copiar imagem para clipboard
+async function copyImageToClipboard(src) {
+    try {
+        const response = await fetch(src);
+        const blob = await response.blob();
+        await navigator.clipboard.write([
+            new ClipboardItem({ [blob.type]: blob })
+        ]);
+        alert('Imagem copiada para a área de transferência!');
+    } catch (error) {
+        console.error('Erro ao copiar imagem:', error);
+        alert('Erro ao copiar imagem.');
+    }
+}
+
+// Adicionar botão de enviar imagens ao form
+document.getElementById('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('input');
+    const text = input.value.trim();
+    
+    if (text || selectedFiles.length > 0) {
+        if (selectedFiles.length > 0) {
+            sendImages();
+        }
+        if (text) {
+            socket.emit('chatMessage', {
+                text,
+                replyTo: selectedReply
+            });
+        }
+        input.value = '';
+        cancelReply();
+    }
+});
+
+// CSS para drag over
+const dragStyle = document.createElement('style');
+dragStyle.textContent = `
+    .drag-over {
+        background: rgba(0, 149, 246, 0.1) !important;
+        border: 2px dashed var(--theme-color) !important;
+    }
+`;
+document.head.appendChild(dragStyle);
 function sendTempMessage(text, duration = 30000) {
     socket.emit('tempMessage', { text, duration });
 }

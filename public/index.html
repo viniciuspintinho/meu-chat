@@ -173,6 +173,104 @@ word-break: break-word;
     font-size: 11px;
 }
 
+/* NOVO: Estilos para Cards de Mídia */
+.media-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(255,255,255,.05);
+    border: 2px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    margin-top: 8px;
+    animation: mediaFadeIn 0.5s ease-out;
+    position: relative;
+}
+
+@keyframes mediaFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.media-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.media-icon {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, var(--theme-color), #7c3aed);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: white;
+}
+
+.media-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.media-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.media-size {
+    font-size: 10px;
+    color: rgba(255,255,255,.6);
+}
+
+.media-preview {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,.1);
+}
+
+.media-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.media-actions button {
+    font-size: 10px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,.1);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.media-actions button:hover {
+    background: rgba(255,255,255,.2);
+}
+
+.image-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--theme-color);
+    color: white;
+    font-size: 8px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* NOVO: Efeito Pulsante Vermelho para Admins Ativos */
 .avatar-active {
     border: 2px solid var(--adm-red) !important;
@@ -993,6 +1091,8 @@ Sair
 <div class="max-w-5xl mx-auto flex items-center gap-3">
 
 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
+<input type="file" id="imageInput" accept="image/*" style="display:none;" multiple>
+<button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
 
 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
