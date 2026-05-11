@@ -37,6 +37,12 @@ let pinnedMessages = []; // Para pins
 let messageReactions = {}; // Para reações
 let userStatuses = {}; // Para status online/away
 let lastSeen = {}; // Para último visto
+let copyHistory = JSON.parse(localStorage.getItem('copy_history') || '[]');
+let achievements = JSON.parse(localStorage.getItem('chat_achievements') || '{}');
+let storyFeed = [];
+let currentThreadMessageId = null;
+let userStatus = localStorage.getItem('chat_status') || 'online';
+let storyDraft = { text: '', imageData: null };
 
 // =========================
 // PREVIEW DE LINKS AUTOMÁTICO
@@ -372,16 +378,107 @@ document.getElementById('search-input')?.addEventListener('input', (e) => {
 // =========================
 // COPIAR MENSAGEM
 function copyMessage(id) {
-    const msg = allMessages.find(m => m.id === id);
+    const msg = allMessages.find(m => m.id === id || m.messageId === id);
     if (msg) {
-        navigator.clipboard.writeText(msg.text).then(() => {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-green-500/80 text-white px-4 py-2 rounded-lg text-sm';
-            toast.innerText = '✓ Copiado!';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+        const formatted = `${msg.name} • ${formatTime(msg.timestamp)}\n${msg.text}${msg.fileName ? `\n[Imagem: ${msg.fileName}]` : ''}`;
+        navigator.clipboard.writeText(formatted).then(() => {
+            copyHistory.unshift({ text: formatted, time: Date.now() });
+            if (copyHistory.length > 10) copyHistory.pop();
+            localStorage.setItem('copy_history', JSON.stringify(copyHistory));
+            showToast('✓ Mensagem copiada com formatação!');
+            renderCopyHistory();
         });
     }
+}
+
+function renderCopyHistory() {
+    const historyList = document.getElementById('copy-history');
+    if (!historyList) return;
+    historyList.innerHTML = copyHistory.slice(0, 5).map(item => `
+        <div class="p-2 rounded-2xl bg-white/5 border border-white/10 text-[10px] text-gray-300">
+            <div class="text-white font-bold mb-1">${new Date(item.time).toLocaleTimeString()}</div>
+            <div>${item.text.replace(/\n/g, '<br>')}</div>
+        </div>
+    `).join('');
+}
+
+function renderStoryBar() {
+    const storyList = document.getElementById('stories-list');
+    if (!storyList) return;
+    storyList.innerHTML = storyFeed.length ? storyFeed.map(story => `
+        <div class="story-item" onclick="viewStory('${story.id}')">
+            <img src="${story.avatar}" class="story-avatar" />
+            <div class="story-type">${story.type}</div>
+            <div class="story-title">${story.name}</div>
+            <div class="story-meta">${story.caption || 'Momento novo'} · ${story.timeAgo}</div>
+        </div>
+    `).join('') : `
+        <div class="story-item bg-white/5 border-dashed border-white/20">
+            <div class="story-type">Nenhum momento</div>
+            <div class="story-title">Crie o seu primeiro momento</div>
+        </div>
+    `;
+}
+
+function toggleStoryComposer() {
+    const caption = prompt('Escreva um texto para o seu momento (story):');
+    if (!caption) return;
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+    socket.emit('chatMessage', {
+        text: caption,
+        msgType: 'story',
+        replyTo: null
+    });
+    showToast('Momento publicado!');
+}
+
+function viewStory(storyId) {
+    const story = storyFeed.find(s => s.id === storyId);
+    if (!story) return;
+    alert(`Story de ${story.name}: ${story.caption || 'Sem legenda'}`);
+}
+
+function renderThreadView(messageId) {
+    const threadHeader = document.getElementById('thread-header');
+    const threadMessagesPanel = document.getElementById('thread-messages');
+    if (!threadMessagesPanel || !threadHeader) return;
+    const rootMessage = allMessages.find(msg => msg.messageId === messageId || msg.id === messageId);
+    threadHeader.innerHTML = rootMessage ? `
+        <div class="thread-author font-bold text-white">${rootMessage.name}</div>
+        <div class="text-[11px] text-gray-400 mt-1">${formatTime(rootMessage.timestamp)}</div>
+        <div class="mt-3 text-sm text-gray-200">${rootMessage.text}</div>
+    ` : '<div class="text-gray-400">Mensagem não encontrada</div>';
+
+    const threadMessages = allMessages.filter(msg => msg.replyTo?.messageId === messageId || msg.replyTo?.id === messageId);
+    threadMessagesPanel.innerHTML = threadMessages.map(msg => `
+        <div class="thread-message">
+            <div class="thread-author">${msg.name}</div>
+            <div class="text-sm text-gray-200 mt-1">${msg.text}</div>
+            <div class="thread-time mt-1">${formatTime(msg.timestamp)}</div>
+        </div>
+    `).join('') || '<div class="text-gray-500 text-[11px]">Nenhuma mensagem aqui ainda. Responda para iniciar a thread.</div>';
+}
+
+function renderRanking() {
+    const rankingBody = document.getElementById('top-ranking');
+    if (!rankingBody) return;
+    const users = Object.entries(userStatuses)
+        .sort(([, a], [, b]) => (b.score || 0) - (a.score || 0))
+        .slice(0, 5);
+    rankingBody.innerHTML = users.map(([name, data], index) => `
+        <div class="rank-item">
+            <div class="rank-name">${index + 1}. ${name}</div>
+            <div class="rank-score">${data.score || 0} pts</div>
+        </div>
+    `).join('');
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 right-4 bg-green-500/90 text-white px-4 py-2 rounded-lg text-sm shadow-xl';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2200);
 }
 
 function playPortalEffect() {
@@ -1002,11 +1099,19 @@ socket.on('message', (data) => {
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
+    const reactionData = messageReactions[data.messageId || data.id] || {};
+    const reactionButton = (emoji) => {
+        const users = reactionData[emoji] || [];
+        const title = users.length ? users.join(', ') : `Reagir com ${emoji}`;
+        return `<button onclick="reactToMessage('${data.messageId || data.id}', '${emoji}'); event.stopPropagation();" title="${title}" class="text-xs bg-white/10 px-2 py-1 rounded">${emoji}${users.length ? ` ${users.length}` : ''}</button>`;
+    };
+    const isRead = isMe ? ' <span class="text-[10px] text-gray-400">✓✓</span>' : '';
+
     div.innerHTML = `
         <div class="max-w-[85%] sm:max-w-[45%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
              data-message-id="${data.messageId || data.id}"
              title="${formatTime(data.timestamp)}"
-             onclick="setReply('${data.name}', '${safeText}')">
+             onclick="setReply('${data.name}', '${safeText}', '${data.messageId || data.id}')">
             ${!isSequencial ? `<div class="flex items-center gap-2 mb-2">
                     <img src="${data.avatar}" class="w-8 h-8 rounded-full object-cover ${frameClass}">
                     <div class="user-label font-bold text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">
@@ -1015,22 +1120,42 @@ socket.on('message', (data) => {
                 </div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
             ${generatePreview(data.text, data.imageData, data.fileName)}
-            <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
-            <div class="msg-actions">
-                <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋</button>
+            <div class="flex items-center justify-between gap-2 mt-3 text-[10px] text-gray-400">
+                <div>${formatTime(data.timestamp)}${isRead}</div>
+                <div class="text-gray-500">${data.replyTo?.id ? '' : ''}</div>
+            </div>
+            <div class="msg-actions mt-2 flex gap-2 flex-wrap">
+                <button onclick="copyMessage('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">📋</button>
                 <button onclick="pinMessage('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">📌</button>
-                <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️</button>
+                <button onclick="setReply('${data.name}', '${safeText}', '${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">↩️</button>
+                <button onclick="openThread('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">🧵</button>
             </div>
             <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
-                <button onclick="reactToMessage('${data.id}', '👍'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">👍</button>
-                <button onclick="reactToMessage('${data.id}', '😂'); event.stopPropagation();" class="text-xs bg-white/10 px-2 py-1 rounded">😂</button>
-                <button onclick="reactToMessage('${data.id}', '❤️')" class="text-xs bg-white/10 px-2 py-1 rounded">❤️</button>
+                ${reactionButton('👍')}
+                ${reactionButton('😂')}
+                ${reactionButton('❤️')}
             </div>
         </div>
     `;
 
     msgContainer.appendChild(div);
     msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    if (data.msgType === 'story') {
+        storyFeed.unshift({
+            id: data.messageId || data.id,
+            name: data.name,
+            avatar: data.avatar,
+            type: 'Story',
+            caption: data.text,
+            timeAgo: 'agora',
+            imageData: data.imageData
+        });
+        if (storyFeed.length > 8) storyFeed.pop();
+        renderStoryBar();
+    }
+
+    renderRanking();
 });
 
 // =========================
@@ -1074,6 +1199,9 @@ socket.on('updateUserList', (users) => {
     if (currentUser.name && ADMINS.includes(currentUser.name)) {
         document.getElementById('logs-btn').style.display = 'block';
     }
+
+    renderStoryBar();
+    renderRanking();
 });
 
 // =========================
@@ -1139,8 +1267,8 @@ function logout() {
 // =========================
 // REPLY
 // =========================
-function setReply(name, text) {
-    selectedReply = { name, text };
+function setReply(name, text, messageId) {
+    selectedReply = { name, text, messageId };
     document.getElementById('reply-user').innerText = name;
     document.getElementById('reply-text').innerText = text;
     document.getElementById('reply-container').classList.remove('hidden');
@@ -1150,6 +1278,18 @@ function setReply(name, text) {
 function cancelReply() {
     selectedReply = null;
     document.getElementById('reply-container').classList.add('hidden');
+}
+
+function openThread(messageId) {
+    currentThreadMessageId = messageId;
+    const threadPanel = document.getElementById('thread-panel');
+    threadPanel.classList.remove('hidden');
+    renderThreadView(messageId);
+}
+
+function closeThreadPanel() {
+    currentThreadMessageId = null;
+    document.getElementById('thread-panel').classList.add('hidden');
 }
 
 function reactToMessage(messageId, emoji) {
@@ -1171,8 +1311,25 @@ socket.on('messageReaction', (data) => {
     if (!messageReactions[data.messageId][data.emoji]) {
         messageReactions[data.messageId][data.emoji] = [];
     }
-    messageReactions[data.messageId][data.emoji].push(data.user);
+    if (!messageReactions[data.messageId][data.emoji].includes(data.user)) {
+        messageReactions[data.messageId][data.emoji].push(data.user);
+    }
+    updateReactionRow(data.messageId);
 });
+
+function updateReactionRow(messageId) {
+    const bubble = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!bubble) return;
+    const reactionButtons = bubble.querySelector('.reaction-buttons');
+    if (!reactionButtons) return;
+    const reactionData = messageReactions[messageId] || {};
+    const buttons = ['👍', '😂', '❤️'].map((emoji) => {
+        const users = reactionData[emoji] || [];
+        const title = users.length ? users.join(', ') : `Reagir com ${emoji}`;
+        return `<button onclick="reactToMessage('${messageId}', '${emoji}'); event.stopPropagation();" title="${title}" class="text-xs bg-white/10 px-2 py-1 rounded">${emoji}${users.length ? ` ${users.length}` : ''}</button>`;
+    }).join('');
+    reactionButtons.innerHTML = buttons;
+}
 
 socket.on('messageEdited', (data) => {
     // Atualizar mensagem editada na UI

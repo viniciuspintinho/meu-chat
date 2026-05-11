@@ -579,9 +579,118 @@ transition: background 0.2s;
 background: rgba(255,255,255,.2);
 }
 
-.room-color-geral { --room-color: #0095f6; }
-.room-color-Desenvolvedores { --room-color: #ff3040; }
-.room-color-random { --room-color: #00f9f9; }
+#story-bar {
+    scrollbar-width: none;
+}
+
+#story-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.story-item {
+    min-width: 110px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.05);
+    border-radius: 24px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.story-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,149,246,.35);
+    background: rgba(255,255,255,.08);
+}
+
+.story-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,.15);
+}
+
+.story-type {
+    font-size: 10px;
+    color: rgba(255,255,255,.7);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+
+.story-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+}
+
+.story-meta {
+    font-size: 10px;
+    color: rgba(255,255,255,.6);
+}
+
+#thread-panel {
+    max-width: 320px;
+    border-left: 1px solid rgba(255,255,255,.08);
+    background: rgba(7, 10, 18, 0.95);
+}
+
+#thread-panel .thread-message {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px;
+    padding: 10px 12px;
+}
+
+#thread-panel .thread-message .thread-author {
+    font-weight: 800;
+    color: white;
+    margin-bottom: 4px;
+}
+
+#thread-panel .thread-message .thread-time {
+    font-size: 9px;
+    color: rgba(255,255,255,.45);
+}
+
+#top-ranking .rank-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+}
+
+#top-ranking .rank-item .rank-name {
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+#top-ranking .rank-item .rank-score {
+    color: rgba(255,255,255,.7);
+    font-size: 10px;
+}
+
+.achievement-pill {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 999px;
+    color: white;
+    font-size: 10px;
+}
+
+#fab-story {
+    backdrop-filter: blur(16px);
+}
 
 #search-input {
 font-size: 12px;
@@ -999,6 +1108,11 @@ Entrar
 
 <div id="user-list" class="flex-1 overflow-y-auto space-y-2 mt-4 border-t border-white/5 pt-4"></div>
 
+<div class="mt-4 px-2">
+    <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter mb-2">Ranking</p>
+    <div id="top-ranking" class="space-y-2"></div>
+</div>
+
 <div class="pt-4 border-t border-white/5 space-y-2">
 <button onclick="toggleGarticView()" class="w-full text-left text-blue-400 text-sm p-2 hover:bg-blue-500/10 rounded-lg transition font-bold">
 🎨 Abrir Painel Gartic
@@ -1019,6 +1133,8 @@ Sair
 
 </aside>
 
+<button id="fab-story" onclick="toggleStoryComposer()" class="fixed right-5 bottom-28 z-[210] w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl shadow-blue-500/20 flex items-center justify-center text-2xl hover:scale-105 transition">✦</button>
+
 <main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10">
 
 <header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md flex-shrink-0 justify-between">
@@ -1027,6 +1143,13 @@ Sair
 <span id="room-title">Canal Principal</span>
 </h2>
 </header>
+
+<div id="story-bar" class="flex gap-3 overflow-x-auto p-4 border-b border-white/10 hide-scrollbar bg-white/5 backdrop-blur-xl">
+    <button onclick="toggleStoryComposer()" class="min-w-[140px] flex-shrink-0 rounded-3xl bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3 text-white font-bold shadow-lg shadow-blue-500/20 hover:scale-[1.01] transition">
+        ✨ Criar Momento
+    </button>
+    <div id="stories-list" class="flex gap-3"></div>
+</div>
 
 <div id="pin-banner" class="hidden bg-blue-500/10 border-b border-blue-500/30 p-2 px-6 flex justify-between items-center backdrop-blur-xl">
     <div class="flex items-center gap-3 overflow-hidden">
@@ -1044,6 +1167,18 @@ Sair
 </div>
 
 <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
+
+<div id="thread-panel" class="hidden fixed right-0 top-24 bottom-0 w-80 bg-[#050509dd] border-l border-white/10 shadow-2xl backdrop-blur-2xl overflow-y-auto z-40 p-4 text-xs">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <div class="text-white font-bold">Thread</div>
+            <div class="text-gray-400 text-[10px]">Discussão encadeada</div>
+        </div>
+        <button onclick="closeThreadPanel()" class="text-gray-400 hover:text-white">✕</button>
+    </div>
+    <div id="thread-header" class="mb-4 rounded-3xl border border-white/10 p-3 bg-white/5"></div>
+    <div id="thread-messages" class="space-y-3"></div>
+</div>
 
 <div id="typing-indicator"></div>
 
