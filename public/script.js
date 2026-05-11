@@ -51,10 +51,25 @@ function generatePreview(text) {
                     <iframe width="100%" height="180" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>
                 </div>`;
     }
-    
+
+    const dataImageRegex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,.*$/i;
+    if (dataImageRegex.test(text)) {
+        return `<img src="${text}" class="max-w-[300px] max-h-[300px] object-cover mt-2 rounded-lg shadow-xl border border-white/10">`;
+    }
+
+    if (/Pasted image/i.test(text) || /Imagem colada/i.test(text)) {
+        return `<div class="pasted-image-card mt-2">
+                    <div class="pasted-image-icon">🖼️</div>
+                    <div class="pasted-image-content">
+                        <span class="pasted-image-title">Imagem colada</span>
+                        <span class="pasted-image-subtitle">Se você colou uma imagem, confirme se ela foi enviada corretamente.</span>
+                    </div>
+                </div>`;
+    }
+
     if (imgRegex.test(text)) {
-    return `<img src="${text}" class="max-w-[300px] max-h-[300px] object-cover mt-2 rounded-lg shadow-xl border border-white/10">`;
-}
+        return `<img src="${text}" class="max-w-[300px] max-h-[300px] object-cover mt-2 rounded-lg shadow-xl border border-white/10">`;
+    }
     
     let txt = text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>')
                   .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
@@ -964,7 +979,8 @@ socket.on('message', (data) => {
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
 
     div.innerHTML = `
-        <div class="max-w-[50%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
+        <div class="max-w-[85%] sm:max-w-[45%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
+             data-message-id="${data.messageId || data.id}"
              title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="flex items-center gap-2 mb-2">
@@ -978,6 +994,7 @@ socket.on('message', (data) => {
             <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
             <div class="msg-actions">
                 <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋</button>
+                <button onclick="pinMessage('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">📌</button>
                 <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️</button>
             </div>
             <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
@@ -1147,7 +1164,7 @@ socket.on('messagePinned', (data) => {
 });
 
 socket.on('messageUnpinned', (data) => {
-    pinnedMessages = pinnedMessages.filter(msg => msg.id !== data.messageId);
+    pinnedMessages = pinnedMessages.filter(msg => msg.messageId !== data.messageId);
     updatePinnedMessages();
 });
 
@@ -1160,7 +1177,7 @@ function updatePinnedMessages() {
         <div class="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded mb-2">
             <div class="flex justify-between items-center">
                 <span class="text-xs text-yellow-400">📌 ${msg.name}: ${msg.text}</span>
-                <button onclick="unpinMessage('${msg.id}')" class="text-xs text-gray-400">✕</button>
+                <button onclick="unpinMessage('${msg.messageId}')" class="text-xs text-gray-400">✕</button>
             </div>
         </div>
     `).join('');

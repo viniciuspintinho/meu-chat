@@ -387,6 +387,7 @@ io.on("connection", (socket) => {
             replyTo: data.replyTo || null,
             isAdmin: user.isAdmin,
             id: socket.id,
+            messageId: `${socket.id}-${now}`,
             timestamp: now,
             room: user.room,
             level: user.level,
@@ -449,7 +450,7 @@ io.on("connection", (socket) => {
         const user = usersOnline[socket.id];
         if (!user) return;
         // Buscar mensagem no histórico
-        msgDb.findOne({ id: data.messageId }, (err, msg) => {
+        msgDb.findOne({ messageId: data.messageId }, (err, msg) => {
             if (msg) {
                 io.to(user.room).emit("messagePinned", msg);
             }

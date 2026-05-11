@@ -134,6 +134,45 @@ white-space: pre-wrap;
 word-break: break-word;
 }
 
+.pasted-image-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(255,255,255,.05);
+    border: 1px dashed rgba(255,255,255,.15);
+    border-radius: 18px;
+    margin-top: 10px;
+}
+
+.pasted-image-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: rgba(255,255,255,.08);
+    font-size: 20px;
+}
+
+.pasted-image-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pasted-image-title {
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.pasted-image-subtitle {
+    color: rgba(255,255,255,.65);
+    font-size: 11px;
+}
+
 /* NOVO: Efeito Pulsante Vermelho para Admins Ativos */
 .avatar-active {
     border: 2px solid var(--adm-red) !important;
@@ -328,45 +367,45 @@ font-weight: bold;
 }
 
 .avatar-wrapper.profile-frame-blue-ring {
-box-shadow: 0 0 0 2px rgba(0,255,255,.35), 0 0 30px rgba(0,255,255,.2), inset 0 0 18px rgba(0,255,255,.25);
+box-shadow: 0 0 0 1px rgba(0,149,246,.35), inset 0 0 0 1px rgba(255,255,255,.08);
 }
 
 .avatar-wrapper.profile-frame-blue-ring::before {
 content: '';
 position: absolute;
-top: -10px;
-left: -10px;
-right: -10px;
-bottom: -10px;
+top: -6px;
+left: -6px;
+right: -6px;
+bottom: -6px;
 border-radius: 28px;
-border: 1px solid rgba(0,255,255,.35);
-box-shadow: 0 0 30px rgba(0,255,255,.25), 0 0 0 2px rgba(0,255,255,.12);
+border: 1px solid rgba(0,149,246,.22);
+box-shadow: 0 0 20px rgba(0,149,246,.12);
 z-index: -1;
 }
 
 .avatar-wrapper.profile-frame-glow-panel {
-box-shadow: 0 0 0 3px rgba(255,255,255,.2), 0 0 30px rgba(124,58,237,.4), inset 0 0 24px rgba(255,255,255,.08);
+box-shadow: 0 0 0 1px rgba(124,58,237,.22), inset 0 0 0 1px rgba(255,255,255,.08);
 }
 
 .avatar-wrapper.profile-frame-glow-panel::before {
 content: '';
 position: absolute;
-top: -10px;
-left: -10px;
-right: -10px;
-bottom: -10px;
+top: -6px;
+left: -6px;
+right: -6px;
+bottom: -6px;
 border-radius: 28px;
-border: 1px solid rgba(255,255,255,.18);
-box-shadow: 0 0 40px rgba(124,58,237,.2), 0 0 0 2px rgba(255,255,255,.1);
+border: 1px solid rgba(124,58,237,.18);
+box-shadow: 0 0 20px rgba(124,58,237,.12);
 z-index: -1;
 }
 
 .avatar-frame-blue-ring {
-box-shadow: 0 0 0 2px rgba(0,255,255,.35), 0 0 18px rgba(0,255,255,.2), inset 0 0 8px rgba(0,255,255,.15);
+box-shadow: 0 0 0 1px rgba(0,149,246,.35), inset 0 0 0 1px rgba(255,255,255,.08);
 }
 
 .avatar-frame-glow-panel {
-box-shadow: 0 0 0 2px rgba(124,58,237,.35), 0 0 16px rgba(124,58,237,.22), inset 0 0 8px rgba(255,255,255,.1);
+box-shadow: 0 0 0 1px rgba(124,58,237,.28), inset 0 0 0 1px rgba(255,255,255,.08);
 }
 
 .frame-option {
