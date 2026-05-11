@@ -1367,29 +1367,6 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
     handleFileSelect(e.target.files);
 });
 
-// Modificar generatePreview para detectar imagens anexadas
-const originalGeneratePreview = generatePreview;
-function generatePreview(text) {
-    // Verificar se é uma mensagem com imagem anexada
-    if (text.startsWith('Imagem anexada:')) {
-        const fileName = text.replace('Imagem anexada: ', '');
-        return `<div class="media-card">
-            <div class="image-badge">Imagem</div>
-            <div class="media-header">
-                <div class="media-icon">🖼️</div>
-                <div class="media-info">
-                    <div class="media-name">${fileName}</div>
-                </div>
-            </div>
-            <div class="media-actions">
-                <button onclick="downloadImage(this.previousElementSibling.previousElementSibling.querySelector('img').src, '${fileName}')">Baixar</button>
-            </div>
-        </div>`;
-    }
-    
-    return originalGeneratePreview(text);
-}
-
 // Função para baixar imagem
 function downloadImage(src, fileName) {
     const link = document.createElement('a');
