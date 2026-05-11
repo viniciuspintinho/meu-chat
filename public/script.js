@@ -337,15 +337,17 @@ document.getElementById('search-input')?.addEventListener('input', (e) => {
 
 // =========================
 // COPIAR MENSAGEM
-// =========================
-function copyMessage(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        const toast = document.createElement('div');
-        toast.className = 'fixed bottom-4 right-4 bg-green-500/80 text-white px-4 py-2 rounded-lg text-sm';
-        toast.innerText = '✓ Copiado!';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-    });
+function copyMessage(id) {
+    const msg = allMessages.find(m => m.id === id);
+    if (msg) {
+        navigator.clipboard.writeText(msg.text).then(() => {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-green-500/80 text-white px-4 py-2 rounded-lg text-sm';
+            toast.innerText = '✓ Copiado!';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        });
+    }
 }
 
 function playPortalEffect() {
@@ -454,7 +456,7 @@ function renderMessageInContainer(data, searchQuery = '') {
 
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
         const divSystem = document.createElement('div');
-        divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+        divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-2'} message-animate`;
         divSystem.innerHTML = `<div class="system-msg">${data.text}</div>`;
         msgContainer.appendChild(divSystem);
         return;
@@ -470,10 +472,10 @@ function renderMessageInContainer(data, searchQuery = '') {
         : data.text;
 
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-2'} message-animate`;
 
     div.innerHTML = `
-        <div class="max-w-[50%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
+        <div class="max-w-[65%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
              title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}" 
@@ -483,7 +485,7 @@ function renderMessageInContainer(data, searchQuery = '') {
             <div>${highlightedText.substring(0, 300)}</div>
             <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
             <div class="msg-actions">
-                <button onclick="copyMessage('${safeText}'); event.stopPropagation();" class="text-xs">📋 Copy</button>
+                <button onclick="copyMessage('${data.id}'); event.stopPropagation();" class="text-xs">📋 Copy</button>
                 <button onclick="editMessage('${data.id}', prompt('Editar mensagem:', '${safeText}')); event.stopPropagation();" class="text-xs">✏️ Edit</button>
                 <button onclick="pinMessage('${data.id}'); event.stopPropagation();" class="text-xs">📌 Pin</button>
                 <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️ Reply</button>
@@ -1140,7 +1142,7 @@ socket.on('messageEdited', (data) => {
 });
 
 socket.on('messagePinned', (data) => {
-    pinnedMessages.push(data.message);
+    pinnedMessages.push(data);
     updatePinnedMessages();
 });
 
@@ -1151,7 +1153,8 @@ socket.on('messageUnpinned', (data) => {
 
 function updatePinnedMessages() {
     const pinContainer = document.getElementById('pinned-messages');
-    if (!pinContainer) return;
+    const pinBanner = document.getElementById('pin-banner');
+    if (!pinContainer || !pinBanner) return;
     
     pinContainer.innerHTML = pinnedMessages.map(msg => `
         <div class="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded mb-2">
@@ -1161,6 +1164,12 @@ function updatePinnedMessages() {
             </div>
         </div>
     `).join('');
+
+    if (pinnedMessages.length > 0) {
+        pinBanner.classList.remove('hidden');
+    } else {
+        pinBanner.classList.add('hidden');
+    }
 }
 
 // =========================
