@@ -80,7 +80,9 @@ Entrar
 </div>
 </div>
 
-<aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 flex-shrink-0">
+<div id="app-shell" class="min-h-screen flex flex-col">
+  <div class="flex-1 flex">
+    <aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 flex-shrink-0">
 
 <div class="profile-section flex flex-col items-center gap-4 py-4">
 <div class="avatar-wrapper relative">
@@ -298,9 +300,9 @@ Sair
         <div id="ranking" class="mt-4 flex flex-wrap gap-2 justify-center py-3 border-t border-white/5 font-bold text-[11px] text-gray-400"></div>
     </div>
 </div>
-</main>
+  </div>
 
-<footer class="p-4 bg-transparent flex-shrink-0">
+  <footer class="p-4 bg-transparent flex-shrink-0">
 <div class="max-w-5xl mx-auto flex items-center gap-3">
 
 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">ðŸ–¼ï¸</button>
@@ -319,6 +321,7 @@ Enviar
 
 </div>
 </footer>
+</div>
 
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
 

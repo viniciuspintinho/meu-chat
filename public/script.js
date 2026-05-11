@@ -756,8 +756,9 @@ function entrar() {
 
     sessionStorage.setItem('chat_user', JSON.stringify(userData));
     socket.emit('join', userData);
+    document.getElementById('login').classList.add('hidden');
 
-    // Não esconder aqui, esperar confirmação
+    // Esconder o overlay imediatamente para mostrar o chat o quanto antes
 }
 
 // =========================
