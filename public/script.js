@@ -43,6 +43,8 @@ let storyFeed = [];
 let currentThreadMessageId = null;
 let userStatus = localStorage.getItem('chat_status') || 'online';
 let storyDraft = { text: '', imageData: null };
+let storyImageData = null;
+let currentViewedStoryId = null;
 
 // =========================
 // PREVIEW DE LINKS AUTOMÁTICO
@@ -420,22 +422,95 @@ function renderStoryBar() {
     `;
 }
 
-function toggleStoryComposer() {
-    const caption = prompt('Escreva um texto para o seu momento (story):');
-    if (!caption) return;
-    const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+function openStoryComposer() {
+    document.getElementById('story-caption').value = '';
+    document.getElementById('story-image-name').innerText = '';
+    document.getElementById('story-image-preview').classList.add('hidden');
+    document.getElementById('story-image-preview').src = '';
+    storyImageData = null;
+    document.getElementById('story-modal').classList.remove('hidden');
+}
+
+function closeStoryModal() {
+    document.getElementById('story-modal').classList.add('hidden');
+}
+
+function submitStory() {
+    const caption = document.getElementById('story-caption').value.trim();
+    if (!caption && !storyImageData) {
+        showToast('Adicione texto ou foto antes de publicar.');
+        return;
+    }
+
     socket.emit('chatMessage', {
-        text: caption,
+        text: caption || '📷 Story com imagem',
         msgType: 'story',
-        replyTo: null
+        replyTo: null,
+        imageData: storyImageData || null,
+        fileName: storyImageData ? `story-${Date.now()}.png` : null
     });
-    showToast('Momento publicado!');
+    closeStoryModal();
+    showToast('Story publicado!');
 }
 
 function viewStory(storyId) {
     const story = storyFeed.find(s => s.id === storyId);
-    if (!story) return;
-    alert(`Story de ${story.name}: ${story.caption || 'Sem legenda'}`);
+    if (!story) {
+        showToast('Story não encontrado.');
+        return;
+    }
+    currentViewedStoryId = storyId;
+    document.getElementById('story-view-avatar').src = story.avatar;
+    document.getElementById('story-view-name').innerText = story.name;
+    document.getElementById('story-view-time').innerText = story.timeAgo;
+    document.getElementById('story-view-text').innerText = story.caption || 'Nenhum texto disponível.';
+
+    const storyImage = document.getElementById('story-view-image');
+    if (story.imageData) {
+        storyImage.src = story.imageData;
+        storyImage.classList.remove('hidden');
+    } else {
+        storyImage.classList.add('hidden');
+        storyImage.src = '';
+    }
+
+    const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
+    const deleteBtn = document.getElementById('story-delete-btn');
+    if (user.name === story.name) {
+        deleteBtn.classList.remove('hidden');
+    } else {
+        deleteBtn.classList.add('hidden');
+    }
+
+    document.getElementById('story-view-modal').classList.remove('hidden');
+}
+
+function closeStoryView() {
+    document.getElementById('story-view-modal').classList.add('hidden');
+    currentViewedStoryId = null;
+}
+
+function deleteStoryView() {
+    if (!currentViewedStoryId) return;
+    deleteStory(currentViewedStoryId);
+    closeStoryView();
+    showToast('Story excluído.');
+}
+
+function deleteStory(storyId) {
+    storyFeed = storyFeed.filter(story => story.id !== storyId);
+    if (currentViewedStoryId === storyId) {
+        closeStoryView();
+    }
+}
+
+function openProfileStory(name) {
+    const story = storyFeed.find(s => s.name === name);
+    if (!story) {
+        showToast('Nenhum story disponível para este perfil.');
+        return;
+    }
+    viewStory(story.id);
 }
 
 function renderThreadView(messageId) {
@@ -1113,7 +1188,7 @@ socket.on('message', (data) => {
              title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}', '${data.messageId || data.id}')">
             ${!isSequencial ? `<div class="flex items-center gap-2 mb-2">
-                    <img src="${data.avatar}" class="w-8 h-8 rounded-full object-cover ${frameClass}">
+                    <img src="${data.avatar}" onclick="openProfileStory('${data.name.replace(/'/g, "\\'")}'); event.stopPropagation();" class="w-8 h-8 rounded-full object-cover ${frameClass} cursor-pointer">
                     <div class="user-label font-bold text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">
                         ${data.name}${isAdminMsg ? ' ⭐' : ''}
                     </div>
@@ -1177,7 +1252,8 @@ socket.on('updateUserList', (users) => {
 
         return `
             <div class="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition cursor-pointer" 
-                 onmouseenter="showHoverCard('${u.name}', event)" 
+                 onclick="openProfileStory('${u.name.replace(/'/g, "\\'")}')"
+                 onmouseenter="showHoverCard('${u.name.replace(/'/g, "\\'")}', event)" 
                  onmouseleave="hideHoverCard()">
                 <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${frameClass} ${isAdm ? 'avatar-active' : ''}">
                 <span class="text-xs ${isAdm ? 'text-red-500 font-bold' : 'text-gray-400'}">
@@ -1522,6 +1598,20 @@ document.addEventListener('paste', (e) => {
 // Event listener para input de arquivo
 document.getElementById('imageInput').addEventListener('change', (e) => {
     handleFileSelect(e.target.files);
+});
+
+document.getElementById('storyImageInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        storyImageData = event.target.result;
+        document.getElementById('story-image-name').innerText = file.name;
+        const preview = document.getElementById('story-image-preview');
+        preview.src = storyImageData;
+        preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
 });
 
 // Função para baixar imagem

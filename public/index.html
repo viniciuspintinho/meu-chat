@@ -1133,7 +1133,7 @@ Sair
 
 </aside>
 
-<button id="fab-story" onclick="toggleStoryComposer()" class="fixed right-5 bottom-28 z-[210] w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl shadow-blue-500/20 flex items-center justify-center text-2xl hover:scale-105 transition">✦</button>
+<button id="fab-story" onclick="openStoryComposer()" class="fixed right-5 bottom-28 z-[210] w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl shadow-blue-500/20 flex items-center justify-center text-2xl hover:scale-105 transition">✦</button>
 
 <main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10">
 
@@ -1144,11 +1144,10 @@ Sair
 </h2>
 </header>
 
-<div id="story-bar" class="flex gap-3 overflow-x-auto p-4 border-b border-white/10 hide-scrollbar bg-white/5 backdrop-blur-xl">
-    <button onclick="toggleStoryComposer()" class="min-w-[140px] flex-shrink-0 rounded-3xl bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3 text-white font-bold shadow-lg shadow-blue-500/20 hover:scale-[1.01] transition">
-        ✨ Criar Momento
+<div id="story-bar" class="flex gap-3 p-4 border-b border-white/10 bg-white/5 backdrop-blur-xl">
+    <button onclick="openStoryComposer();" class="min-w-[140px] rounded-3xl bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3 text-white font-bold shadow-lg shadow-blue-500/20 hover:scale-[1.01] transition">
+        ✨ Adicionar Story
     </button>
-    <div id="stories-list" class="flex gap-3"></div>
 </div>
 
 <div id="pin-banner" class="hidden bg-blue-500/10 border-b border-blue-500/30 p-2 px-6 flex justify-between items-center backdrop-blur-xl">
@@ -1178,6 +1177,49 @@ Sair
     </div>
     <div id="thread-header" class="mb-4 rounded-3xl border border-white/10 p-3 bg-white/5"></div>
     <div id="thread-messages" class="space-y-3"></div>
+</div>
+
+<div id="story-modal" class="hidden fixed inset-0 bg-black/90 z-[220] flex items-center justify-center p-6">
+    <div class="w-full max-w-lg bg-[#111] border border-white/10 rounded-3xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-xl font-bold text-white">Novo Story</h2>
+                <p class="text-xs text-gray-400">Conte algo rápido e adicione uma foto.</p>
+            </div>
+            <button onclick="closeStoryModal()" class="text-gray-400 hover:text-white">✕</button>
+        </div>
+        <textarea id="story-caption" rows="4" placeholder="Digite seu texto..." class="w-full bg-[#121212] border border-white/10 rounded-3xl p-4 text-white outline-none resize-none"></textarea>
+        <div class="flex items-center justify-between gap-3 mt-4">
+            <button type="button" onclick="document.getElementById('storyImageInput').click()" class="px-4 py-3 rounded-3xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold">Adicionar foto</button>
+            <span id="story-image-name" class="text-xs text-gray-400 truncate"></span>
+        </div>
+        <img id="story-image-preview" class="mt-4 hidden w-full max-h-64 object-contain rounded-3xl border border-white/10" alt="Preview de story">
+        <div class="mt-6 flex justify-end gap-3">
+            <button onclick="closeStoryModal()" class="px-4 py-3 rounded-3xl bg-white/10 text-white">Cancelar</button>
+            <button onclick="submitStory()" class="px-4 py-3 rounded-3xl bg-blue-600 text-white font-bold">Publicar</button>
+        </div>
+    </div>
+</div>
+
+<div id="story-view-modal" class="hidden fixed inset-0 bg-black/95 z-[230] flex items-center justify-center p-6">
+    <div class="w-full max-w-xl bg-[#111] border border-white/10 rounded-3xl p-6 relative">
+        <button onclick="closeStoryView()" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+        <div id="story-view-content" class="space-y-4">
+            <div class="flex items-center gap-3">
+                <img id="story-view-avatar" src="" class="w-12 h-12 rounded-full object-cover border border-white/10">
+                <div>
+                    <div id="story-view-name" class="font-bold text-white"></div>
+                    <div id="story-view-time" class="text-xs text-gray-400"></div>
+                </div>
+            </div>
+            <div id="story-view-text" class="text-white text-sm"></div>
+            <img id="story-view-image" class="w-full max-h-96 object-contain rounded-3xl border border-white/10 hidden" alt="Story image">
+            <div class="flex justify-between items-center pt-4 border-t border-white/10">
+                <div id="story-view-meta" class="text-xs text-gray-400"></div>
+                <button id="story-delete-btn" onclick="deleteStoryView()" class="px-4 py-2 rounded-3xl bg-red-500 text-white text-xs font-bold hidden">Excluir</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="typing-indicator"></div>
@@ -1253,6 +1295,7 @@ Sair
 
 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
 <input type="file" id="imageInput" accept="image/*" style="display:none;" multiple>
+<input type="file" id="storyImageInput" accept="image/*" style="display:none;">
 <button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
 
