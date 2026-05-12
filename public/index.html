@@ -50,8 +50,7 @@ margin:0;
 padding:0;
 min-height:100vh;
 display:flex;
-overflow-x:hidden;
-overflow-y:auto;
+overflow:hidden;
 position:relative;
 }
 
@@ -1459,7 +1458,7 @@ Sair
 
 <button id="fab-story" onclick="openStoryComposer()" class="fixed right-5 bottom-28 z-[210] w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl shadow-blue-500/20 flex items-center justify-center text-2xl hover:scale-105 transition">✦</button>
 
-<main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10">
+<main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10" style="height: 100vh;">
 
 <header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md flex-shrink-0 justify-between">
 <h2 class="font-bold text-white flex items-center gap-2">
@@ -1469,6 +1468,7 @@ Sair
 <div class="flex items-center gap-4">
 <h3 class="text-white font-bold text-sm">Ranking Global</h3>
 <div id="global-ranking" class="flex gap-2"></div>
+<button onclick="openAchievements()" class="text-gray-400 hover:text-white text-xl">🏆</button>
 <button onclick="toggleNotifications()" class="text-gray-400 hover:text-white text-xl">🔔</button>
 <div id="notifications-dropdown" class="hidden absolute top-16 right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-[300]">
 <h3 class="text-white font-bold mb-2">Notificações</h3>
@@ -1477,9 +1477,6 @@ Sair
 </div>
 </header>
 
-<div id="story-bar" class="flex gap-3 p-4 border-b border-white/10 bg-white/5 backdrop-blur-xl">
-</div>
-
 <div id="pin-banner" class="hidden bg-blue-500/10 border-b border-blue-500/30 p-2 px-6 flex justify-between items-center backdrop-blur-xl">
     <div class="flex items-center gap-3 overflow-hidden">
         <span class="text-blue-400 text-xs">📌</span>
@@ -1487,8 +1484,6 @@ Sair
     </div>
     <button onclick="document.getElementById('pin-banner').classList.add('hidden')" class="text-gray-500 hover:text-white text-xs">✕</button>
 </div>
-
-<div id="pinned-messages" class="px-6 py-2 border-b border-yellow-500/20 bg-yellow-500/5"></div>
 
 <div class="flex items-center px-6 py-2 border-b border-white/10">
   <input id="search-input" type="text" placeholder="🔍 Buscar mensagens..." class="flex-1 bg-transparent outline-none text-white text-sm placeholder-gray-500">
@@ -1733,15 +1728,6 @@ Fechar
 </div>
 
 <aside class="w-64 glass-panel hidden xl:flex flex-col p-4 flex-shrink-0">
-<div class="mt-6">
-<h3 class="text-white font-bold mb-4">Conquistas Globais</h3>
-<div class="space-y-2">
-<div class="achievement-pill achievement-unlocked">🏆 Mestre do Chat</div>
-<div class="achievement-pill">🎨 Artista</div>
-<div class="achievement-pill">💬 Tagarela</div>
-<div class="achievement-pill">⏳ Veterano</div>
-</div>
-</div>
 </aside>
 
 <script src="script.js"></script>
