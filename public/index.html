@@ -1335,7 +1335,7 @@ main {
 }
 
 main #messages {
-    padding-bottom: 110px !important;
+    padding-bottom: 80px !important;
 }
 
 footer {
@@ -1358,6 +1358,58 @@ footer {
     main #messages {
         padding-bottom: 140px !important;
     }
+}
+
+/* Ajustes para footer e input visível */
+footer button, 
+footer input[type="file"] {
+    font-size: 16px !important;
+    padding: 4px 6px !important;
+}
+
+#form {
+    flex: 1 !important;
+    min-height: 40px !important;
+}
+
+#input {
+    font-size: 13px !important;
+    padding: 8px !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+footer button {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
+}
+
+.insta-input-container {
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 4px 8px !important;
+}
+
+/* Lista de usuários online maior */
+#user-list {
+    font-size: 12px !important;
+}
+
+#user-list button {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+}
+
+/* Reduzir espaço das seções da sidebar */
+.profile-section {
+    gap: 8px !important;
+    padding: 8px 0 !important;
+}
+
+#user-list ~ div {
+    margin-top: 8px !important;
 }
 </style>
 </head>
@@ -1431,24 +1483,24 @@ Entrar
 
 <aside class="w-20 lg:w-72 glass-panel hidden md:flex flex-col p-4 flex-shrink-0">
 
-<div class="profile-section flex flex-col items-center gap-4 py-4">
-<div class="avatar-wrapper relative">
-<img id="my-avatar" src="" class="avatar-main">
-<div id="user-level" class="lv-badge-circle">1</div>
+<div class="profile-section flex flex-col items-center gap-2 py-2">
+<div class="avatar-wrapper relative" style="width: 60px; height: 60px;">
+<img id="my-avatar" src="" class="avatar-main" style="width: 54px; height: 54px;">
+<div id="user-level" class="lv-badge-circle" style="width: 18px; height: 18px; font-size: 9px;">1</div>
 </div>
 
 <div class="text-center">
-  <h3 id="my-name" class="font-bold text-sm tracking-tight text-white"></h3>
-  <p id="my-bio" class="text-[10px] text-gray-400 italic mt-1 max-w-[200px]"></p>
+  <h3 id="my-name" class="font-bold text-xs tracking-tight text-white"></h3>
+  <p id="my-bio" class="text-[8px] text-gray-400 italic mt-0.5 max-w-[200px] line-clamp-2"></p>
 </div>
 
-<div class="w-full px-4">
-<div class="flex justify-between text-[9px] font-bold text-gray-500 mb-1">
-<span>XP STATUS</span>
+<div class="w-full px-2">
+<div class="flex justify-between text-[8px] font-bold text-gray-500 mb-0.5">
+<span>XP</span>
 <span><span id="user-xp">0</span>/100</span>
 </div>
 
-<div class="xp-bar-bg">
+<div class="xp-bar-bg" style="height: 3px;">
 <div id="xp-fill" class="xp-bar-fill"></div>
 <div id="xp-popup-container"></div>
 </div>
@@ -1464,7 +1516,7 @@ Entrar
     </div>
 </div>
 
-<div id="user-list" class="flex-1 overflow-y-auto space-y-2 mt-4 border-t border-white/5 pt-4"></div>
+<div id="user-list" class="flex-1 overflow-y-auto space-y-1.5 mt-2 border-t border-white/5 pt-2" style="flex: 2;"></div>
 
 <div class="mt-4 px-2">
     <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter mb-2">Ranking</p>
@@ -1672,8 +1724,8 @@ Sair
     </div>
 </div>
 
-<footer class="p-4 bg-black/50 backdrop-blur-xl flex-shrink-0 border-t border-white/5 fixed bottom-0 left-0 right-0 md:left-72 z-[100]">
-<div class="max-w-5xl mx-auto flex items-center gap-3">
+<footer class="p-3 bg-black/80 backdrop-blur-xl flex-shrink-0 border-t border-white/5 fixed bottom-0 left-0 right-0 md:left-72 z-[100]" style="height: auto; min-height: 60px;">
+<div class="flex items-center gap-2" style="flex-wrap: wrap;">
 
 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
 <input type="file" id="imageInput" accept="image/*" style="display:none;" multiple>
