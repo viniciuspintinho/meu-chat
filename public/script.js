@@ -1,4 +1,29 @@
 const socket = io();
+
+function getDefaultAvatarUrl(name) {
+    const seed = encodeURIComponent((name && String(name).trim()) || 'user');
+    return `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}`;
+}
+
+function resolveAvatarUrl(avatar, name) {
+    const u = (avatar && String(avatar).trim()) || '';
+    if (!u) return getDefaultAvatarUrl(name);
+    return u;
+}
+
+function applyAvatarToImg(img, avatar, name) {
+    if (!img) return;
+    const resolved = resolveAvatarUrl(avatar, name);
+    const fallback = getDefaultAvatarUrl(name);
+    img.onerror = function () {
+        if (this.src !== fallback) {
+            this.onerror = null;
+            this.src = fallback;
+        }
+    };
+    img.src = resolved;
+}
+
 const msgContainer = document.getElementById('messages');
 const msgInput = document.getElementById('input');
 const garticChatContainer = document.getElementById('gartic-chat-messages');
@@ -387,7 +412,7 @@ function renderStoryBar() {
     if (!storyList) return;
     storyList.innerHTML = storyFeed.length ? storyFeed.map(story => `
         <div class="story-item" onclick="viewStory('${story.id}')">
-            <img src="${story.avatar}" class="story-avatar" />
+            <img src="${resolveAvatarUrl(story.avatar, story.name)}" class="story-avatar" alt="" />
             <div class="story-type">${story.type}</div>
             <div class="story-title">${story.name}</div>
             <div class="story-meta">${story.caption || 'Momento novo'} · ${story.timeAgo}</div>
@@ -438,7 +463,7 @@ function viewStory(storyId) {
         return;
     }
     currentViewedStoryId = storyId;
-    document.getElementById('story-view-avatar').src = story.avatar;
+    document.getElementById('story-view-avatar').src = resolveAvatarUrl(story.avatar, story.name);
     document.getElementById('story-view-name').innerText = story.name;
     document.getElementById('story-view-time').innerText = story.timeAgo;
     document.getElementById('story-view-text').innerText = story.caption || 'Nenhum texto disponível.';
@@ -671,8 +696,8 @@ function renderMessageInContainer(data, searchQuery = '') {
              title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs flex items-center gap-2" style="color:${userColor};"
-                onmouseenter="showHoverCard('${data.name}', event)" 
-                onmouseleave="hideHoverCard()"><img src="${data.avatar}" class="w-4 h-4 rounded-full" alt="">${data.name}${isAdminMsg ? (data.name === 'vn7' || data.name === 'pl' ? ' 👑 <span class="admin-badge">ADM</span>' : ' ⭐') : ''}</div>` : ''}
+                onmouseenter="showHoverCard('${data.name.replace(/'/g, "\\'")}', event)" 
+                onmouseleave="hideHoverCard()"><img src="${resolveAvatarUrl(data.avatar, data.name)}" class="w-4 h-4 rounded-full" alt="">${data.name}${isAdminMsg ? (data.name === 'vn7' || data.name === 'pl' ? ' 👑 <span class="admin-badge">ADM</span>' : ' ⭐') : ''}</div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
             <div>${highlightedText.substring(0, 300)}</div>
             ${data.imageData ? `<img src="${data.imageData}" class="max-w-[200px] max-h-[200px] rounded-lg mt-2 cursor-pointer" onclick="viewFullImage('${data.imageData}')" title="Clique para expandir">` : ''}
@@ -712,13 +737,14 @@ window.onload = () => {
 
         socket.emit('join', user);
 
-        document.getElementById('my-avatar').src = user.avatar;
+        applyAvatarToImg(document.getElementById('my-avatar'), user.avatar, user.name);
         document.getElementById('my-name').innerText = user.name;
         document.getElementById('login').classList.add('hidden');
     }
 
     let profileFrame = localStorage.getItem('chat_profile_frame') || 'none';
-    if (sessionUser && ADMINS.includes(sessionUser.name) && profileFrame === 'none') {
+    const parsedSession = sessionUser ? JSON.parse(sessionUser) : null;
+    if (parsedSession && ADMINS.includes(parsedSession.name) && profileFrame === 'none') {
         profileFrame = 'blue-ring';
     }
     selectProfileFrame(profileFrame, true);
@@ -740,9 +766,7 @@ function highlight(messageId) {
 function entrar() {
     const name = document.getElementById('username').value.trim();
 
-    const avatar =
-        document.getElementById('avatar').value.trim() ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`;
+    const avatar = resolveAvatarUrl(document.getElementById('avatar').value.trim(), name);
 
     if (!name) return;
 
@@ -905,7 +929,7 @@ function showHoverCard(name, e) {
     const user = usersForMention.find(u => u.name === name);
     if (!user) return;
 
-    document.getElementById('hover-avatar').src = user.avatar;
+    document.getElementById('hover-avatar').src = resolveAvatarUrl(user.avatar, user.name);
     document.getElementById('hover-name').innerText = user.name;
     document.getElementById('hover-level').innerText = user.level || 1;
     document.getElementById('hover-title').innerText = getTitle(user.level || 1);
@@ -1187,7 +1211,7 @@ socket.on('message', (data) => {
              title="${formatTime(data.timestamp)}"
              onclick="setReply('${data.name}', '${safeText}', '${data.messageId || data.id}')">
             ${!isSequencial ? `<div class="flex items-center gap-2 mb-2">
-                    <img src="${data.avatar}" onclick="openProfileStory('${data.name.replace(/'/g, "\\'")}'); event.stopPropagation();" class="w-8 h-8 rounded-full object-cover ${frameClass} cursor-pointer">
+                    <img src="${resolveAvatarUrl(data.avatar, data.name)}" onclick="openProfileStory('${data.name.replace(/'/g, "\\'")}'); event.stopPropagation();" class="w-8 h-8 rounded-full object-cover ${frameClass} cursor-pointer" alt="">
                     <div class="user-label font-bold text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">
                         ${data.name}${isAdminMsg ? ' ⭐' : ''}
                     </div>
@@ -1254,7 +1278,7 @@ socket.on('updateUserList', (users) => {
                  onclick="openProfileStory('${u.name.replace(/'/g, "\\'")}')"
                  onmouseenter="showHoverCard('${u.name.replace(/'/g, "\\'")}', event)" 
                  onmouseleave="hideHoverCard()">
-                <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover ${frameClass} ${isAdm ? 'avatar-active' : ''}">
+                <img src="${resolveAvatarUrl(u.avatar, u.name)}" class="w-8 h-8 rounded-full object-cover ${frameClass} ${isAdm ? 'avatar-active' : ''}" alt="">
                 <span class="text-xs ${isAdm ? 'text-red-500 font-bold' : 'text-gray-400'}">
                     ${u.name}
                 </span>
@@ -1265,7 +1289,7 @@ socket.on('updateUserList', (users) => {
     // Esconder login se ainda estiver visível (primeiro login)
     if (!document.getElementById('login').classList.contains('hidden')) {
         const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
-        document.getElementById('my-avatar').src = user.avatar;
+        applyAvatarToImg(document.getElementById('my-avatar'), user.avatar, user.name);
         document.getElementById('my-name').innerText = user.name;
         document.getElementById('login').classList.add('hidden');
     }
@@ -1303,12 +1327,14 @@ function openSettings() {
 
 function saveSettings() {
     const name = document.getElementById('set-username').value.trim();
-    const avatar = document.getElementById('set-avatar').value.trim();
+    let avatar = document.getElementById('set-avatar').value.trim();
     const bio = document.getElementById('set-bio').value.trim();
     const user = JSON.parse(sessionStorage.getItem('chat_user') || "{}");
     const isAdm = ADMINS.includes(user.name);
 
     if (!name) return;
+
+    avatar = resolveAvatarUrl(avatar, name);
 
     userBio = bio;
     localStorage.setItem('chat_bio', userBio);
@@ -2159,7 +2185,7 @@ function toggleCinemaMode() {
     console.log("Cinema mode toggled");
 }
 
-// Função para renderizar palpites no chat do Gartic
+// Função para mostrar palpites no chat do Gartic (reutilizável)
 function addGarticGuess(name, guess) {
     const container = document.getElementById('gartic-chat-messages');
     if (!container) return;
@@ -2170,18 +2196,3 @@ function addGarticGuess(name, guess) {
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
 }
-
-// Função para mostrar mensagens do Gartic
-socket.on('message', (data) => {
-    // Se for uma mensagem de acerto do Gartic
-    if (data.name === "Lux Bot" && data.text.includes("acertou a palavra")) {
-        const garticContainer = document.getElementById('gartic-chat-messages');
-        if (garticContainer) {
-            const div = document.createElement('div');
-            div.className = 'p-2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg text-yellow-300 text-xs font-bold';
-            div.innerHTML = data.text.replace(/\*\*/g, '');
-            garticContainer.appendChild(div);
-            garticContainer.scrollTop = garticContainer.scrollHeight;
-        }
-    }
-});

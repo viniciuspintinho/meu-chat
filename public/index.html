@@ -1370,7 +1370,8 @@ footer input[type="file"] {
 }
 
 #form {
-    flex: 1 !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
     min-height: 45px !important;
     display: flex !important;
     align-items: center !important;
@@ -1379,9 +1380,11 @@ footer input[type="file"] {
 #input {
     font-size: 14px !important;
     padding: 10px 12px !important;
-    height: 40px !important;
+    min-height: 40px !important;
     display: block !important;
     background: transparent !important;
+    width: 100% !important;
+    min-width: 0 !important;
 }
 
 footer button {
@@ -1396,7 +1399,8 @@ footer button {
     display: flex !important;
     align-items: center !important;
     padding: 6px 12px !important;
-    flex: 1 !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
 }
 
 /* Lista de usuários online maior */
@@ -1492,7 +1496,7 @@ Entrar
 
 <div class="profile-section flex flex-col items-center gap-2 py-2">
 <div class="avatar-wrapper relative" style="width: 60px; height: 60px;">
-<img id="my-avatar" src="" class="avatar-main" style="width: 54px; height: 54px;">
+<img id="my-avatar" src="" alt="" class="avatar-main" style="width: 54px; height: 54px; position: relative; z-index: 1;">
 <div id="user-level" class="lv-badge-circle" style="width: 18px; height: 18px; font-size: 9px;">1</div>
 </div>
 
@@ -1559,8 +1563,8 @@ Sair
 </button>
 </div>
 
-<!-- Menu rápido para mobile -->
-<div class="md:hidden fixed bottom-20 left-4 right-4 flex gap-2 z-[110]">
+<!-- Menu rápido para mobile (abaixo da área do footer / teclado) -->
+<div class="md:hidden fixed left-4 right-4 flex gap-2 z-[105]" style="bottom: max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 5.5rem));">
 <button onclick="toggleGarticView()" class="flex-1 text-blue-400 text-xs p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition font-bold border border-blue-500/30">🎨 Gartic</button>
 <button onclick="openSettings()" class="flex-1 text-gray-300 text-xs p-2 bg-white/10 hover:bg-white/20 rounded-lg transition font-bold border border-white/10">⚙️ Config</button>
 <button onclick="logout()" class="flex-1 text-red-400 text-xs p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition font-bold border border-red-500/30">🚪 Sair</button>
@@ -1731,32 +1735,34 @@ Sair
     </div>
 </div>
 
-<footer class="p-3 bg-black/80 backdrop-blur-xl flex-shrink-0 border-t border-white/5 fixed bottom-0 left-0 right-0 md:left-72 z-[100] flex flex-wrap items-center gap-2" style="width: 100%; box-sizing: border-box; height: auto; min-height: 60px; display: flex !important;">
-<div class="flex items-center gap-2 flex-wrap" style="width: 100%; display: flex; align-items: center;">
+<footer class="p-3 bg-black/80 backdrop-blur-xl flex-shrink-0 border-t border-white/5 fixed bottom-0 left-0 right-0 md:left-72 z-[130] flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-nowrap" style="width: 100%; box-sizing: border-box; min-height: 60px; display: flex !important; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));">
+<div class="flex items-center gap-2 overflow-x-auto shrink-0 pb-0 sm:max-w-[45%]" style="-webkit-overflow-scrolling: touch;">
 
-<button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
+<button onclick="enviarFoto()" class="text-xl hover:scale-110 transition shrink-0">🖼️</button>
 <input type="file" id="imageInput" accept="image/*" style="display:none;" multiple>
 <input type="file" id="storyImageInput" accept="image/*" style="display:none;">
 <button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
 <button onclick="renderCopyHistory()" class="text-xl hover:scale-110 transition" title="Mensagens salvas">📋</button>
-<button onclick="toggleGifSelector()" class="text-xl hover:scale-110 transition" title="Enviar GIF">🎉</button>
+<button onclick="toggleGifSelector()" class="text-xl hover:scale-110 transition shrink-0" title="Enviar GIF">🎉</button>
 
 <div id="gif-selector-panel" class="gif-selector hidden">
 <input type="text" class="gif-search" placeholder="Buscar GIF..." id="gif-search" onkeyup="searchGifs()">
 <div id="gif-grid" class="space-y-2"></div>
 </div>
 
-<form id="form" class="flex-1 flex items-center insta-input-container px-4">
-<input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
+</div>
 
-<button class="font-bold text-sm" style="color:var(--theme-color)">
+<form id="form" class="flex-1 flex items-center insta-input-container px-4 min-w-0 w-full sm:min-w-[120px]">
+<input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 min-w-0 bg-transparent py-3 outline-none text-white text-sm">
+
+<button type="submit" class="font-bold text-sm shrink-0" style="color:var(--theme-color)">
 Enviar
 </button>
 </form>
 
-</div>
 </footer>
+</main>
 
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/95 z-[500] flex items-center justify-center p-6 backdrop-blur-sm">
 
@@ -1858,7 +1864,7 @@ Fechar
 /* --- CONFIGURAÇÃO OTIMIZADA DAS PARTÍCULAS (PARA PARAR DE TRAVAR) --- */
 tsParticles.load("tsparticles", {
     fpsLimit: 60, // Limita o FPS para não sobrecarregar
-    fullScreen: { enable: true },
+    fullScreen: { enable: false },
     particles: {
         number: { 
             value: 60, // Quantidade ideal para não travar
@@ -1925,7 +1931,9 @@ document.addEventListener('mousemove', (e) => {
 function showUserCard(user) {
     const card = document.getElementById('hover-card');
     document.getElementById('hover-name').innerText = user.name;
-    document.getElementById('hover-avatar').src = user.avatar || 'https://via.placeholder.com/150';
+    document.getElementById('hover-avatar').src = typeof resolveAvatarUrl === 'function'
+        ? resolveAvatarUrl(user.avatar, user.name)
+        : (user.avatar || 'https://api.dicebear.com/9.x/avataaars/svg?seed=' + encodeURIComponent(user.name || 'user'));
     
     // CORREÇÃO: Pegando o nível correto e atualizado
     document.getElementById('hover-level').innerText = user.level || '1';
