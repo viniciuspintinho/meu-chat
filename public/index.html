@@ -1467,9 +1467,10 @@ Sair
 <span id="room-title">Canal Principal</span>
 </h2>
 <div class="flex items-center gap-4">
-<input id="global-search" type="text" placeholder="🔍 Buscar mensagens..." class="bg-white/10 border border-white/10 rounded-full px-4 py-2 text-white outline-none focus:border-blue-500 transition text-sm">
+<h3 class="text-white font-bold text-sm">Ranking Global</h3>
+<div id="global-ranking" class="flex gap-2"></div>
 <button onclick="toggleNotifications()" class="text-gray-400 hover:text-white text-xl">🔔</button>
-<div id="notifications-dropdown" class="hidden absolute top-16 right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-50">
+<div id="notifications-dropdown" class="hidden absolute top-16 right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-[300]">
 <h3 class="text-white font-bold mb-2">Notificações</h3>
 <p class="text-gray-400 text-sm">Nenhuma nova notificação.</p>
 </div>
@@ -1477,9 +1478,6 @@ Sair
 </header>
 
 <div id="story-bar" class="flex gap-3 p-4 border-b border-white/10 bg-white/5 backdrop-blur-xl">
-    <button onclick="openStoryComposer();" class="min-w-[140px] rounded-3xl bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3 text-white font-bold shadow-lg shadow-blue-500/20 hover:scale-[1.01] transition">
-        ✨ Adicionar Story
-    </button>
 </div>
 
 <div id="pin-banner" class="hidden bg-blue-500/10 border-b border-blue-500/30 p-2 px-6 flex justify-between items-center backdrop-blur-xl">
@@ -1735,10 +1733,6 @@ Fechar
 </div>
 
 <aside class="w-64 glass-panel hidden xl:flex flex-col p-4 flex-shrink-0">
-<div>
-<h3 class="text-white font-bold mb-4">Ranking Global</h3>
-<div id="global-ranking" class="space-y-2"></div>
-</div>
 <div class="mt-6">
 <h3 class="text-white font-bold mb-4">Conquistas Globais</h3>
 <div class="space-y-2">

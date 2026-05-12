@@ -513,16 +513,13 @@ function renderThreadView(messageId) {
 }
 
 function renderRanking() {
-    const rankingBody = document.getElementById('top-ranking');
+    const rankingBody = document.getElementById('global-ranking');
     if (!rankingBody) return;
     const users = Object.entries(userStatuses)
         .sort(([, a], [, b]) => (b.score || 0) - (a.score || 0))
         .slice(0, 5);
     rankingBody.innerHTML = users.map(([name, data], index) => `
-        <div class="rank-item">
-            <div class="rank-name">${index + 1}. ${name}</div>
-            <div class="rank-score">${data.score || 0} pts</div>
-        </div>
+        <div class="text-xs text-gray-300">${index + 1}. ${name} (${data.score || 0})</div>
     `).join('');
 }
 
@@ -2106,5 +2103,3 @@ function globalSearch() {
         }
     });
 }
-
-document.getElementById('global-search').addEventListener('input', globalSearch);
