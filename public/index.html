@@ -23,7 +23,11 @@
 --adm-red:#ff3040;
 }
 
-/* --- ATUALIZAÇÃO: ANIMAÇÃO DE FUNDO --- */
+.admin-badge {
+    color: #ffec82;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
 @keyframes gradientBG {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -1623,7 +1627,7 @@ Sair
 <input type="file" id="storyImageInput" accept="image/*" style="display:none;">
 <button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
-<button onclick="startVoiceMessage()" class="text-xl hover:scale-110 transition" title="Mensagem de voz">🎤</button>
+<button onclick="renderCopyHistory()" class="text-xl hover:scale-110 transition" title="Mensagens salvas">📋</button>
 <button onclick="toggleGifSelector()" class="text-xl hover:scale-110 transition" title="Enviar GIF">🎉</button>
 
 <div id="gif-selector-panel" class="gif-selector hidden">
@@ -1689,8 +1693,8 @@ Enviar
 Voltar
 </button>
 
-<button onclick="saveSettings()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold">
-Salvar
+<button onclick="logout()" class="bg-red-600 text-white py-4 rounded-2xl font-bold">
+Sair
 </button>
 </div>
 

@@ -672,7 +672,7 @@ function renderMessageInContainer(data, searchQuery = '') {
              onclick="setReply('${data.name}', '${safeText}')">
             ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs" style="color:${userColor};"
                 onmouseenter="showHoverCard('${data.name}', event)" 
-                onmouseleave="hideHoverCard()">${data.name}${isAdminMsg ? ' ⭐' : ''}</div>` : ''}
+                onmouseleave="hideHoverCard()">${data.name}${isAdminMsg ? (data.name === 'vn7' || data.name === 'pl' ? ' 👑 <span class="admin-badge">ADM</span>' : ' ⭐') : ''}</div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
             <div>${highlightedText.substring(0, 300)}</div>
             ${data.imageData ? `<img src="${data.imageData}" class="max-w-[200px] max-h-[200px] rounded-lg mt-2 cursor-pointer" onclick="viewFullImage('${data.imageData}')" title="Clique para expandir">` : ''}
@@ -1969,6 +1969,11 @@ function loadTrendingGifs() {
         'https://media.giphy.com/media/l0HlL0qy3nrDe64hy/giphy.gif',
         'https://media.giphy.com/media/3o7TKEhUxJ6P5F9gEE/giphy.gif',
         'https://media.giphy.com/media/l0HlDlZxACvSHkV44/giphy.gif',
+        'https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
+        'https://media.giphy.com/media/3o7TKz9bX9Z8LxOq5y/giphy.gif',
+        'https://media.giphy.com/media/3o7TKz9bX9Z8LxOq5y/giphy.gif',
+        'https://media.giphy.com/media/3o7TKz9bX9Z8LxOq5y/giphy.gif',
+        'https://media.giphy.com/media/3o7TKz9bX9Z8LxOq5y/giphy.gif',
     ];
     displayGifs(popularGifs);
 }
