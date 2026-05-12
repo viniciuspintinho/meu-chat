@@ -41,7 +41,7 @@
 }
 
 html, body {
-    min-height: 100%;
+    height: 100%;
     width: 100%;
 }
 
@@ -52,15 +52,18 @@ background: transparent;
 color:#fff;
 margin:0;
 padding:0;
-min-height:100vh;
+height:100vh;
 display:flex;
 overflow:hidden;
 position:relative;
 }
 
 #app-shell {
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* Container fixo para partículas */
@@ -315,6 +318,7 @@ word-break: break-word;
     letter-spacing: -3px;
     font-style: italic;
     background: linear-gradient(to bottom, #fff, #666);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1164,7 +1168,8 @@ color: white;
 /* === NOVO: MINI GAMES MENU === */
 .games-menu {
   position: fixed;
-  bottom-20 left-4;
+  bottom: 80px;
+  left: 16px;
   background: rgba(18,18,18,.95);
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 12px;
@@ -1262,7 +1267,8 @@ color: white;
 /* === NOVO: GIF SELECTOR === */
 .gif-selector {
   position: fixed;
-  bottom-24 left-4;
+  bottom: 96px;
+  left: 16px;
   background: rgba(18,18,18,.95);
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 16px;
@@ -1317,6 +1323,42 @@ color: white;
   100% { opacity: 1; transform: scale(1); }
 }
 
+</style>
+<style>
+/* ===== AJUSTES PARA LAYOUT FIXO ===== */
+main {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    height: calc(100vh - 80px) !important;
+}
+
+main #messages {
+    padding-bottom: 110px !important;
+}
+
+footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 100 !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+@media (min-width: 768px) {
+    footer {
+        left: 288px !important;
+        width: calc(100% - 288px) !important;
+    }
+}
+
+@media (max-width: 767px) {
+    main #messages {
+        padding-bottom: 140px !important;
+    }
+}
 </style>
 </head>
 
@@ -1440,7 +1482,7 @@ Entrar
     </button>
 </div>
 
-<div class="pt-4 border-t border-white/5 space-y-2">
+<div class="pt-4 border-t border-white/5 space-y-2 hidden md:block">
 <button onclick="toggleGarticView()" class="w-full text-left text-blue-400 text-sm p-2 hover:bg-blue-500/10 rounded-lg transition font-bold">
 🎨 Abrir Painel Gartic
 </button>
@@ -1458,11 +1500,18 @@ Sair
 </button>
 </div>
 
+<!-- Menu rápido para mobile -->
+<div class="md:hidden fixed bottom-20 left-4 right-4 flex gap-2 z-[110]">
+<button onclick="toggleGarticView()" class="flex-1 text-blue-400 text-xs p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition font-bold border border-blue-500/30">🎨 Gartic</button>
+<button onclick="openSettings()" class="flex-1 text-gray-300 text-xs p-2 bg-white/10 hover:bg-white/20 rounded-lg transition font-bold border border-white/10">⚙️ Config</button>
+<button onclick="logout()" class="flex-1 text-red-400 text-xs p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition font-bold border border-red-500/30">🚪 Sair</button>
+</div>
+
 </aside>
 
 <button id="fab-story" onclick="openStoryComposer()" class="fixed right-5 bottom-28 z-[210] w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl shadow-blue-500/20 flex items-center justify-center text-2xl hover:scale-105 transition">✦</button>
 
-<main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10" style="height: 100vh;">
+<main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10" style="height: 100%; display: flex; flex-direction: column;">
 
 <header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md flex-shrink-0 justify-between">
 <h2 class="font-bold text-white flex items-center gap-2">
@@ -1494,7 +1543,7 @@ Sair
   <button onclick="clearSearch()" class="text-gray-400 hover:text-white ml-2">✕</button>
 </div>
 
-<div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
+<div id="messages" class="flex-1 overflow-y-auto p-4 space-y-1 pb-20"></div>
 
 <div id="thread-panel" class="hidden fixed right-0 top-24 bottom-0 w-80 bg-[#050509dd] border-l border-white/10 shadow-2xl backdrop-blur-2xl overflow-y-auto z-40 p-4 text-xs">
     <div class="flex items-center justify-between mb-4">
@@ -1623,7 +1672,7 @@ Sair
     </div>
 </div>
 
-<footer class="p-4 bg-transparent flex-shrink-0">
+<footer class="p-4 bg-black/50 backdrop-blur-xl flex-shrink-0 border-t border-white/5 fixed bottom-0 left-0 right-0 md:left-72 z-[100]">
 <div class="max-w-5xl mx-auto flex items-center gap-3">
 
 <button onclick="enviarFoto()" class="text-xl hover:scale-110 transition">🖼️</button>
