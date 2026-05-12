@@ -36,6 +36,11 @@
     100% { transform: translate(0, 0) scale(1); }
 }
 
+html, body {
+    min-height: 100%;
+    width: 100%;
+}
+
 body{
 font-family:'Plus Jakarta Sans',sans-serif;
 /* Ajustado para fundo transparente para as partículas aparecerem */
@@ -43,10 +48,16 @@ background: transparent;
 color:#fff;
 margin:0;
 padding:0;
-height:100vh;
+min-height:100vh;
 display:flex;
-overflow:hidden;
+overflow-x:hidden;
+overflow-y:auto;
 position:relative;
+}
+
+#app-shell {
+    min-height: 100vh;
+    width: 100%;
 }
 
 /* Container fixo para partículas */
