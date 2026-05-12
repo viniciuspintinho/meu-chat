@@ -1824,3 +1824,20 @@ const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
 if (ADMINS.includes(user.name)) {
     document.getElementById('logs-btn').style.display = 'block';
 }
+
+function toggleNotifications() {
+    const dropdown = document.getElementById('notifications-dropdown');
+    dropdown.classList.toggle('hidden');
+}
+
+function startVoiceMessage() {
+    showToast('Mensagem de voz não implementada ainda! 🎤');
+}
+
+function openAchievements() {
+    document.getElementById('achievements-modal').classList.remove('hidden');
+}
+
+function closeAchievements() {
+    document.getElementById('achievements-modal').classList.add('hidden');
+}

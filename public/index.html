@@ -701,6 +701,13 @@ background: rgba(255,255,255,.2);
 
 #fab-story {
     backdrop-filter: blur(16px);
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-2px); }
 }
 
 #search-input {
@@ -741,6 +748,7 @@ position:relative;
 height:100%;
 background:linear-gradient(90deg,var(--theme-color),#fff);
 transition:width .5s ease;
+box-shadow: 0 0 10px var(--theme-color);
 }
 
 .insta-input-container{
@@ -1022,6 +1030,7 @@ color: white;
 
 <div class="nebula" style="background:var(--theme-color); top:-10%; left:15%;"></div>
 <div class="nebula" style="background:#7c3aed; bottom:5%; right:5%; animation-delay: -5s;"></div>
+<div class="nebula" style="background:#ff3040; top:50%; left:50%; animation-delay: -10s;"></div>
 
 <div id="hover-card">
     <div id="hover-banner"></div>
@@ -1124,6 +1133,12 @@ Entrar
     <div id="top-ranking" class="space-y-2"></div>
 </div>
 
+<div class="mt-4 px-2">
+    <button onclick="openAchievements()" class="w-full text-left text-yellow-400 text-sm p-2 hover:bg-yellow-500/10 rounded-lg transition font-bold">
+        🏆 Conquistas
+    </button>
+</div>
+
 <div class="pt-4 border-t border-white/5 space-y-2">
 <button onclick="toggleGarticView()" class="w-full text-left text-blue-400 text-sm p-2 hover:bg-blue-500/10 rounded-lg transition font-bold">
 🎨 Abrir Painel Gartic
@@ -1153,6 +1168,13 @@ Sair
 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
 <span id="room-title">Canal Principal</span>
 </h2>
+<div class="flex items-center gap-4">
+<button onclick="toggleNotifications()" class="text-gray-400 hover:text-white text-xl">🔔</button>
+<div id="notifications-dropdown" class="hidden absolute top-16 right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-50">
+<h3 class="text-white font-bold mb-2">Notificações</h3>
+<p class="text-gray-400 text-sm">Nenhuma nova notificação.</p>
+</div>
+</div>
 </header>
 
 <div id="story-bar" class="flex gap-3 p-4 border-b border-white/10 bg-white/5 backdrop-blur-xl">
@@ -1309,6 +1331,7 @@ Sair
 <input type="file" id="storyImageInput" accept="image/*" style="display:none;">
 <button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
+<button onclick="startVoiceMessage()" class="text-xl hover:scale-110 transition" title="Mensagem de voz">🎤</button>
 
 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
 <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
@@ -1341,6 +1364,10 @@ Enviar
 <div onclick="changeTheme('#42e97f')" class="theme-dot" style="background:#42e97f"></div>
 <div onclick="changeTheme('#00f9f9')" class="theme-dot" style="background:#00f9f9"></div>
 <div onclick="changeTheme('#9000ff')" class="theme-dot" style="background:#9000ff"></div>
+<div onclick="changeTheme('#ff6b6b')" class="theme-dot" style="background:#ff6b6b"></div>
+<div onclick="changeTheme('#4ecdc4')" class="theme-dot" style="background:#4ecdc4"></div>
+<div onclick="changeTheme('#45b7d1')" class="theme-dot" style="background:#45b7d1"></div>
+<div onclick="changeTheme('#f9ca24')" class="theme-dot" style="background:#f9ca24"></div>
 </div>
 
 <div id="admin-settings-locked" class="text-xs text-white/60 mt-4 p-4 rounded-2xl bg-white/5 border border-white/10">
@@ -1370,6 +1397,36 @@ Salvar
 </div>
 
 </div>
+</div>
+
+<div id="achievements-modal" class="hidden fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
+
+<div class="bg-[#121212] border border-white/10 p-8 rounded-[32px] w-full max-w-lg">
+
+<h2 class="text-2xl font-bold mb-8 text-white text-center">Conquistas Desbloqueadas</h2>
+
+<div class="space-y-4">
+
+<div class="achievement-pill achievement-unlocked">💬 Tagarela - 1000 mensagens</div>
+
+<div class="achievement-pill">🎨 Pintor - 10 vitórias no Gartic</div>
+
+<div class="achievement-pill">⏳ Antigo - Membro desde o início</div>
+
+</div>
+
+<div class="mt-8 text-center">
+
+<button onclick="closeAchievements()" class="bg-blue-600 text-white py-4 rounded-2xl font-bold w-full">
+
+Fechar
+
+</button>
+
+</div>
+
+</div>
+
 </div>
 
 <script src="script.js"></script>
