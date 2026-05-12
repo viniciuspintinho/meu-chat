@@ -448,6 +448,12 @@ backdrop-filter:blur(20px);
 border-right:1px solid rgba(255,255,255,.05);
 position:relative;
 z-index:10;
+animation: fadeInSidebar 0.5s ease;
+}
+
+@keyframes fadeInSidebar {
+from { opacity: 0; transform: translateX(-20px); }
+to { opacity: 1; transform: translateX(0); }
 }
 
 .avatar-wrapper {
@@ -777,6 +783,21 @@ height:28px;
 border-radius:50%;
 cursor:pointer;
 border:2px solid rgba(255,255,255,.1);
+}
+
+.theme-button {
+color: white;
+padding: 10px 12px;
+border-radius: 16px;
+border: 2px solid transparent;
+transition: border-color 0.2s, transform 0.2s;
+font-size: 12px;
+font-weight: bold;
+}
+
+.theme-button:hover {
+border-color: white;
+transform: translateY(-2px);
 }
 
 #typing-indicator{
@@ -1169,6 +1190,7 @@ Sair
 <span id="room-title">Canal Principal</span>
 </h2>
 <div class="flex items-center gap-4">
+<input id="global-search" type="text" placeholder="🔍 Buscar mensagens..." class="bg-white/10 border border-white/10 rounded-full px-4 py-2 text-white outline-none focus:border-blue-500 transition text-sm">
 <button onclick="toggleNotifications()" class="text-gray-400 hover:text-white text-xl">🔔</button>
 <div id="notifications-dropdown" class="hidden absolute top-16 right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-50">
 <h3 class="text-white font-bold mb-2">Notificações</h3>
@@ -1332,6 +1354,7 @@ Sair
 <button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
 <button onclick="startVoiceMessage()" class="text-xl hover:scale-110 transition" title="Mensagem de voz">🎤</button>
+<button onclick="openGifMenu()" class="text-xl hover:scale-110 transition" title="Enviar GIF">🎉</button>
 
 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
 <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
@@ -1358,16 +1381,16 @@ Enviar
 
 <textarea id="set-bio" placeholder="Adicione uma bio..." class="w-full bg-black border border-white/10 p-4 rounded-2xl text-white outline-none text-sm resize-none" rows="2"></textarea>
 
-<div class="grid grid-cols-4 gap-3 p-4 bg-black/40 rounded-2xl">
-<div onclick="changeTheme('#0095f6')" class="theme-dot" style="background:#0095f6"></div>
-<div onclick="changeTheme('#ff3040')" class="theme-dot" style="background:#ff3040"></div>
-<div onclick="changeTheme('#42e97f')" class="theme-dot" style="background:#42e97f"></div>
-<div onclick="changeTheme('#00f9f9')" class="theme-dot" style="background:#00f9f9"></div>
-<div onclick="changeTheme('#9000ff')" class="theme-dot" style="background:#9000ff"></div>
-<div onclick="changeTheme('#ff6b6b')" class="theme-dot" style="background:#ff6b6b"></div>
-<div onclick="changeTheme('#4ecdc4')" class="theme-dot" style="background:#4ecdc4"></div>
-<div onclick="changeTheme('#45b7d1')" class="theme-dot" style="background:#45b7d1"></div>
-<div onclick="changeTheme('#f9ca24')" class="theme-dot" style="background:#f9ca24"></div>
+<div class="grid grid-cols-2 gap-3 p-4 bg-black/40 rounded-2xl">
+<button onclick="changeTheme('#0095f6')" class="theme-button" style="background:#0095f6">Azul Lux</button>
+<button onclick="changeTheme('#ff3040')" class="theme-button" style="background:#ff3040">Vermelho</button>
+<button onclick="changeTheme('#42e97f')" class="theme-button" style="background:#42e97f">Verde</button>
+<button onclick="changeTheme('#00f9f9')" class="theme-button" style="background:#00f9f9">Ciano</button>
+<button onclick="changeTheme('#9000ff')" class="theme-button" style="background:#9000ff">Roxo</button>
+<button onclick="changeTheme('#ff6b6b')" class="theme-button" style="background:#ff6b6b">Coral</button>
+<button onclick="changeTheme('#4ecdc4')" class="theme-button" style="background:#4ecdc4">Teal</button>
+<button onclick="changeTheme('#45b7d1')" class="theme-button" style="background:#45b7d1">Azul Céu</button>
+<button onclick="changeTheme('#f9ca24')" class="theme-button" style="background:#f9ca24">Amarelo</button>
 </div>
 
 <div id="admin-settings-locked" class="text-xs text-white/60 mt-4 p-4 rounded-2xl bg-white/5 border border-white/10">
@@ -1428,6 +1451,22 @@ Fechar
 </div>
 
 </div>
+
+<aside class="w-64 glass-panel hidden xl:flex flex-col p-4 flex-shrink-0">
+<div>
+<h3 class="text-white font-bold mb-4">Ranking Global</h3>
+<div id="global-ranking" class="space-y-2"></div>
+</div>
+<div class="mt-6">
+<h3 class="text-white font-bold mb-4">Conquistas Globais</h3>
+<div class="space-y-2">
+<div class="achievement-pill achievement-unlocked">🏆 Mestre do Chat</div>
+<div class="achievement-pill">🎨 Artista</div>
+<div class="achievement-pill">💬 Tagarela</div>
+<div class="achievement-pill">⏳ Veterano</div>
+</div>
+</div>
+</aside>
 
 <script src="script.js"></script>
 

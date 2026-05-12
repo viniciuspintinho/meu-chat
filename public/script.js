@@ -25,7 +25,8 @@ const emojiList = document.getElementById('emoji-list');
 const EMOJIS = {
     ":smile:": "😊", ":heart:": "❤️", ":fire:": "🔥", ":laugh:": "😂",":pika:":"Ɑ͞ ͞ ͞ ͞ ͞ ͞ ͞ ﻝﮞ",":chup:":"(っ'ཀ')っ Ɑ͞ ̶͞ ̶͞ ̶͞ لں͞",
     ":cry:": "😢", ":cool:": "😎", ":think:": "🤔", ":clap:": "👏",":linguada:": "👅{(ᶅ͒)}",
-    ":rocket:": "🚀", ":star:": "⭐", ":check:": "✅", ":warn:": "⚠️", ":seqsu:": "𓀓𓂸"
+    ":rocket:": "🚀", ":star:": "⭐", ":check:": "✅", ":warn:": "⚠️", ":seqsu:": "𓀓𓂸",
+    ":thumbsup:": "👍", ":heart_eyes:": "😍", ":laughing:": "😆", ":wink:": "😉", ":angry:": "😠"
 };
 
 let userXP = parseInt(localStorage.getItem('chat_xp')) || 0;
@@ -1841,3 +1842,22 @@ function openAchievements() {
 function closeAchievements() {
     document.getElementById('achievements-modal').classList.add('hidden');
 }
+
+function openGifMenu() {
+    showToast('GIFs não implementados ainda! 🎉');
+}
+
+function globalSearch() {
+    const query = document.getElementById('global-search').value.toLowerCase();
+    const messages = document.querySelectorAll('#messages > div');
+    messages.forEach(div => {
+        const text = div.textContent.toLowerCase();
+        if (text.includes(query)) {
+            div.style.display = 'block';
+        } else {
+            div.style.display = 'none';
+        }
+    });
+}
+
+document.getElementById('global-search').addEventListener('input', globalSearch);
