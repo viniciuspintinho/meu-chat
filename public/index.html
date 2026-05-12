@@ -1358,11 +1358,9 @@ color: white;
   transform: translateY(-1px);
 }
 
-#chat-composer textarea#input {
-  min-height: 44px;
-  max-height: 140px;
+#chat-composer #input {
+  height: 44px;
   line-height: 1.45;
-  resize: none;
 }
 
 .gif-item {
@@ -1456,7 +1454,7 @@ main #messages {
     min-width: 0 !important;
     min-height: 0 !important;
     display: flex !important;
-    align-items: flex-end !important;
+    align-items: center !important;
     gap: 8px !important;
 }
 
@@ -1494,6 +1492,16 @@ main #messages {
 
 #user-list ~ div {
     margin-top: 8px !important;
+}
+
+.chat-bubble-card {
+  box-shadow: 0 8px 28px rgba(0,0,0,.35);
+}
+.chat-bubble-card .chat-bubble-header {
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.chat-bubble-body {
+  word-break: break-word;
 }
 
 details > summary {
@@ -1607,41 +1615,9 @@ Entrar
     </div>
 </div>
 
-<div id="user-list" class="flex-1 overflow-y-auto space-y-1.5 mt-2 border-t border-white/5 pt-2" style="flex: 2;"></div>
+<div class="flex-1 min-h-0"></div>
 
-<div class="mt-4 px-2">
-    <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter mb-2">Ranking</p>
-    <div id="top-ranking" class="space-y-2"></div>
-</div>
-
-<div class="mt-4 px-2 border-t border-white/5 pt-4">
-    <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter mb-2">🔖 Salvos</p>
-    <div id="bookmarks-list" class="space-y-2 text-[10px]"></div>
-</div>
-
-<div class="mt-4 px-2">
-    <button onclick="openAchievements()" class="w-full text-left text-yellow-400 text-sm p-2 hover:bg-yellow-500/10 rounded-lg transition font-bold">
-        🏆 Conquistas
-    </button>
-</div>
-
-<div class="pt-4 border-t border-white/5 space-y-2 hidden md:block">
-<button onclick="toggleGarticView()" class="w-full text-left text-blue-400 text-sm p-2 hover:bg-blue-500/10 rounded-lg transition font-bold">
-🎨 Abrir Painel Gartic
-</button>
-
-<button onclick="openSettings()" class="w-full text-left text-gray-400 text-sm p-2 hover:text-white transition">
-⚙️ Configurações
-</button>
-
-<button onclick="viewLogs()" class="w-full text-left text-red-400 text-sm p-2 hover:text-red-300 transition" id="logs-btn" style="display:none;">
-📋 Ver Logs
-</button>
-
-<button onclick="logout()" class="w-full text-left text-red-500 text-sm p-2 font-bold hover:bg-red-500/10 rounded-lg transition">
-Sair
-</button>
-</div>
+<div id="user-list" class="hidden" aria-hidden="true"></div>
 
 </aside>
 
@@ -1664,6 +1640,7 @@ Sair
   </div>
 </details>
 <button type="button" onclick="toggleNotifications()" class="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/10 bg-white/5 items-center justify-center hover:bg-white/10 transition text-lg" title="Notificações">🔔</button>
+<button type="button" onclick="logout()" class="text-xs sm:text-sm font-semibold text-red-400/90 hover:text-red-300 px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition" title="Sair">Sair</button>
 <div id="notifications-dropdown" class="hidden absolute top-14 sm:top-16 right-4 sm:right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-[300]">
 <h3 class="text-white font-bold mb-2">Notificações</h3>
 <p class="text-gray-400 text-sm">Nenhuma nova notificação.</p>
@@ -1820,7 +1797,7 @@ Sair
 <div id="gif-grid" class="space-y-2"></div>
 </div>
 
-<div class="composer-shell flex items-end gap-2 p-2 sm:p-2.5">
+<div class="composer-shell flex items-center gap-2 p-2 sm:p-2.5">
 <input type="file" id="imageInput" accept="image/*" class="hidden" multiple>
 <input type="file" id="storyImageInput" accept="image/*" class="hidden">
 
@@ -1829,13 +1806,12 @@ Sair
 <button type="button" id="composer-gif-btn" class="composer-icon-btn" onclick="toggleGifSelector()" title="Enviar GIF">GIF</button>
 </div>
 
-<form id="form" class="flex-1 flex items-end gap-2 min-w-0">
+<form id="form" class="flex-1 flex items-center gap-2 min-w-0">
 <label class="sr-only" for="input">Mensagem</label>
-<textarea id="input" rows="1" autocomplete="off" placeholder="Digite uma mensagem… (Shift+Enter nova linha)" class="flex-1 min-w-0 rounded-xl bg-black/25 border border-white/10 px-3 py-2.5 text-white placeholder-white/35 text-[15px] leading-snug focus:border-[color:var(--theme-color)] focus:ring-1 focus:ring-[color:var(--theme-color)] outline-none transition"></textarea>
+<input type="text" id="input" autocomplete="off" placeholder="Digite uma mensagem e pressione Enter para enviar…" class="flex-1 min-w-0 h-11 rounded-xl bg-black/25 border border-white/10 px-3 text-white placeholder-white/35 text-[15px] focus:border-[color:var(--theme-color)] focus:ring-1 focus:ring-[color:var(--theme-color)] outline-none transition">
 <button type="submit" class="composer-send-btn" title="Enviar">Enviar</button>
 </form>
 </div>
-<p class="text-center text-[10px] text-white/25 mt-1.5 hidden sm:block">Markdown leve: **negrito** · `código` · blocos ```código``` · emojis nativos</p>
 </div>
 </footer>
 </main>

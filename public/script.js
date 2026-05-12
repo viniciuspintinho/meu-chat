@@ -29,6 +29,13 @@ const msgInput = document.getElementById('input');
 const garticChatContainer = document.getElementById('gartic-chat-messages');
 const garticInput = document.getElementById('gartic-input');
 
+function scrollChatToBottom() {
+    if (!msgContainer) return;
+    requestAnimationFrame(() => {
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    });
+}
+
 // AudioContext para notificações (criado sob demanda para evitar bloqueio em alguns navegadores)
 let audioCtx;
 
@@ -419,6 +426,7 @@ function searchMessages(query) {
     if (!query.trim()) {
         msgContainer.innerHTML = '';
         allMessages.forEach(msg => renderMessageInContainer(msg));
+        scrollChatToBottom();
         return;
     }
 
@@ -429,12 +437,14 @@ function searchMessages(query) {
 
     msgContainer.innerHTML = '';
     filtered.forEach(msg => renderMessageInContainer(msg, query));
+    scrollChatToBottom();
 }
 
 function clearSearch() {
     document.getElementById('search-input').value = '';
     msgContainer.innerHTML = '';
     allMessages.forEach(msg => renderMessageInContainer(msg));
+    scrollChatToBottom();
 }
 
 document.getElementById('search-input')?.addEventListener('input', (e) => {
@@ -718,17 +728,16 @@ function formatLastSeen(timestamp) {
 // =========================
 function renderMessageInContainer(data, searchQuery = '') {
     const isMe = data.id === socket.id;
-    const isSequencial = data.id === lastSenderId;
     const isAdminMsg = ADMINS.includes(data.name);
     const isTempMessage = data.duration !== undefined;
-    const isBookmarked = bookmarkedMessages.includes(data.messageId);
     const userColor = generateUserColor(data.name);
 
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
         const divSystem = document.createElement('div');
-        divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-2'} message-animate`;
-        divSystem.innerHTML = `<div class="system-msg">${data.text}</div>`;
+        divSystem.className = `flex justify-center w-full mt-2 message-animate`;
+        divSystem.innerHTML = `<div class="system-msg">${escapeHtml(data.text)}</div>`;
         msgContainer.appendChild(divSystem);
+        scrollChatToBottom();
         return;
     }
 
@@ -736,46 +745,37 @@ function renderMessageInContainer(data, searchQuery = '') {
     if (isTempMessage) bubbleStyle += ' temp-message';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
+    const safeText = (data.text || '').replace(/['"\\`]/g, "").replace(/\n/g, " ");
     const bodyHtml = searchQuery
         ? highlightSearchInPlainText(data.text, searchQuery)
-        : formatRichChatText(data.text);
+        : generatePreview(data.text, data.imageData, data.fileName);
+    const displayTime = formatTime(data.timestamp);
+    const safeName = escapeHtml(data.name);
+    const nameJs = data.name.replace(/'/g, "\\'");
+    const frameClass = getAvatarFrameClass(data.profileFrame, data.isAdmin);
 
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-2'} message-animate`;
-    div.id = data.messageId;
-    div.onmouseenter = function() {
-        showQuickReactions(this);
-        this.querySelector('.msg-actions').style.opacity = '1';
-    };
-    div.onmouseleave = function() {
-        hideQuickReactions(this);
-        this.querySelector('.msg-actions').style.opacity = '0';
-    };
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mt-3 message-animate`;
+    if (data.messageId) div.id = data.messageId;
 
     div.innerHTML = `
-        <div class="max-w-[65%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer" style="border-left: 3px solid ${userColor};"
-             title="${formatTime(data.timestamp)}"
-             onclick="setReply('${data.name}', '${safeText}')">
-            ${!isSequencial ? `<div class="user-label font-bold mb-1 text-xs flex items-center gap-2" style="color:${userColor};"
-                onmouseenter="showHoverCard('${data.name.replace(/'/g, "\\'")}', event)" 
-                onmouseleave="hideHoverCard()"><img src="${resolveAvatarUrl(data.avatar, data.name)}" class="w-4 h-4 rounded-full" alt="">${data.name}${isAdminMsg ? (data.name === 'vn7' || data.name === 'pl' ? ' 👑 <span class="admin-badge">ADM</span>' : ' ⭐') : ''}</div>` : ''}
-            ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
-            <div>${bodyHtml}</div>
-            ${data.imageData ? `<img src="${data.imageData}" class="max-w-[200px] max-h-[200px] rounded-lg mt-2 cursor-pointer" onclick="viewFullImage('${data.imageData}')" title="Clique para expandir">` : ''}
-            <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
-            <div class="msg-actions" style="opacity: 0;">
-                <button onclick="toggleBookmark('${data.messageId}'); event.stopPropagation();" class="text-xs bookmark-btn ${isBookmarked ? 'bookmarked' : ''}">🔖</button>
-                <button onclick="copyMessage('${data.id}'); event.stopPropagation();" class="text-xs">📋</button>
-                <button onclick="editMessage('${data.id}', prompt('Editar mensagem:', '${safeText}')); event.stopPropagation();" class="text-xs">✏️</button>
-                <button onclick="pinMessage('${data.id}'); event.stopPropagation();" class="text-xs">📌</button>
-                <button onclick="setReply('${data.name}', '${safeText}'); event.stopPropagation();" class="text-xs">↩️</button>
+        <div class="max-w-[min(92vw,28rem)] ${bubbleStyle} chat-bubble-card px-3 py-3 relative cursor-pointer" style="border-left: 3px solid ${userColor};"
+             onclick="setReply('${nameJs}', '${safeText}')">
+            <div class="chat-bubble-header flex items-center gap-2.5 pb-2 mb-2">
+                <img src="${resolveAvatarUrl(data.avatar, data.name)}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0 border border-white/10 ${frameClass}"
+                     onmouseenter="showHoverCard('${nameJs}', event)" onmouseleave="hideHoverCard()">
+                <div class="min-w-0 flex-1">
+                    <span class="user-label font-bold text-sm" style="color:${userColor};">${safeName}${isAdminMsg ? (data.name === 'vn7' || data.name === 'pl' ? ' 👑 <span class="admin-badge">ADM</span>' : ' ⭐') : ''}</span>
+                </div>
+                <time class="tabular-nums text-[11px] text-white/45 shrink-0">${displayTime}</time>
             </div>
-            ${data.threadCount ? `<div class="thread-badge" onclick="openThread('${data.messageId}'); event.stopPropagation();">💬 ${data.threadCount} ${data.threadCount === 1 ? 'resposta' : 'respostas'}</div>` : ''}
+            ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${escapeHtml(data.replyTo.name)}</span>: ${escapeHtml(data.replyTo.text)}</div>` : ''}
+            <div class="chat-bubble-body text-[14px] text-white/95">${bodyHtml}</div>
         </div>
     `;
 
     msgContainer.appendChild(div);
+    scrollChatToBottom();
 }
 
 // Aplicar tema automático ao carregar
@@ -810,7 +810,6 @@ window.onload = () => {
         profileFrame = 'blue-ring';
     }
     selectProfileFrame(profileFrame, true);
-    resizeComposerInput();
 };
 
 // Função auxiliar para highlighting
@@ -1152,7 +1151,6 @@ document.getElementById('form').onsubmit = (e) => {
 
         if (cmdResult.silent) {
             msgInput.value = '';
-            resizeComposerInput();
             return;
         }
 
@@ -1248,15 +1246,14 @@ socket.on('message', (data) => {
 
     // 3. LOGICA CHAT NORMAL
     const isMe = data.id === socket.id;
-    const isSequencial = data.id === lastSenderId;
     lastSenderId = data.id;
 
     if (data.id === "bot" || data.name === "SISTEMA" || data.name === "Lux Bot") {
         const divSystem = document.createElement('div');
-        divSystem.className = `flex justify-center w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
-        divSystem.innerHTML = `<div class="system-msg">${data.text}</div>`;
+        divSystem.className = `flex justify-center w-full mt-3 message-animate`;
+        divSystem.innerHTML = `<div class="system-msg">${escapeHtml(data.text)}</div>`;
         msgContainer.appendChild(divSystem);
-        msgContainer.scrollTop = msgContainer.scrollHeight;
+        scrollChatToBottom();
         return;
     }
 
@@ -1264,7 +1261,7 @@ socket.on('message', (data) => {
 
     if (!isMe && data.id !== 'bot' && data.name !== 'SISTEMA') {
         const myName = JSON.parse(sessionStorage.getItem('chat_user') || '{}').name;
-        const hasUserMention = data.text.includes(`@${myName}`);
+        const hasUserMention = data.text && data.text.includes(`@${myName}`);
         const isReplyToMe = data.replyTo && data.replyTo.name === myName;
         
         if (hasUserMention || isReplyToMe) {
@@ -1275,57 +1272,37 @@ socket.on('message', (data) => {
     let bubbleStyle = isMe ? 'bubble-me rounded-2xl' : 'bg-white/5 rounded-2xl';
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
-    const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
+    const safeText = (data.text || '').replace(/['"\\`]/g, "").replace(/\n/g, " ");
 
-    // Armazenar para busca
     allMessages.push({...data, _renderId: Math.random()});
 
     const frameClass = getAvatarFrameClass(data.profileFrame, data.isAdmin);
+    const displayTime = formatTime(data.timestamp);
+    const safeName = escapeHtml(data.name);
+    const nameJs = data.name.replace(/'/g, "\\'");
 
     const div = document.createElement('div');
-    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-4'} message-animate`;
-
-    const reactionData = messageReactions[data.messageId || data.id] || {};
-    const reactionButton = (emoji) => {
-        const users = reactionData[emoji] || [];
-        const title = users.length ? users.join(', ') : `Reagir com ${emoji}`;
-        return `<button onclick="reactToMessage('${data.messageId || data.id}', '${emoji}'); event.stopPropagation();" title="${title}" class="text-xs bg-white/10 px-2 py-1 rounded">${emoji}${users.length ? ` ${users.length}` : ''}</button>`;
-    };
-    const isRead = isMe ? ' <span class="text-[10px] text-gray-400">✓✓</span>' : '';
+    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full mt-3 message-animate`;
+    if (data.messageId) div.id = data.messageId;
 
     div.innerHTML = `
-        <div class="max-w-[85%] sm:max-w-[45%] ${bubbleStyle} px-3 py-2 relative group cursor-pointer"
+        <div class="max-w-[min(92vw,28rem)] ${bubbleStyle} chat-bubble-card px-3 py-3 relative cursor-pointer"
              data-message-id="${data.messageId || data.id}"
-             title="${formatTime(data.timestamp)}"
-             onclick="setReply('${data.name}', '${safeText}', '${data.messageId || data.id}')">
-            ${!isSequencial ? `<div class="flex items-center gap-2 mb-2">
-                    <img src="${resolveAvatarUrl(data.avatar, data.name)}" onclick="openProfileStory('${data.name.replace(/'/g, "\\'")}'); event.stopPropagation();" class="w-8 h-8 rounded-full object-cover ${frameClass} cursor-pointer" alt="">
-                    <div class="user-label font-bold text-xs ${isAdminMsg ? 'admin-name-highlight' : 'text-blue-400'}">
-                        ${data.name}${isAdminMsg ? ' ⭐' : ''}
-                    </div>
-                </div>` : ''}
-            ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
-            ${generatePreview(data.text, data.imageData, data.fileName)}
-            <div class="flex items-center justify-between gap-2 mt-3 text-[10px] text-gray-400">
-                <div>${formatTime(data.timestamp)}${isRead}</div>
-                <div class="text-gray-500">${data.replyTo?.id ? '' : ''}</div>
+             onclick="setReply('${nameJs}', '${safeText}', '${data.messageId || data.id}')">
+            <div class="chat-bubble-header flex items-center gap-2.5 pb-2 mb-2">
+                <img src="${resolveAvatarUrl(data.avatar, data.name)}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0 border border-white/10 ${frameClass}" onclick="openProfileStory('${nameJs}'); event.stopPropagation();">
+                <div class="min-w-0 flex-1">
+                    <span class="user-label font-bold text-sm text-white ${isAdminMsg ? 'admin-name-highlight' : ''}">${safeName}${isAdminMsg ? ' ⭐' : ''}</span>
+                </div>
+                <time class="tabular-nums text-[11px] text-white/45 shrink-0">${displayTime}</time>
             </div>
-            <div class="msg-actions mt-2 flex gap-2 flex-wrap">
-                <button onclick="copyMessage('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">📋</button>
-                <button onclick="pinMessage('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">📌</button>
-                <button onclick="setReply('${data.name}', '${safeText}', '${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">↩️</button>
-                <button onclick="openThread('${data.messageId || data.id}'); event.stopPropagation();" class="text-xs">🧵</button>
-            </div>
-            <div class="reaction-buttons opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-2">
-                ${reactionButton('👍')}
-                ${reactionButton('😂')}
-                ${reactionButton('❤️')}
-            </div>
+            ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${escapeHtml(data.replyTo.name)}</span>: ${escapeHtml(data.replyTo.text)}</div>` : ''}
+            <div class="chat-bubble-body text-[14px] text-white/95">${generatePreview(data.text, data.imageData, data.fileName)}</div>
         </div>
     `;
 
     msgContainer.appendChild(div);
-    msgContainer.scrollTop = msgContainer.scrollHeight;
+    scrollChatToBottom();
 
     if (data.msgType === 'story') {
         storyFeed.unshift({
@@ -1350,6 +1327,7 @@ socket.on('message', (data) => {
 socket.on('updateUserList', (users) => {
     usersForMention = users; 
     const userList = document.getElementById('user-list');
+    if (!userList) return;
     
     // Definir status online para o usuário atual
     const currentUser = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
@@ -1380,11 +1358,6 @@ socket.on('updateUserList', (users) => {
         applyAvatarToImg(document.getElementById('my-avatar'), user.avatar, user.name);
         document.getElementById('my-name').innerText = user.name;
         document.getElementById('login').classList.add('hidden');
-    }
-
-    // Mostrar botão de logs para admins após login
-    if (currentUser.name && ADMINS.includes(currentUser.name)) {
-        document.getElementById('logs-btn').style.display = 'block';
     }
 
     renderStoryBar();
@@ -1806,7 +1779,6 @@ function toggleGarticView() {
         // Envia o comando /gartic para iniciar uma rodada
         document.getElementById('input').value = "/gartic";
         document.getElementById('form').dispatchEvent(new Event('submit'));
-        resizeComposerInput();
         console.log("Gartic aberto");
     } else {
         garticBox.classList.add("hidden");
@@ -2212,10 +2184,6 @@ function showAchievementPopup(emoji, name) {
 
 // Verificar admin para logs
 const user = JSON.parse(sessionStorage.getItem('chat_user') || '{}');
-if (ADMINS.includes(user.name)) {
-    document.getElementById('logs-btn').style.display = 'block';
-}
-
 function toggleNotifications() {
     const dropdown = document.getElementById('notifications-dropdown');
     dropdown.classList.toggle('hidden');
