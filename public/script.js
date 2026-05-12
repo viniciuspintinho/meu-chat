@@ -72,6 +72,68 @@ let storyDraft = { text: '', imageData: null };
 let storyImageData = null;
 let currentViewedStoryId = null;
 
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function formatInlineRichText(raw) {
+    let t = String(raw);
+    t = t.replace(/^> (.+)$/gm, '[[QUOTE]]$1[[/QUOTE]]');
+    t = escapeHtml(t);
+    t = t.replace(/\[\[QUOTE\]\]([\s\S]*?)\[\[\/QUOTE\]\]/g, '<div class="message-blockquote">$1</div>');
+    t = t.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    t = t.replace(/\n/g, '<br>');
+    t = t.replace(/`([^`]+)`/g, '<code class="message-code">$1</code>');
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    t = t.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    t = t.replace(/@(\w+)/g, '<span class="text-blue-400 font-semibold">@$1</span>');
+    return t;
+}
+
+function formatRichChatText(text) {
+    if (!text) return '';
+    const re = /```([\w-]*)\s*\n?([\s\S]*?)```/g;
+    let out = '';
+    let last = 0;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+        if (m.index > last) {
+            out += `<span class="msg-rich">${formatInlineRichText(text.slice(last, m.index))}</span>`;
+        }
+        out += `<pre class="message-fenced-code"><code>${escapeHtml(m[2])}</code></pre>`;
+        last = m.index + m[0].length;
+    }
+    if (last < text.length) {
+        out += `<span class="msg-rich">${formatInlineRichText(text.slice(last))}</span>`;
+    }
+    if (!out) {
+        out = `<span class="msg-rich">${formatInlineRichText(text)}</span>`;
+    }
+    return out;
+}
+
+function highlightSearchInPlainText(text, query) {
+    if (!query.trim()) return formatRichChatText(text);
+    const q = query;
+    const parts = String(text).split(new RegExp(`(${escapeRegExp(q)})`, 'gi'));
+    const html = parts.map((p) =>
+        p.toLowerCase() === q.toLowerCase()
+            ? `<mark class="search-highlight">${escapeHtml(p)}</mark>`
+            : escapeHtml(p)
+    ).join('');
+    return `<span class="msg-rich">${html.replace(/\n/g, '<br>')}</span>`;
+}
+
 // =========================
 // PREVIEW DE LINKS AUTOMÁTICO
 // =========================
@@ -121,12 +183,11 @@ function generatePreview(text, imageData = null, fileName = null) {
     }
 
     if (imgRegex.test(text)) {
-        return `<img src="${text}" class="max-w-[300px] max-h-[300px] object-cover mt-2 rounded-lg shadow-xl border border-white/10">`;
+        const safeSrc = encodeURI(text.trim());
+        return `<img src="${safeSrc}" class="max-w-[300px] max-h-[300px] object-cover mt-2 rounded-lg shadow-xl border border-white/10" alt="">`;
     }
-    
-    let txt = text.replace(/@(\w+)/g, '<span class="text-blue-400 font-bold">@$1</span>')
-                  .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-    return `<p>${txt}</p>`;
+
+    return `<div class="msg-body">${formatRichChatText(text)}</div>`;
 }
 
 // =========================
@@ -550,7 +611,8 @@ function renderRanking() {
 
 function showToast(message) {
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-4 right-4 bg-green-500/90 text-white px-4 py-2 rounded-lg text-sm shadow-xl';
+    toast.className = 'fixed right-4 z-[200] bg-green-500/90 text-white px-4 py-2 rounded-lg text-sm shadow-xl';
+    toast.style.bottom = 'calc(6rem + env(safe-area-inset-bottom, 0px))';
     toast.innerText = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2200);
@@ -675,9 +737,9 @@ function renderMessageInContainer(data, searchQuery = '') {
     if (isAdminMsg) bubbleStyle += ' admin-glow';
 
     const safeText = data.text.replace(/['"\\`]/g, "").replace(/\n/g, " ");
-    const highlightedText = searchQuery 
-        ? data.text.replace(new RegExp(`(${searchQuery})`, 'gi'), '<mark style="background:rgba(255,200,0,.4)">$1</mark>')
-        : formatMessageText(data.text);
+    const bodyHtml = searchQuery
+        ? highlightSearchInPlainText(data.text, searchQuery)
+        : formatRichChatText(data.text);
 
     const div = document.createElement('div');
     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} w-full ${isSequencial ? 'mt-0.5' : 'mt-2'} message-animate`;
@@ -699,7 +761,7 @@ function renderMessageInContainer(data, searchQuery = '') {
                 onmouseenter="showHoverCard('${data.name.replace(/'/g, "\\'")}', event)" 
                 onmouseleave="hideHoverCard()"><img src="${resolveAvatarUrl(data.avatar, data.name)}" class="w-4 h-4 rounded-full" alt="">${data.name}${isAdminMsg ? (data.name === 'vn7' || data.name === 'pl' ? ' 👑 <span class="admin-badge">ADM</span>' : ' ⭐') : ''}</div>` : ''}
             ${data.replyTo ? `<div class="reply-preview mb-2 p-2 rounded-xl bg-white/5 text-[11px] text-gray-300 border border-white/10">Respondendo a <span class="font-bold text-white">${data.replyTo.name}</span>: ${data.replyTo.text}</div>` : ''}
-            <div>${highlightedText.substring(0, 300)}</div>
+            <div>${bodyHtml}</div>
             ${data.imageData ? `<img src="${data.imageData}" class="max-w-[200px] max-h-[200px] rounded-lg mt-2 cursor-pointer" onclick="viewFullImage('${data.imageData}')" title="Clique para expandir">` : ''}
             <div class="msg-timestamp">${formatTime(data.timestamp)}</div>
             <div class="msg-actions" style="opacity: 0;">
@@ -748,6 +810,7 @@ window.onload = () => {
         profileFrame = 'blue-ring';
     }
     selectProfileFrame(profileFrame, true);
+    resizeComposerInput();
 };
 
 // Função auxiliar para highlighting
@@ -828,8 +891,8 @@ socket.on('displayTyping', (data) => {
 
 msgInput.addEventListener('keyup', (e) => {
     const val = msgInput.value;
-    const words = val.split(" ");
-    const lastWord = words[words.length - 1];
+    const words = val.trim().split(/\s+/).filter(Boolean);
+    const lastWord = words.length ? words[words.length - 1] : '';
 
     // Lógica de Menções @
     if (lastWord.startsWith("@") && lastWord.length > 1) {
@@ -863,7 +926,21 @@ msgInput.addEventListener('keyup', (e) => {
     }
 });
 
+msgInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('form').requestSubmit();
+    }
+});
+
+function resizeComposerInput() {
+    if (!msgInput || msgInput.tagName !== 'TEXTAREA') return;
+    msgInput.style.height = 'auto';
+    msgInput.style.height = Math.min(msgInput.scrollHeight, 140) + 'px';
+}
+
 msgInput.addEventListener('input', () => {
+    resizeComposerInput();
     socket.emit('typing', true);
 
     clearTimeout(typingTimeout);
@@ -884,11 +961,12 @@ function renderEmojiMenu(list) {
 }
 
 function selectEmoji(key) {
-    const words = msgInput.value.split(" ");
+    const words = msgInput.value.trim().split(/\s+/).filter(Boolean);
     words.pop();
     msgInput.value = words.join(" ") + (words.length > 0 ? " " : "") + EMOJIS[key] + " ";
     emojiMenu.classList.add('hidden');
     msgInput.focus();
+    resizeComposerInput();
 }
 
 function renderMentionMenu(list) {
@@ -901,16 +979,24 @@ function renderMentionMenu(list) {
 }
 
 function selectMention(name) {
-    const words = msgInput.value.split(" ");
+    const words = msgInput.value.trim().split(/\s+/).filter(Boolean);
     words.pop();
     msgInput.value = words.join(" ") + (words.length > 0 ? " " : "") + "@" + name + " ";
     mentionMenu.classList.add('hidden');
     msgInput.focus();
+    resizeComposerInput();
 }
 
 document.addEventListener('click', (e) => {
     if (mentionMenu && !mentionMenu.contains(e.target)) mentionMenu.classList.add('hidden');
     if (emojiMenu && !emojiMenu.contains(e.target)) emojiMenu.classList.add('hidden');
+    const gifPanel = document.getElementById('gif-selector-panel');
+    if (gifPanel && !gifPanel.classList.contains('hidden')) {
+        const t = e.target;
+        if (!gifPanel.contains(t) && !t.closest('#composer-gif-btn')) {
+            gifPanel.classList.add('hidden');
+        }
+    }
 });
 
 // =========================
@@ -1066,6 +1152,7 @@ document.getElementById('form').onsubmit = (e) => {
 
         if (cmdResult.silent) {
             msgInput.value = '';
+            resizeComposerInput();
             return;
         }
 
@@ -1086,6 +1173,7 @@ document.getElementById('form').onsubmit = (e) => {
     }
 
     msgInput.value = '';
+    resizeComposerInput();
     cancelReply();
     socket.emit('typing', false);
 };
@@ -1522,7 +1610,8 @@ function showImagePreview(file) {
 function createPreviewArea() {
     const previewArea = document.createElement('div');
     previewArea.id = 'image-previews';
-    previewArea.className = 'fixed bottom-20 left-4 right-4 bg-black/80 p-4 rounded-xl max-h-60 overflow-y-auto z-50';
+    previewArea.className = 'fixed z-[125] left-3 right-3 max-w-lg mx-auto bg-black/90 p-3 rounded-2xl max-h-52 overflow-y-auto border border-white/10';
+    previewArea.style.bottom = 'calc(5.5rem + env(safe-area-inset-bottom, 0px))';
     document.body.appendChild(previewArea);
     return previewArea;
 }
@@ -1717,6 +1806,7 @@ function toggleGarticView() {
         // Envia o comando /gartic para iniciar uma rodada
         document.getElementById('input').value = "/gartic";
         document.getElementById('form').dispatchEvent(new Event('submit'));
+        resizeComposerInput();
         console.log("Gartic aberto");
     } else {
         garticBox.classList.add("hidden");
@@ -1972,27 +2062,9 @@ function updateBookmarksUI() {
     `).join('');
 }
 
-// 5. INLINE CODE & MARKDOWN - Formatação avançada
+// 5. INLINE CODE & MARKDOWN - Formatação avançada (blocos ``` e emojis UTF-8)
 function formatMessageText(text) {
-    // Inline code
-    text = text.replace(/`([^`]+)`/g, '<span class="message-code">$1</span>');
-    
-    // Code blocks
-    text = text.replace(/```([^`]+)```/g, '<div class="message-code-block">$1</div>');
-    
-    // Bold
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-    
-    // Italic
-    text = text.replace(/\*([^*]+)\*/g, '<i>$1</i>');
-    
-    // Strikethrough
-    text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-    
-    // Blockquote
-    text = text.replace(/^> (.+)$/gm, '<div class="message-blockquote">$1</div>');
-    
-    return text;
+    return formatRichChatText(text);
 }
 
 // 6. MINI GAMES - Jogos integrados

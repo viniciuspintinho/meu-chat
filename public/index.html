@@ -1264,20 +1264,105 @@ color: white;
   100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
-/* === NOVO: GIF SELECTOR === */
+/* === GIF SELECTOR (popover acima do compositor) === */
 .gif-selector {
-  position: fixed;
-  bottom: 96px;
-  left: 16px;
-  background: rgba(18,18,18,.95);
-  border: 1px solid rgba(255,255,255,.1);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 22rem);
+  max-height: min(50vh, 22rem);
+  background: rgba(12, 14, 22, 0.96);
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 16px;
-  width: 300px;
-  max-height: 400px;
-  z-index: 50;
-  backdrop-filter: blur(10px);
+  z-index: 140;
+  backdrop-filter: blur(14px);
   padding: 12px;
   overflow-y: auto;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.45);
+}
+
+.msg-rich {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-variant-emoji: emoji;
+}
+
+.message-fenced-code {
+  margin: 8px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.1);
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #a5f3fc;
+}
+
+.message-fenced-code code {
+  white-space: pre;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.composer-shell {
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.composer-icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .15s;
+  flex-shrink: 0;
+}
+
+.composer-icon-btn:hover {
+  background: rgba(0,149,246,.18);
+  border-color: rgba(0,149,246,.35);
+  transform: scale(1.03);
+}
+
+.composer-send-btn {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--theme-color), #7c3aed);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0,149,246,.25);
+  transition: opacity .2s, transform .15s;
+  flex-shrink: 0;
+}
+
+.composer-send-btn:hover {
+  opacity: .95;
+  transform: translateY(-1px);
+}
+
+#chat-composer textarea#input {
+  min-height: 44px;
+  max-height: 140px;
+  line-height: 1.45;
+  resize: none;
 }
 
 .gif-item {
@@ -1335,21 +1420,21 @@ main {
 }
 
 main #messages {
-    padding-bottom: 100px !important;
+    padding-bottom: 120px !important;
 }
 
-footer {
+#chat-composer {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    z-index: 100 !important;
+    z-index: 130 !important;
     width: 100% !important;
     box-sizing: border-box !important;
 }
 
 @media (min-width: 768px) {
-    footer {
+    #chat-composer {
         left: 288px !important;
         right: auto !important;
         width: calc(100% - 288px) !important;
@@ -1358,49 +1443,37 @@ footer {
 
 @media (max-width: 767px) {
     main #messages {
-        padding-bottom: 150px !important;
+        padding-bottom: 140px !important;
     }
 }
 
-/* Ajustes para footer e input visível */
-footer button, 
-footer input[type="file"] {
+#chat-composer button[type="button"] {
     font-size: 16px !important;
-    padding: 4px 6px !important;
 }
 
 #form {
     flex: 1 1 0% !important;
     min-width: 0 !important;
-    min-height: 45px !important;
+    min-height: 0 !important;
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-end !important;
+    gap: 8px !important;
 }
 
 #input {
-    font-size: 14px !important;
+    font-size: 15px !important;
     padding: 10px 12px !important;
-    min-height: 40px !important;
     display: block !important;
     background: transparent !important;
     width: 100% !important;
     min-width: 0 !important;
+    border: none !important;
+    outline: none !important;
+    color: #fff !important;
 }
 
-footer button {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: inline-block !important;
-    margin: 0 4px !important;
-}
-
-.insta-input-container {
-    min-height: 45px !important;
-    display: flex !important;
-    align-items: center !important;
-    padding: 6px 12px !important;
-    flex: 1 1 0% !important;
-    min-width: 0 !important;
+#chat-composer .composer-shell {
+    min-height: 56px !important;
 }
 
 /* Lista de usuários online maior */
@@ -1421,6 +1494,13 @@ footer button {
 
 #user-list ~ div {
     margin-top: 8px !important;
+}
+
+details > summary {
+    list-style: none;
+}
+details > summary::-webkit-details-marker {
+    display: none;
 }
 </style>
 </head>
@@ -1563,30 +1643,28 @@ Sair
 </button>
 </div>
 
-<!-- Menu rápido para mobile (abaixo da área do footer / teclado) -->
-<div class="md:hidden fixed left-4 right-4 flex gap-2 z-[105]" style="bottom: max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 5.5rem));">
-<button onclick="toggleGarticView()" class="flex-1 text-blue-400 text-xs p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition font-bold border border-blue-500/30">🎨 Gartic</button>
-<button onclick="openSettings()" class="flex-1 text-gray-300 text-xs p-2 bg-white/10 hover:bg-white/20 rounded-lg transition font-bold border border-white/10">⚙️ Config</button>
-<button onclick="logout()" class="flex-1 text-red-400 text-xs p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition font-bold border border-red-500/30">🚪 Sair</button>
-</div>
-
 </aside>
-
-<button id="fab-story" onclick="openStoryComposer()" class="fixed right-5 bottom-28 z-[210] w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-2xl shadow-blue-500/20 flex items-center justify-center text-2xl hover:scale-105 transition">✦</button>
 
 <main class="flex-1 flex flex-col bg-transparent overflow-hidden relative z-10" style="height: 100%; display: flex; flex-direction: column;">
 
-<header class="h-16 border-b border-white/5 flex items-center px-6 backdrop-blur-md flex-shrink-0 justify-between">
-<h2 class="font-bold text-white flex items-center gap-2">
-<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-<span id="room-title">Canal Principal</span>
+<header class="relative h-14 sm:h-16 border-b border-white/5 flex items-center px-4 sm:px-6 backdrop-blur-md flex-shrink-0 justify-between gap-2">
+<h2 class="font-bold text-white flex items-center gap-2 text-sm sm:text-base min-w-0 truncate">
+<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shrink-0"></span>
+<span id="room-title" class="truncate">Canal Principal</span>
 </h2>
-<div class="flex items-center gap-4">
-<h3 class="text-white font-bold text-sm">Ranking Global</h3>
-<div id="global-ranking" class="flex gap-2"></div>
-<button onclick="openAchievements()" class="text-gray-400 hover:text-white text-xl">🏆</button>
-<button onclick="toggleNotifications()" class="text-gray-400 hover:text-white text-xl">🔔</button>
-<div id="notifications-dropdown" class="hidden absolute top-16 right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-[300]">
+<div class="flex items-center gap-1 sm:gap-2 shrink-0">
+<button type="button" onclick="openStoryComposer()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/10 bg-white/5 text-lg flex items-center justify-center hover:bg-white/10 transition" title="Novo story">✦</button>
+<button type="button" onclick="openAchievements()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/10 bg-white/5 text-lg flex items-center justify-center hover:bg-white/10 transition" title="Conquistas">🏆</button>
+<button type="button" onclick="openSettings()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/10 bg-white/5 text-sm flex items-center justify-center hover:bg-white/10 transition font-bold" title="Configurações">⚙️</button>
+<details class="md:hidden relative">
+  <summary class="list-none w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center cursor-pointer hover:bg-white/10 text-lg font-bold select-none">⋯</summary>
+  <div class="absolute right-0 top-full mt-1 w-44 rounded-xl border border-white/10 bg-[#0c0e16]/98 backdrop-blur-xl shadow-2xl py-1 z-[300]">
+    <button type="button" onclick="this.closest('details').removeAttribute('open'); toggleGarticView();" class="w-full text-left px-3 py-2.5 text-sm text-blue-300 hover:bg-white/10">🎨 Gartic</button>
+    <button type="button" onclick="this.closest('details').removeAttribute('open'); logout();" class="w-full text-left px-3 py-2.5 text-sm text-red-400 hover:bg-white/10 font-semibold">Sair</button>
+  </div>
+</details>
+<button type="button" onclick="toggleNotifications()" class="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-white/10 bg-white/5 items-center justify-center hover:bg-white/10 transition text-lg" title="Notificações">🔔</button>
+<div id="notifications-dropdown" class="hidden absolute top-14 sm:top-16 right-4 sm:right-6 bg-[#121212] border border-white/10 rounded-xl p-4 w-64 shadow-2xl z-[300]">
 <h3 class="text-white font-bold mb-2">Notificações</h3>
 <p class="text-gray-400 text-sm">Nenhuma nova notificação.</p>
 </div>
@@ -1665,12 +1743,12 @@ Sair
 
 <div id="typing-indicator"></div>
 
-<div id="mention-menu" class="hidden absolute bottom-20 left-4 w-48 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-[50] shadow-2xl">
+<div id="mention-menu" class="hidden fixed left-4 w-48 max-w-[calc(100vw-2rem)] bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-[140] shadow-2xl" style="bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));">
     <div class="p-2 text-[10px] font-bold text-gray-500 border-b border-white/5 uppercase">Mencionar usuário</div>
     <div id="mention-list" class="max-h-40 overflow-y-auto"></div>
 </div>
 
-<div id="emoji-menu" class="hidden absolute bottom-20 left-4 w-48 bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-[50] shadow-2xl">
+<div id="emoji-menu" class="hidden fixed left-4 w-48 max-w-[calc(100vw-2rem)] bg-[#121212] border border-white/10 rounded-xl overflow-hidden z-[140] shadow-2xl" style="bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));">
     <div class="p-2 text-[10px] font-bold text-gray-500 border-b border-white/5 uppercase">Sugestões de Emoji</div>
     <div id="emoji-list" class="max-h-40 overflow-y-auto"></div>
 </div>
@@ -1735,32 +1813,30 @@ Sair
     </div>
 </div>
 
-<footer class="p-3 bg-black/80 backdrop-blur-xl flex-shrink-0 border-t border-white/5 fixed bottom-0 left-0 right-0 md:left-72 z-[130] flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-nowrap" style="width: 100%; box-sizing: border-box; min-height: 60px; display: flex !important; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));">
-<div class="flex items-center gap-2 overflow-x-auto shrink-0 pb-0 sm:max-w-[45%]" style="-webkit-overflow-scrolling: touch;">
-
-<button onclick="enviarFoto()" class="text-xl hover:scale-110 transition shrink-0">🖼️</button>
-<input type="file" id="imageInput" accept="image/*" style="display:none;" multiple>
-<input type="file" id="storyImageInput" accept="image/*" style="display:none;">
-<button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
-<button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
-<button onclick="renderCopyHistory()" class="text-xl hover:scale-110 transition" title="Mensagens salvas">📋</button>
-<button onclick="toggleGifSelector()" class="text-xl hover:scale-110 transition shrink-0" title="Enviar GIF">🎉</button>
-
+<footer id="chat-composer" class="border-t border-white/10 bg-[#070a12]/94 backdrop-blur-2xl flex-shrink-0" style="padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));">
+<div class="max-w-5xl mx-auto w-full px-3 sm:px-4 py-3 relative">
 <div id="gif-selector-panel" class="gif-selector hidden">
 <input type="text" class="gif-search" placeholder="Buscar GIF..." id="gif-search" onkeyup="searchGifs()">
 <div id="gif-grid" class="space-y-2"></div>
 </div>
 
+<div class="composer-shell flex items-end gap-2 p-2 sm:p-2.5">
+<input type="file" id="imageInput" accept="image/*" class="hidden" multiple>
+<input type="file" id="storyImageInput" accept="image/*" class="hidden">
+
+<div class="flex flex-col gap-1.5 shrink-0 pb-0.5">
+<button type="button" class="composer-icon-btn" onclick="document.getElementById('imageInput').click()" title="Enviar foto">📷</button>
+<button type="button" id="composer-gif-btn" class="composer-icon-btn" onclick="toggleGifSelector()" title="Enviar GIF">GIF</button>
 </div>
 
-<form id="form" class="flex-1 flex items-center insta-input-container px-4 min-w-0 w-full sm:min-w-[120px]">
-<input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 min-w-0 bg-transparent py-3 outline-none text-white text-sm">
-
-<button type="submit" class="font-bold text-sm shrink-0" style="color:var(--theme-color)">
-Enviar
-</button>
+<form id="form" class="flex-1 flex items-end gap-2 min-w-0">
+<label class="sr-only" for="input">Mensagem</label>
+<textarea id="input" rows="1" autocomplete="off" placeholder="Digite uma mensagem… (Shift+Enter nova linha)" class="flex-1 min-w-0 rounded-xl bg-black/25 border border-white/10 px-3 py-2.5 text-white placeholder-white/35 text-[15px] leading-snug focus:border-[color:var(--theme-color)] focus:ring-1 focus:ring-[color:var(--theme-color)] outline-none transition"></textarea>
+<button type="submit" class="composer-send-btn" title="Enviar">Enviar</button>
 </form>
-
+</div>
+<p class="text-center text-[10px] text-white/25 mt-1.5 hidden sm:block">Markdown leve: **negrito** · `código` · blocos ```código``` · emojis nativos</p>
+</div>
 </footer>
 </main>
 
@@ -1854,9 +1930,6 @@ Fechar
 </div>
 
 </div>
-
-<aside class="w-64 glass-panel hidden xl:flex flex-col p-4 flex-shrink-0">
-</aside>
 
 <script src="script.js"></script>
 
