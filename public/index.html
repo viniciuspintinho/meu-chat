@@ -1042,6 +1042,278 @@ color: white;
     100% { opacity: 0; transform: scale(0.95); }
 }
 
+/* === NOVO: FLOATING REACTIONS === */
+.floating-reaction {
+  position: fixed;
+  font-size: 32px;
+  z-index: 999;
+  animation: floatReaction 2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes floatReaction {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  50% { opacity: 1; }
+  100% { opacity: 0; transform: translate(0, -100px) scale(0.5); }
+}
+
+/* === NOVO: MESSAGE THREADS VISUAL === */
+.thread-badge {
+  background: rgba(0,149,246,.2);
+  border: 1px solid rgba(0,149,246,.4);
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #0095f6;
+  font-weight: bold;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thread-badge:hover {
+  background: rgba(0,149,246,.3);
+  transform: translateX(4px);
+}
+
+/* === NOVO: QUICK REACTIONS BAR === */
+.quick-reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.quick-reactions button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.1);
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.quick-reactions button:hover {
+  background: rgba(0,149,246,.3);
+  transform: scale(1.2);
+}
+
+/* === NOVO: MESSAGE BOOKMARKS === */
+.bookmark-btn {
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.bookmark-btn.bookmarked {
+  opacity: 1;
+  color: #ffec82;
+  filter: drop-shadow(0 0 4px rgba(255,236,130,.6));
+}
+
+/* === NOVO: INLINE CODE & MARKDOWN === */
+.message-code {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #4ade80;
+}
+
+.message-code-block {
+  background: rgba(0,0,0,.5);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  overflow-x: auto;
+  color: #4ade80;
+}
+
+.message-blockquote {
+  border-left: 3px solid rgba(0,149,246,.5);
+  padding-left: 12px;
+  margin-left: 0;
+  color: rgba(255,255,255,.7);
+  font-style: italic;
+}
+
+/* === NOVO: READ RECEIPTS === */
+.read-receipt {
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
+  margin-top: 2px;
+}
+
+.read-receipt.read {
+  color: #0095f6;
+}
+
+/* === NOVO: MINI GAMES MENU === */
+.games-menu {
+  position: fixed;
+  bottom-20 left-4;
+  background: rgba(18,18,18,.95);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  padding: 8px;
+  width: 240px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+
+.game-option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  color: white;
+  width: 100%;
+  text-align: left;
+}
+
+.game-option:hover {
+  background: rgba(0,149,246,.2);
+}
+
+/* === NOVO: DYNAMIC GRADIENTS === */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.dynamic-gradient {
+  background: linear-gradient(-45deg, #0095f6, #7c3aed, #ff3040, #42e97f, #0095f6);
+  background-size: 300% 300%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* === NOVO: REACTION STACKING === */
+.reaction-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 20px;
+}
+
+.reaction-item {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reaction-item:hover {
+  background: rgba(255,255,255,.15);
+  transform: scale(1.1);
+}
+
+.reaction-item.user-reacted {
+  background: rgba(0,149,246,.2);
+  border-color: rgba(0,149,246,.4);
+}
+
+/* === NOVO: ACHIEVEMENTS BADGE === */
+.achievement-badge {
+  position: absolute;
+  top: -35px;
+  right: -10px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #ffec82, #daa520);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 0 20px rgba(255,236,130,.6);
+  animation: popAchievement 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popAchievement {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* === NOVO: GIF SELECTOR === */
+.gif-selector {
+  position: fixed;
+  bottom-24 left-4;
+  background: rgba(18,18,18,.95);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  width: 300px;
+  max-height: 400px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.gif-item {
+  width: 100%;
+  height: 150px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  object-fit: cover;
+}
+
+.gif-item:hover {
+  transform: scale(1.02);
+}
+
+.gif-search {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 8px;
+  outline: none;
+}
+
+/* === NOVO: STAR REACTION INDICATOR === */
+.star-indicator {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 17px solid #ffec82;
+  animation: starPulse 0.5s ease-out;
+}
+
+@keyframes starPulse {
+  0% { opacity: 0; transform: scale(2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
 </style>
 </head>
 
@@ -1152,6 +1424,11 @@ Entrar
 <div class="mt-4 px-2">
     <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter mb-2">Ranking</p>
     <div id="top-ranking" class="space-y-2"></div>
+</div>
+
+<div class="mt-4 px-2 border-t border-white/5 pt-4">
+    <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter mb-2">🔖 Salvos</p>
+    <div id="bookmarks-list" class="space-y-2 text-[10px]"></div>
 </div>
 
 <div class="mt-4 px-2">
@@ -1354,7 +1631,12 @@ Sair
 <button onclick="document.getElementById('imageInput').click()" class="text-xl hover:scale-110 transition" title="Anexar imagem">📎</button>
 <button onclick="sendTempMessage(prompt('Mensagem temporária (30s):'), 30000)" class="text-xl hover:scale-110 transition" title="Mensagem temporária">⏰</button>
 <button onclick="startVoiceMessage()" class="text-xl hover:scale-110 transition" title="Mensagem de voz">🎤</button>
-<button onclick="openGifMenu()" class="text-xl hover:scale-110 transition" title="Enviar GIF">🎉</button>
+<button onclick="toggleGifSelector()" class="text-xl hover:scale-110 transition" title="Enviar GIF">🎉</button>
+
+<div id="gif-selector-panel" class="gif-selector hidden">
+<input type="text" class="gif-search" placeholder="Buscar GIF..." id="gif-search" onkeyup="searchGifs()">
+<div id="gif-grid" class="space-y-2"></div>
+</div>
 
 <form id="form" class="flex-1 flex items-center insta-input-container px-4">
 <input id="input" autocomplete="off" placeholder="Mensagem..." class="flex-1 bg-transparent py-3 outline-none text-white text-sm">
