@@ -1683,12 +1683,22 @@ let lastX = 0;
 let lastY = 0;
 
 function toggleGarticView() {
+    const garticBox = document.getElementById("gartic-box");
+    
     if (garticBox.classList.contains("hidden")) {
         garticBox.classList.remove("hidden");
         resizeCanvas();
-        socket.emit("startGartic"); 
+        // Envia o comando /gartic para iniciar uma rodada
+        document.getElementById('input').value = "/gartic";
+        document.getElementById('form').dispatchEvent(new Event('submit'));
+        console.log("Gartic aberto");
     } else {
         garticBox.classList.add("hidden");
+        // Limpa o canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        podeDesenhar = false;
+        document.getElementById('gartic-chat-messages').innerHTML = '';
+        console.log("Gartic fechado");
     }
 }
 
@@ -1703,6 +1713,16 @@ function resizeCanvas() {
 }
 
 window.addEventListener("resize", resizeCanvas);
+
+// Fechar Gartic com ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const garticBox = document.getElementById("gartic-box");
+        if (garticBox && !garticBox.classList.contains("hidden")) {
+            toggleGarticView();
+        }
+    }
+});
 
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
@@ -1721,9 +1741,13 @@ function getPos(e) {
 }
 
 function renderStroke(data) {
+    if (!ctx || !canvas) return;
+    
     ctx.beginPath();
     ctx.strokeStyle = data.color || "#000000";
-    ctx.lineWidth = data.size || 5;
+    ctx.lineWidth = parseInt(data.size) || 5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.moveTo(data.x1, data.y1);
     ctx.lineTo(data.x2, data.y2);
     ctx.stroke();
@@ -1769,6 +1793,14 @@ socket.on("draw", (data) => {
 
 socket.on("clearCanvas", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    console.log("Canvas limpo!");
+});
+
+socket.on("garticPalavra", (palavra) => {
+    const meuUser = JSON.parse(sessionStorage.getItem('chat_user'));
+    podeDesenhar = true;
+    garticInfo.innerText = `✏️ VOCÊ está desenhando! A palavra é: **${palavra}**`;
+    console.log("Minha palavra:", palavra);
 });
 
 socket.on("garticStatus", (data) => {
@@ -1777,13 +1809,22 @@ socket.on("garticStatus", (data) => {
     if (data.desenhista !== meuUser.name) {
         podeDesenhar = false;
         garticInfo.innerText = `🎨 ${data.desenhista} está desenhando...`;
+    } else {
+        garticInfo.innerText = `✏️ Você está desenhando!`;
     }
 });
 
 socket.on("garticRanking", (points) => {
+    const rankingDiv = document.getElementById('ranking');
+    if (!rankingDiv) return;
+    
     rankingDiv.innerHTML = Object.entries(points)
-        .map(([nome, pts]) => `🏆 ${nome}: ${pts} pts`)
-        .join(" | ");
+        .sort((a, b) => b[1] - a[1])
+        .map(([nome, pts], idx) => {
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+            return `<span class="px-4 py-2 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 border border-yellow-500/20 rounded-full">${medal} ${nome}: <span class="font-black">${pts}</span> pts</span>`;
+        })
+        .join(" ");
 });
 
 socket.on('deleteMessage', (messageId) => {
@@ -2108,3 +2149,39 @@ function globalSearch() {
         }
     });
 }
+
+// =========================
+// CINEMA MODE & GARTIC FUNÇÕES
+// =========================
+function toggleCinemaMode() {
+    const garticBox = document.getElementById("gartic-box");
+    garticBox.classList.toggle("gartic-cinema-mode");
+    console.log("Cinema mode toggled");
+}
+
+// Função para renderizar palpites no chat do Gartic
+function addGarticGuess(name, guess) {
+    const container = document.getElementById('gartic-chat-messages');
+    if (!container) return;
+    
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2 p-2 bg-white/5 rounded-lg border border-white/10';
+    div.innerHTML = `<span class="font-bold text-blue-400">${name}</span><span class="text-gray-400">: ${guess}</span>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+// Função para mostrar mensagens do Gartic
+socket.on('message', (data) => {
+    // Se for uma mensagem de acerto do Gartic
+    if (data.name === "Lux Bot" && data.text.includes("acertou a palavra")) {
+        const garticContainer = document.getElementById('gartic-chat-messages');
+        if (garticContainer) {
+            const div = document.createElement('div');
+            div.className = 'p-2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg text-yellow-300 text-xs font-bold';
+            div.innerHTML = data.text.replace(/\*\*/g, '');
+            garticContainer.appendChild(div);
+            garticContainer.scrollTop = garticContainer.scrollHeight;
+        }
+    }
+});

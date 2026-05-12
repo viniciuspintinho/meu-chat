@@ -77,6 +77,7 @@ let gartic = {
 };
 
 let ultimaPalavra = ""; // Para evitar repetição imediata
+let garticTimeout = null; // Timer para encerrar rodada
 
 function gerarHint(palavra) {
     return palavra
@@ -93,8 +94,9 @@ function iniciarRodada() {
         return;
     }
 
-    // Limpa timer de dica anterior se houver
+    // Limpa timers anteriores
     if (gartic.timerHint) clearTimeout(gartic.timerHint);
+    if (garticTimeout) clearTimeout(garticTimeout);
 
     const sorteado = lista[Math.floor(Math.random() * lista.length)];
     
@@ -141,6 +143,21 @@ function iniciarRodada() {
             });
         }
     }, 30000);
+
+    // Timeout de 90 segundos para encerrar a rodada se ninguém acertar
+    garticTimeout = setTimeout(() => {
+        if (gartic.ativo) {
+            io.emit("message", {
+                name: "Lux Bot",
+                text: `⏱️ Tempo esgotado! A palavra era: **${gartic.palavra}**. Iniciando nova rodada...`,
+                id: "bot"
+            });
+            gartic.ativo = false;
+            setTimeout(() => {
+                iniciarRodada();
+            }, 2000);
+        }
+    }, 90000);
 }
 
 /* =========================
@@ -362,8 +379,9 @@ io.on("connection", (socket) => {
             io.emit("updateUserList", Object.values(usersOnline));
             gartic.ativo = false;
 
-            // Limpa o timer da dica ao acertar
+            // Limpa os timers ao acertar
             if (gartic.timerHint) clearTimeout(gartic.timerHint);
+            if (garticTimeout) clearTimeout(garticTimeout);
 
             setTimeout(() => {
                 iniciarRodada();
